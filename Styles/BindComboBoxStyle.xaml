@@ -186,16 +186,24 @@
 
                             </VisualStateGroup>
                             <VisualStateGroup x:Name="DropDownStates">
-                                <!--
-                                    Stock uses SplitOpenThemeAnimation/SplitCloseThemeAnimation driven by
-                                    TemplateSettings.DropDownOpenedHeight, which is computed assuming
-                                    PopupBorder is the Popup's direct child. Wrapping it in a Grid (for the
-                                    close button overlay) throws that computation off, so drop the reveal
-                                    animation and size the popup from plain layout instead (see MaxHeight
-                                    on PopupBorder below).
-                                -->
-                                <VisualState x:Name="Opened" />
-                                <VisualState x:Name="Closed" />
+                                <VisualState x:Name="Opened">
+
+                                    <Storyboard>
+                                        <SplitOpenThemeAnimation OpenedTargetName="PopupBorder"
+                    ClosedTargetName="ContentPresenter"
+                    OffsetFromCenter="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.DropDownOffset}"
+                    OpenedLength="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.DropDownOpenedHeight}" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Closed">
+
+                                    <Storyboard>
+                                        <SplitCloseThemeAnimation OpenedTargetName="PopupBorder"
+                    ClosedTargetName="ContentPresenter"
+                    OffsetFromCenter="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.DropDownOffset}"
+                    OpenedLength="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.DropDownOpenedHeight}" />
+                                    </Storyboard>
+                                </VisualState>
 
                             </VisualStateGroup>
 
@@ -268,8 +276,8 @@
                             </controls:AnimatedIcon.FallbackIconSource>
                         </controls:AnimatedIcon>
                         <ContentPresenter x:Name="DescriptionPresenter" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Foreground="{ThemeResource SystemControlDescriptionTextForegroundBrush}" Content="{TemplateBinding Description}" x:Load="False" />
-                        <Popup x:Name="Popup" VerticalOffset="{TemplateBinding ActualHeight}">
-                            <Border x:Name="PopupBorder" Background="{ThemeResource ComboBoxDropDownBackground}" BackgroundSizing="InnerBorderEdge" BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}" BorderThickness="{ThemeResource ComboBoxDropdownBorderThickness}" Margin="0,4,0,-1" Padding="{ThemeResource ComboBoxDropdownBorderPadding}" HorizontalAlignment="Stretch" CornerRadius="{ThemeResource OverlayCornerRadius}" Translation="0,0,32" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                        <Popup x:Name="Popup">
+                            <Border x:Name="PopupBorder" Background="{ThemeResource ComboBoxDropDownBackground}" BackgroundSizing="InnerBorderEdge" BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}" BorderThickness="{ThemeResource ComboBoxDropdownBorderThickness}" Margin="0,4,0,-1" Padding="{ThemeResource ComboBoxDropdownBorderPadding}" HorizontalAlignment="Stretch" CornerRadius="{ThemeResource OverlayCornerRadius}" Translation="0,0,32">
                                 <Border.Shadow>
                                     <ThemeShadow />
                                 </Border.Shadow>
