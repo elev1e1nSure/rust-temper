@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   KeyboardLine,
@@ -7,8 +7,11 @@ import {
   SearchLine,
   Delete2Line,
   DownLine,
+  ToolLine,
+  LoadingLine,
 } from "@mingcute/react";
 import { Tooltip } from "./Tooltip";
+import { Titlebar } from "./Titlebar";
 import "./App.css";
 
 const DEFAULT_CONFIG_PATH =
@@ -164,6 +167,8 @@ function App() {
   >(null);
   const closingDropdownTimeoutRef = useRef<number | null>(null);
   const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
+  const [newBindIndex, setNewBindIndex] = useState<number | null>(null);
+  const [exitingBindIndex, setExitingBindIndex] = useState<number | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
 
@@ -244,6 +249,7 @@ function App() {
   };
 
   const autoDetectConfigPath = async () => {
+    const minDelay = new Promise((r) => setTimeout(r, 900));
     setDetecting(true);
     try {
       const found = await invoke<string | null>("find_keys_cfg");
@@ -258,6 +264,7 @@ function App() {
       console.error("Автопоиск keys.cfg не удался:", err);
       return null;
     } finally {
+      await minDelay;
       setDetecting(false);
     }
   };
@@ -326,10 +333,25 @@ function App() {
 
   function addBind() {
     setBinds((prev) => [{ key: "", command: "" }, ...prev]);
+    setNewBindIndex(0);
+    setEditingKeyIndex(0);
+    requestAnimationFrame(() => {
+      document
+        .querySelector(".table-wrap")
+        ?.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
-  function removeBind(bind: Bind) {
-    setBinds((prev) => prev.filter((b) => b !== bind));
+  function removeBind(index: number) {
+    if (editingKeyIndex === index) {
+      setEditingKeyIndex(null);
+    }
+    setExitingBindIndex(index);
+  }
+
+  function confirmRemoveBind(index: number) {
+    setBinds((prev) => prev.filter((_, i) => i !== index));
+    setExitingBindIndex(null);
   }
 
   function updateBindCommand(index: number, newCommand: string) {
@@ -410,33 +432,6 @@ function App() {
     };
   }, []);
 
-  // Smart flip: open action dropdown upward if it overflows the viewport
-  useLayoutEffect(() => {
-    // Keep the last direction while closing so the fade-out plays the same
-    // way it opened, instead of snapping back to "down".
-    if (openDropdownIndex === null) return;
-    const el = document.querySelector(
-      ".dropdown-menu.open",
-    ) as HTMLElement | null;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setDropdownDir(rect.bottom > window.innerHeight - 8 ? "up" : "down");
-  }, [openDropdownIndex]);
-
-  // Smart flip: open theme dropdown downward if it overflows the top
-  useLayoutEffect(() => {
-    if (!themeDropdownOpen) {
-      setThemeDropdownDir("up");
-      return;
-    }
-    const el = document.querySelector(
-      ".theme-dropdown-menu.open",
-    ) as HTMLElement | null;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setThemeDropdownDir(rect.top < 8 ? "down" : "up");
-  }, [themeDropdownOpen]);
-
   function applyPreset(presetBinds: Bind[]) {
     setBinds(presetBinds);
     setActivePage("binds");
@@ -445,272 +440,314 @@ function App() {
   const activeIndex = NAV_ITEMS.findIndex((item) => item.id === activePage);
 
   return (
-    <div className="app">
-      <div className="sidebar" style={{ width: sidebarWidth }}>
-        <div className="nav">
-          <div
-            className="nav-indicator"
-            style={{
-              transform: `translateY(${activeIndex * 42}px)`,
-            }}
-          />
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className={`nav-item${activePage === id ? " active" : ""}`}
-              onClick={() => setActivePage(id)}
-            >
-              <Icon />
-              {label}
-            </button>
-          ))}
+    <>
+      <Titlebar />
+      <div className="app">
+        <div className="sidebar" style={{ width: sidebarWidth }}>
+          <div className="nav">
+            <div
+              className="nav-indicator"
+              style={{
+                transform: `translateY(${activeIndex * 42}px)`,
+              }}
+            />
+            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                className={`nav-item${activePage === id ? " active" : ""}`}
+                onClick={() => setActivePage(id)}
+              >
+                <Icon />
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="sidebar-resizer" onMouseDown={startResizing} />
         </div>
-        <div className="sidebar-resizer" onMouseDown={startResizing} />
-      </div>
 
-      <div className="main">
-        {activePage === "binds" && (
-          <div className="page-container binds-page">
-            <div className="header-row">
-              <div className="header-actions">
-                <div className="search">
-                  <SearchIcon />
-                  <input
-                    type="text"
-                    placeholder="Поиск бинда..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
+        <div className="main">
+          {activePage === "binds" && (
+            <div className="page-container binds-page">
+              <div className="header-row">
+                <div className="header-actions">
+                  <div className="search">
+                    <SearchIcon />
+                    <input
+                      type="text"
+                      placeholder="Поиск бинда..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                  <button className="btn-add" type="button" onClick={addBind}>
+                    <PlusIcon />
+                    Добавить бинд
+                  </button>
                 </div>
-                <button className="btn-add" type="button" onClick={addBind}>
-                  <PlusIcon />
-                  Добавить бинд
-                </button>
               </div>
-            </div>
 
-            <div className="table-wrap">
-              <div className="col-headers">
-                <div className="col-key">Клавиша</div>
-                <div className="col-action">Действие</div>
-              </div>
-              <div className="binds-body">
-                {filteredBinds.map((bind, index) => {
-                  const hasConflict =
-                    bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-                  const isDropdownOpen = openDropdownIndex === index;
-                  const isDropdownClosing = closingDropdownIndex === index;
-                  return (
-                    <div
-                      className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""} ${isDropdownClosing ? "dropdown-closing" : ""}`}
-                      key={`${bind.key}-${bind.command}-${index}`}
-                    >
-                      <div className="key-cell">
-                        <Tooltip
-                          content={
-                            hasConflict
-                              ? "Эта клавиша уже используется другим биндом"
-                              : null
+              <div className="table-wrap">
+                <div className="col-headers">
+                  <div className="col-key">Клавиша</div>
+                  <div className="col-action">Действие</div>
+                </div>
+                <div className="binds-body">
+                  {filteredBinds.map((bind, index) => {
+                    const hasConflict =
+                      bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+                    const isDropdownOpen = openDropdownIndex === index;
+                    const isDropdownClosing = closingDropdownIndex === index;
+                    return (
+                      <div
+                        className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""} ${isDropdownClosing ? "dropdown-closing" : ""} ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
+                        key={`${bind.key}-${bind.command}-${index}`}
+                        onAnimationEnd={() => {
+                          if (exitingBindIndex === index) {
+                            confirmRemoveBind(index);
                           }
-                        >
-                          <div
-                            className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
-                            onClick={() => setEditingKeyIndex(index)}
-                          >
-                            {editingKeyIndex === index
-                              ? "Нажмите клавишу..."
-                              : bind.key || "—"}
-                          </div>
-                        </Tooltip>
-                      </div>
-                      <div className="action-cell-container">
-                        <Tooltip content={descriptionFor(bind.command)}>
-                          <button
-                            className="action-cell"
-                            type="button"
-                            onClick={() =>
-                              changeOpenDropdown(
-                                openDropdownIndex === index ? null : index,
-                              )
+                          if (newBindIndex === index) {
+                            setNewBindIndex(null);
+                          }
+                        }}
+                      >
+                        <div className="key-cell">
+                          <Tooltip
+                            content={
+                              hasConflict
+                                ? "Эта клавиша уже используется другим биндом"
+                                : null
                             }
                           >
-                            {bind.command
-                              ? nameFor(bind.command)
-                              : "Выберите действие"}
-                            <ChevronIcon />
-                          </button>
-                        </Tooltip>
-                        <div
-                          className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
-                        >
-                          {commandPresets.map((preset) => (
-                            <Tooltip
-                              key={preset.command}
-                              content={preset.description}
+                            <div
+                              className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
+                              onClick={() => setEditingKeyIndex(index)}
                             >
-                              <button
-                                className="dropdown-item"
-                                type="button"
-                                onClick={() =>
-                                  updateBindCommand(index, preset.command)
-                                }
+                              {editingKeyIndex === index
+                                ? "Нажмите клавишу..."
+                                : bind.key || "—"}
+                            </div>
+                          </Tooltip>
+                        </div>
+                        <div className="action-cell-container">
+                          <Tooltip content={descriptionFor(bind.command)}>
+                            <button
+                              className="action-cell"
+                              type="button"
+                              onClick={(e) => {
+                                const rect =
+                                  e.currentTarget.getBoundingClientRect();
+                                const spaceBelow =
+                                  window.innerHeight - rect.bottom;
+                                // If space below is less than 230px, open upward
+                                setDropdownDir(
+                                  spaceBelow < 230 ? "up" : "down",
+                                );
+                                changeOpenDropdown(
+                                  openDropdownIndex === index ? null : index,
+                                );
+                              }}
+                            >
+                              {bind.command
+                                ? nameFor(bind.command)
+                                : "Выберите действие"}
+                              <ChevronIcon />
+                            </button>
+                          </Tooltip>
+                          <div
+                            className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
+                          >
+                            {commandPresets.map((preset) => (
+                              <Tooltip
+                                key={preset.command}
+                                content={preset.description}
                               >
-                                {preset.name}
-                              </button>
-                            </Tooltip>
-                          ))}
+                                <button
+                                  className="dropdown-item"
+                                  type="button"
+                                  onClick={() =>
+                                    updateBindCommand(index, preset.command)
+                                  }
+                                >
+                                  {preset.name}
+                                </button>
+                              </Tooltip>
+                            ))}
+                          </div>
+                        </div>
+                        <div
+                          className="delete-btn"
+                          onClick={() => removeBind(index)}
+                        >
+                          <TrashIcon />
                         </div>
                       </div>
-                      <div
-                        className="delete-btn"
-                        onClick={() => removeBind(bind)}
-                      >
-                        <TrashIcon />
-                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {statusMessage && (
+                <div className="status-message">{statusMessage}</div>
+              )}
+            </div>
+          )}
+
+          {activePage === "presets" && (
+            <div className="presets-container page-container">
+              <div className="presets-blur-wrapper">
+                <div className="presets-list">
+                  <div className="preset-card">
+                    <div className="preset-info">
+                      <h3>По умолчанию</h3>
+                      <p>
+                        Перечитать текущий keys.cfg с диска, отменив
+                        несохранённые правки.
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {statusMessage && (
-              <div className="status-message">{statusMessage}</div>
-            )}
-          </div>
-        )}
-
-        {activePage === "presets" && (
-          <div className="presets-container page-container">
-            <div className="presets-list">
-              <div className="preset-card">
-                <div className="preset-info">
-                  <h3>По умолчанию</h3>
-                  <p>
-                    Перечитать текущий keys.cfg с диска, отменив несохранённые
-                    правки.
-                  </p>
-                </div>
-                <button
-                  className="btn-preset-apply"
-                  onClick={() => loadFromPath(configPath)}
-                >
-                  Применить
-                </button>
-              </div>
-
-              <div className="preset-card">
-                <div className="preset-info">
-                  <h3>PvP Набор</h3>
-                  <p>
-                    Оптимизировано для боя: быстрое переключение на шприц,
-                    зажатое прицеливание.
-                  </p>
-                </div>
-                <button
-                  className="btn-preset-apply"
-                  onClick={() => applyPreset(PVP_PRESET)}
-                >
-                  Применить
-                </button>
-              </div>
-
-              <div className="preset-card">
-                <div className="preset-info">
-                  <h3>Строительство</h3>
-                  <p>
-                    Удобные клавиши для быстрого взаимодействия и апгрейда
-                    конструкций.
-                  </p>
-                </div>
-                <button
-                  className="btn-preset-apply"
-                  onClick={() => applyPreset(BUILDING_PRESET)}
-                >
-                  Применить
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activePage === "settings" && (
-          <div className="settings-container page-container">
-            <div className="settings-card">
-              <div className="setting-group">
-                <label className="setting-label">
-                  Путь к файлу конфигурации (keys.cfg)
-                </label>
-                <input
-                  type="text"
-                  className="setting-input"
-                  value={configPath}
-                  onChange={(e) => handleConfigPathChange(e.target.value)}
-                />
-                <div className="path-actions">
-                  <button
-                    type="button"
-                    className="btn-path"
-                    onClick={handleAutoDetect}
-                    disabled={detecting}
-                  >
-                    {detecting ? "Поиск..." : "Автоопределение"}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-path"
-                    onClick={handleSelectFile}
-                  >
-                    Выбрать файл
-                  </button>
-                </div>
-              </div>
-
-              <div className="setting-row">
-                <div>
-                  <div className="setting-name">Цветовая тема</div>
-                  <div className="setting-desc">Выберите тему интерфейса.</div>
-                </div>
-                <div className="theme-select-container">
-                  <button
-                    className="theme-select-button"
-                    type="button"
-                    onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-                  >
-                    {theme === "dark" ? "Тёмная" : "Светлая"}
-                    <ChevronIcon />
-                  </button>
-                  <div
-                    className={`theme-dropdown-menu ${themeDropdownOpen ? "open" : ""} ${themeDropdownDir}`}
-                  >
                     <button
-                      className="theme-dropdown-item"
+                      className="btn-preset-apply"
                       type="button"
-                      onClick={() => {
-                        setTheme("dark");
-                        setThemeDropdownOpen(false);
-                      }}
+                      onClick={() => loadFromPath(configPath)}
                     >
-                      Тёмная
+                      Применить
                     </button>
+                  </div>
+
+                  <div className="preset-card">
+                    <div className="preset-info">
+                      <h3>PvP Набор</h3>
+                      <p>
+                        Оптимизировано для боя: быстрое переключение на шприц,
+                        зажатое прицеливание.
+                      </p>
+                    </div>
                     <button
-                      className="theme-dropdown-item"
+                      className="btn-preset-apply"
                       type="button"
-                      onClick={() => {
-                        setTheme("light");
-                        setThemeDropdownOpen(false);
-                      }}
+                      onClick={() => applyPreset(PVP_PRESET)}
                     >
-                      Светлая
+                      Применить
+                    </button>
+                  </div>
+
+                  <div className="preset-card">
+                    <div className="preset-info">
+                      <h3>Строительство</h3>
+                      <p>
+                        Удобные клавиши для быстрого взаимодействия и апгрейда
+                        конструкций.
+                      </p>
+                    </div>
+                    <button
+                      className="btn-preset-apply"
+                      type="button"
+                      onClick={() => applyPreset(BUILDING_PRESET)}
+                    >
+                      Применить
                     </button>
                   </div>
                 </div>
               </div>
+
+              <div className="presets-overlay">
+                <div className="presets-overlay-icon">
+                  <ToolLine size={44} />
+                </div>
+                <p className="presets-overlay-text">Пресеты в разработке</p>
+                <p className="presets-overlay-sub">
+                  Скоро здесь появятся фильтры, импорт и шаринг раскладок
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {activePage === "settings" && (
+            <div className="settings-container page-container">
+              <div className="settings-card">
+                <div className="setting-group">
+                  <label className="setting-label">
+                    Путь к файлу конфигурации (keys.cfg)
+                  </label>
+                  <input
+                    type="text"
+                    className="setting-input"
+                    value={configPath}
+                    onChange={(e) => handleConfigPathChange(e.target.value)}
+                  />
+                  <div className="path-actions">
+                    <button
+                      type="button"
+                      className={`btn-path${detecting ? " detecting" : ""}`}
+                      onClick={handleAutoDetect}
+                      disabled={detecting}
+                    >
+                      {detecting && <LoadingLine size={14} />}
+                      {detecting ? "Поиск..." : "Автоопределение"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-path"
+                      onClick={handleSelectFile}
+                    >
+                      Выбрать файл
+                    </button>
+                  </div>
+                </div>
+
+                <div className="setting-row">
+                  <div>
+                    <div className="setting-name">Цветовая тема</div>
+                    <div className="setting-desc">
+                      Выберите тему интерфейса.
+                    </div>
+                  </div>
+                  <div className="theme-select-container">
+                    <button
+                      className="theme-select-button"
+                      type="button"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        // If space above is less than 110px, open downward
+                        setThemeDropdownDir(rect.top < 110 ? "down" : "up");
+                        setThemeDropdownOpen(!themeDropdownOpen);
+                      }}
+                    >
+                      {theme === "dark" ? "Тёмная" : "Светлая"}
+                      <ChevronIcon />
+                    </button>
+                    <div
+                      className={`theme-dropdown-menu ${themeDropdownOpen ? "open" : ""} ${themeDropdownDir}`}
+                    >
+                      <button
+                        className="theme-dropdown-item"
+                        type="button"
+                        onClick={() => {
+                          setTheme("dark");
+                          setThemeDropdownOpen(false);
+                        }}
+                      >
+                        Тёмная
+                      </button>
+                      <button
+                        className="theme-dropdown-item"
+                        type="button"
+                        onClick={() => {
+                          setTheme("light");
+                          setThemeDropdownOpen(false);
+                        }}
+                      >
+                        Светлая
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

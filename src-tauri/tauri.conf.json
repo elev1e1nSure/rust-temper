@@ -14,7 +14,8 @@
       {
         "title": "RustPatch",
         "width": 1100,
-        "height": 700
+        "height": 700,
+        "decorations": false
       }
     ],
     "security": {
