@@ -60,11 +60,11 @@
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:CommandPreset">
                                     <StackPanel Spacing="2" ToolTipService.ToolTip="{x:Bind Description}">
-                                        <TextBlock Text="{x:Bind Name}" />
+                                        <TextBlock Text="{x:Bind Name}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
                                         <TextBlock
                                             Text="{x:Bind Description}"
                                             FontSize="11"
-                                            Opacity="0.6"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
                                 </DataTemplate>
