@@ -53,8 +53,9 @@
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
                             ItemsSource="{x:Bind local:MainPage.KnownCommands}"
-                            SelectedValuePath="Command"
-                            SelectedValue="{x:Bind Command, Mode=TwoWay}"
+                            SelectedItem="{x:Bind services:KnownCommands.PresetFor(Command), Mode=OneWay}"
+                            SelectionChanged="OnCommandSelectionChanged"
+                            Tag="{x:Bind}"
                             ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:CommandPreset">
