@@ -8,6 +8,7 @@ import {
   Delete2Line,
   DownLine,
 } from "@mingcute/react";
+import { Tooltip } from "./Tooltip";
 import "./App.css";
 
 const DEFAULT_CONFIG_PATH =
@@ -489,35 +490,37 @@ function App() {
                       key={`${bind.key}-${bind.command}-${index}`}
                     >
                       <div className="key-cell">
-                        <div
-                          className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
-                          onClick={() => setEditingKeyIndex(index)}
-                          title={hasConflict ? "Эта клавиша уже используется другим биндом" : undefined}
-                        >
-                          {editingKeyIndex === index ? "Нажмите клавишу..." : bind.key || "—"}
-                        </div>
+                        <Tooltip content={hasConflict ? "Эта клавиша уже используется другим биндом" : null}>
+                          <div
+                            className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
+                            onClick={() => setEditingKeyIndex(index)}
+                          >
+                            {editingKeyIndex === index ? "Нажмите клавишу..." : bind.key || "—"}
+                          </div>
+                        </Tooltip>
                       </div>
                       <div className="action-cell-container">
-                        <button
-                          className="action-cell"
-                          type="button"
-                          title={descriptionFor(bind.command)}
-                          onClick={() => changeOpenDropdown(openDropdownIndex === index ? null : index)}
-                        >
-                          {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                          <ChevronIcon />
-                        </button>
+                        <Tooltip content={descriptionFor(bind.command)}>
+                          <button
+                            className="action-cell"
+                            type="button"
+                            onClick={() => changeOpenDropdown(openDropdownIndex === index ? null : index)}
+                          >
+                            {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                            <ChevronIcon />
+                          </button>
+                        </Tooltip>
                         <div className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}>
                           {commandPresets.map((preset) => (
-                            <button
-                              key={preset.command}
-                              className="dropdown-item"
-                              type="button"
-                              title={preset.description}
-                              onClick={() => updateBindCommand(index, preset.command)}
-                            >
-                              {preset.name}
-                            </button>
+                            <Tooltip key={preset.command} content={preset.description}>
+                              <button
+                                className="dropdown-item"
+                                type="button"
+                                onClick={() => updateBindCommand(index, preset.command)}
+                              >
+                                {preset.name}
+                              </button>
+                            </Tooltip>
                           ))}
                         </div>
                       </div>
