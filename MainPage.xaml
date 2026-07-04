@@ -29,7 +29,14 @@
 
         <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Margin="0,0,0,12" />
 
-        <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Binds}">
+        <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Binds}" SelectionMode="None">
+            <ListView.Resources>
+                <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+                <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent" />
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="Transparent" />
+                <SolidColorBrush x:Key="ListViewItemForegroundPointerOver" Color="{ThemeResource TextFillColorPrimary}" />
+            </ListView.Resources>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:KeyBind">
                     <Grid Padding="0,4" ColumnSpacing="8">
@@ -45,23 +52,13 @@
                         <ComboBox
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
                             ItemsSource="{x:Bind local:MainPage.KnownCommands}"
-                            SelectedValuePath="Command"
-                            SelectedValue="{x:Bind Command, Mode=TwoWay}"
-                            ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:CommandPreset">
-                                    <StackPanel Spacing="2" ToolTipService.ToolTip="{x:Bind Description}">
-                                        <TextBlock Text="{x:Bind Name}" />
-                                        <TextBlock
-                                            Text="{x:Bind Description}"
-                                            FontSize="11"
-                                            Opacity="0.6"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                            DisplayMemberPath="Name"
+                            SelectedItem="{x:Bind services:KnownCommands.PresetFor(Command), Mode=OneWay}"
+                            SelectionChanged="OnCommandSelectionChanged"
+                            Tag="{x:Bind}"
+                            ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}" />
 
                         <FontIcon
                             Grid.Column="2"

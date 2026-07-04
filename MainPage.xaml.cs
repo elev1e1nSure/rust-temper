@@ -45,4 +45,12 @@ public sealed partial class MainPage : Page
             ViewModel.RemoveBindCommand.Execute(bind);
         }
     }
+
+    private void OnCommandSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { Tag: KeyBind bind, SelectedItem: CommandPreset preset })
+        {
+            bind.Command = preset.Command;
+        }
+    }
 }

@@ -165,4 +165,7 @@ public static class KnownCommands
         ByCommand.TryGetValue(command, out var preset)
             ? preset.Description
             : "Команда не описана в словаре — задайте бинд через список, чтобы увидеть подсказку.";
+
+    public static CommandPreset? PresetFor(string command) =>
+        ByCommand.TryGetValue(command, out var preset) ? preset : null;
 }
