@@ -49,7 +49,7 @@
 
                         <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
 
-                        <views:ClosableComboBox
+                        <views:SelfDismissComboBox
                             Grid.Column="1"
                             Style="{StaticResource BindComboBoxStyle}"
                             HorizontalAlignment="Stretch"
