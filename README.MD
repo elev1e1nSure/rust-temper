@@ -1,3 +1,3 @@
 # Rust Patch
 
-Right it's empty..
+Right now it's empty..

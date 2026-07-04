@@ -5,11 +5,62 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:RustPatch"
+    xmlns:models="using:RustPatch.Models"
+    xmlns:views="using:RustPatch.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-        <Button x:Name="Button1" Content="Button 1" Click="OnButton1Click" />
-        <Button x:Name="Button2" Content="Button 2" Click="OnButton2Click" />
-    </StackPanel>
+    <Grid Padding="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <InfoBar
+            Grid.Row="0"
+            IsOpen="{x:Bind ViewModel.IsRustRunning, Mode=OneWay}"
+            Severity="Warning"
+            Title="Rust is running"
+            Message="Binds saved now may not apply until you restart the game."
+            Margin="0,0,0,12" />
+
+        <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Margin="0,0,0,12" />
+
+        <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Binds}">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="models:KeyBind">
+                    <Grid Padding="0,4" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
+
+                        <ComboBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
+                            IsEditable="True"
+                            ItemsSource="{x:Bind local:MainPage.KnownCommands}"
+                            Text="{x:Bind Command, Mode=TwoWay}" />
+
+                        <FontIcon
+                            Grid.Column="2"
+                            Glyph="&#xE783;"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            Visibility="{x:Bind HasConflict, Mode=OneWay}"
+                            ToolTipService.ToolTip="This key is bound more than once" />
+
+                        <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" />
+    </Grid>
 </Page>

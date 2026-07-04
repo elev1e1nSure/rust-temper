@@ -1,24 +1,48 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System;
-using System.Diagnostics;
+using RustPatch.Models;
+using RustPatch.Services;
+using RustPatch.ViewModels;
 
 namespace RustPatch;
 
 public sealed partial class MainPage : Page
 {
+    public static string[] KnownCommands => Services.KnownCommands.All;
+
+    public MainViewModel ViewModel { get; } = new();
+
+    private RustProcessWatcher? _rustWatcher;
+
     public MainPage()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
-    private void OnButton1Click(object sender, RoutedEventArgs e)
+    private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("Button 1 clicked");
+        _rustWatcher = new RustProcessWatcher(DispatcherQueue);
+        _rustWatcher.RunningStateChanged += (_, isRunning) => ViewModel.IsRustRunning = isRunning;
+        _rustWatcher.Start();
     }
 
-    private void OnButton2Click(object sender, RoutedEventArgs e)
+    private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("Button 2 clicked");
+        _rustWatcher?.Dispose();
+    }
+
+    private void OnAddBindClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.AddBindCommand.Execute(null);
+    }
+
+    private void OnRemoveBindClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: KeyBind bind })
+        {
+            ViewModel.RemoveBindCommand.Execute(bind);
+        }
     }
 }
