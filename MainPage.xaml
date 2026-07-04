@@ -65,8 +65,9 @@
 
                                     <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
 
-                                    <ComboBox
+                                    <views:SelfDismissComboBox
                                         Grid.Column="1"
+                                        Style="{StaticResource BindComboBoxStyle}"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Center"
                                         ItemsSource="{x:Bind local:MainPage.KnownCommands}"
@@ -83,13 +84,13 @@
                                         Visibility="{x:Bind HasConflict, Mode=OneWay}"
                                         ToolTipService.ToolTip="This key is bound more than once" />
 
-                                    <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" />
+                                    <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" Background="{StaticResource AppDarkSurfaceBrush}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" />
+                    <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" Background="{StaticResource AppDarkSurfaceBrush}" />
                 </Grid>
 
                 <!-- Presets panel -->
@@ -111,8 +112,8 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="Определить автоматически" Command="{x:Bind ViewModel.DetectPathCommand}" />
-                            <Button Grid.Column="1" Content="Выбрать файл..." Click="OnBrowseCfgClick" />
+                            <Button Grid.Column="0" Content="Определить автоматически" Command="{x:Bind ViewModel.DetectPathCommand}" Background="{StaticResource AppDarkSurfaceBrush}" />
+                            <Button Grid.Column="1" Content="Выбрать файл..." Click="OnBrowseCfgClick" Background="{StaticResource AppDarkSurfaceBrush}" />
                         </Grid>
                     </StackPanel>
                 </Grid>

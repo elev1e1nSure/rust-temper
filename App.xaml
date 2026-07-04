@@ -8,9 +8,13 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="ms-appx:///Styles/BindComboBoxStyle.xaml" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+            <!-- Explicit (non-theme) brushes so "darker" doesn't depend on which system theme is active. -->
+            <SolidColorBrush x:Key="AppDarkSurfaceBrush" Color="#1A1A1A" />
+            <SolidColorBrush x:Key="AppDarkSurfaceHoverBrush" Color="#262626" />
+            <SolidColorBrush x:Key="AppDarkSurfacePressedBrush" Color="#101010" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
