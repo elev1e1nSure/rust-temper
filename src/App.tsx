@@ -232,22 +232,46 @@ function App() {
     setOpenDropdownIndex(null);
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    e.preventDefault();
-    const newKey = e.key.toLowerCase();
-    let keyName = newKey;
-    if (newKey === " ") keyName = "space";
-    if (newKey === "control") keyName = "leftctrl";
-    if (newKey === "shift") keyName = "leftshift";
-    if (newKey === "alt") keyName = "leftalt";
+  // Global listener for key rebinding
+  useEffect(() => {
+    if (editingKeyIndex === null) return;
 
-    setBinds((prev) => {
-      const next = [...prev];
-      next[index] = [keyName, next[index][1]];
-      return next;
-    });
-    setEditingKeyIndex(null);
-  };
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      const newKey = e.key.toLowerCase();
+      let keyName = newKey;
+      if (newKey === " ") keyName = "space";
+      if (newKey === "control") keyName = "leftctrl";
+      if (newKey === "shift") keyName = "leftshift";
+      if (newKey === "alt") keyName = "leftalt";
+      
+      setBinds((prev) => {
+        const next = [...prev];
+        next[editingKeyIndex] = [keyName, next[editingKeyIndex][1]];
+        return next;
+      });
+      setEditingKeyIndex(null);
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [editingKeyIndex]);
+
+  // Global listener for click outside to close dropdowns
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".action-cell-container")) {
+        setOpenDropdownIndex(null);
+      }
+      if (!target.closest(".theme-select-container")) {
+        setThemeDropdownOpen(false);
+      }
+    };
+    
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   function applyPreset(presetBinds: Bind[]) {
     setBinds(presetBinds);
@@ -315,12 +339,6 @@ function App() {
                         <div
                           className={`key-badge ${editingKeyIndex === index ? "editing" : ""}`}
                           onClick={() => setEditingKeyIndex(index)}
-                          onKeyDown={(e) => {
-                            if (editingKeyIndex === index) {
-                              handleKeyDown(e, index);
-                            }
-                          }}
-                          tabIndex={0}
                         >
                           {editingKeyIndex === index ? "Нажмите клавишу..." : key}
                         </div>
