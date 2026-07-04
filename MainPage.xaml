@@ -52,24 +52,13 @@
                         <ComboBox
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
                             ItemsSource="{x:Bind local:MainPage.KnownCommands}"
+                            DisplayMemberPath="Name"
                             SelectedItem="{x:Bind services:KnownCommands.PresetFor(Command), Mode=OneWay}"
                             SelectionChanged="OnCommandSelectionChanged"
                             Tag="{x:Bind}"
-                            ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:CommandPreset">
-                                    <StackPanel Spacing="2" ToolTipService.ToolTip="{x:Bind Description}">
-                                        <TextBlock Text="{x:Bind Name}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-                                        <TextBlock
-                                            Text="{x:Bind Description}"
-                                            FontSize="11"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                            ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}" />
 
                         <FontIcon
                             Grid.Column="2"
