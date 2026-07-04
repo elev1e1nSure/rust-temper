@@ -19,9 +19,21 @@
         Header=""
         SelectionChanged="OnNavigationSelectionChanged">
         <NavigationView.MenuItems>
-            <NavigationViewItem Content="Бинды" Tag="binds" IsSelected="True" />
-            <NavigationViewItem Content="Пресеты" Tag="presets" />
-            <NavigationViewItem Content="Настройки" Tag="settings" />
+            <NavigationViewItem Content="Бинды" Tag="binds" IsSelected="True">
+                <NavigationViewItem.Icon>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE92E;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Пресеты" Tag="presets">
+                <NavigationViewItem.Icon>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE74E;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Настройки" Tag="settings">
+                <NavigationViewItem.Icon>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE713;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
         </NavigationView.MenuItems>
 
         <ScrollViewer>
@@ -65,17 +77,15 @@
 
                                     <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
 
-                                    <views:SelfDismissComboBox
+                                    <ComboBox
                                         Grid.Column="1"
-                                        Style="{StaticResource BindComboBoxStyle}"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Center"
                                         ItemsSource="{x:Bind local:MainPage.KnownCommands}"
                                         DisplayMemberPath="Name"
                                         SelectedItem="{x:Bind services:KnownCommands.PresetFor(Command), Mode=OneWay}"
                                         SelectionChanged="OnCommandSelectionChanged"
-                                        Tag="{x:Bind}"
-                                        ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}" />
+                                        Tag="{x:Bind}" />
 
                                     <FontIcon
                                         Grid.Column="2"
