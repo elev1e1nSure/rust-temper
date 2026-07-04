@@ -53,4 +53,8 @@ public sealed partial class MainPage : Page
             bind.Command = preset.Command;
         }
     }
+
+    private void OnNavigationSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+    }
 }
