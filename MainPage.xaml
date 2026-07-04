@@ -68,12 +68,12 @@
                             Visibility="{x:Bind HasConflict, Mode=OneWay}"
                             ToolTipService.ToolTip="This key is bound more than once" />
 
-                        <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" />
+                        <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" Background="{StaticResource AppDarkSurfaceBrush}" />
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
 
-        <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" />
+        <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" Background="{StaticResource AppDarkSurfaceBrush}" />
     </Grid>
 </Page>

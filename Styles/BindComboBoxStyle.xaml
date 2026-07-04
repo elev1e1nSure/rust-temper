@@ -5,12 +5,12 @@
     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"
     xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals">
 
-    <!-- Copy of the default WinUI ComboBox style/template, with a close button and a drop shadow added to the popup. -->
+    <!-- Copy of the default WinUI ComboBox style/template, with a drop shadow added to the popup and a darker closed-state background. -->
     <Style x:Key="BindComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Padding" Value="{ThemeResource ComboBoxPadding}" />
         <Setter Property="MaxDropDownHeight" Value="504" />
         <Setter Property="Foreground" Value="{ThemeResource ComboBoxForeground}" />
-        <Setter Property="Background" Value="{ThemeResource ComboBoxBackground}" />
+        <Setter Property="Background" Value="{StaticResource AppDarkSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource ComboBoxBorderBrush}" />
         <Setter Property="BorderThickness" Value="{ThemeResource ComboBoxBorderThemeThickness}" />
         <Setter Property="TabNavigation" Value="Once" />
@@ -268,7 +268,7 @@
                             </controls:AnimatedIcon.FallbackIconSource>
                         </controls:AnimatedIcon>
                         <ContentPresenter x:Name="DescriptionPresenter" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Foreground="{ThemeResource SystemControlDescriptionTextForegroundBrush}" Content="{TemplateBinding Description}" x:Load="False" />
-                        <Popup x:Name="Popup" RequestedTheme="Light">
+                        <Popup x:Name="Popup" VerticalOffset="{TemplateBinding ActualHeight}">
                             <Border x:Name="PopupBorder" Background="{ThemeResource ComboBoxDropDownBackground}" BackgroundSizing="InnerBorderEdge" BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}" BorderThickness="{ThemeResource ComboBoxDropdownBorderThickness}" Margin="0,4,0,-1" Padding="{ThemeResource ComboBoxDropdownBorderPadding}" HorizontalAlignment="Stretch" CornerRadius="{ThemeResource OverlayCornerRadius}" Translation="0,0,32" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                 <Border.Shadow>
                                     <ThemeShadow />
