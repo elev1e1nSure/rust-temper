@@ -1,78 +1,49 @@
-## .NET / Visual Studio
-[Bb]in/
-[Oo]bj/
-[Dd]ebug/
-[Rr]elease/
-.vs/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-artifacts/
-
-# Build logs
-[Ll]og/
-[Ll]ogs/
+# Logs
+logs
 *.log
-*.binlog
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Test results
-[Tt]est[Rr]esult*/
-*.trx
-*.coverage
-*.coveragexml
+# Dependency directories
+node_modules/
+/dist
+/dist-ssr
+/*.local
 
-# NuGet
-*.nupkg
-*.snupkg
-*.nuget.props
-*.nuget.targets
-project.lock.json
+# Rust / Tauri
+/target/
+/src-tauri/target/
+/src-tauri/binaries/
+*.rs.bk
+*.pdb
 
-# MSIX packaging output
-AppPackages/
-BundleArtifacts/
-*.msix
-*.msixupload
-*.appx
-*.appxbundle
-*.appxupload
+# TypeScript
+*.tsbuildinfo
 
-# Publish output
-publish/
-*.pubxml
-PublishScripts/
-
-# Code analysis and tooling
-_ReSharper*/
-*.DotSettings.user
-*.dotCover
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
 .idea/
-
-# Generated files
-Generated\ Files/
-*_wpftmp.csproj
-
-# OS files
-Thumbs.db
-Desktop.ini
 .DS_Store
-*.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.remember/
 
-# Editor temp files
-*.swp
-*.swo
-*~
-*.bak
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# JetBrains Rider
-.idea/
-*.sln.iml
-
-# VS Code
-.vscode/
-*.code-workspace
-
-# Ionide
-.ionide/
-temp.md
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
