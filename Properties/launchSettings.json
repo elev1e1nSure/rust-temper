@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "RustPatch (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "RustPatch (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
