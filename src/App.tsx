@@ -152,11 +152,16 @@ const NAV_ITEMS = [
 ] as const;
 
 function App() {
-  const [activePage, setActivePage] = useState<(typeof NAV_ITEMS)[number]["id"]>("binds");
+  const [activePage, setActivePage] =
+    useState<(typeof NAV_ITEMS)[number]["id"]>("binds");
   const [binds, setBinds] = useState<Bind[]>([]);
   const [search, setSearch] = useState("");
-  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
-  const [closingDropdownIndex, setClosingDropdownIndex] = useState<number | null>(null);
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(
+    null,
+  );
+  const [closingDropdownIndex, setClosingDropdownIndex] = useState<
+    number | null
+  >(null);
   const closingDropdownTimeoutRef = useRef<number | null>(null);
   const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
@@ -214,12 +219,15 @@ function App() {
   const descriptionFor = (command: string) =>
     presetByCommand.get(command)?.description ?? FALLBACK_DESCRIPTION;
 
-  const nameFor = (command: string) => presetByCommand.get(command)?.name ?? command;
+  const nameFor = (command: string) =>
+    presetByCommand.get(command)?.name ?? command;
 
   useEffect(() => {
     invoke<CommandPreset[]>("get_known_commands")
       .then(setCommandPresets)
-      .catch((err) => console.error("Не удалось загрузить словарь команд:", err));
+      .catch((err) =>
+        console.error("Не удалось загрузить словарь команд:", err),
+      );
   }, []);
 
   const loadFromPath = async (path: string) => {
@@ -276,7 +284,9 @@ function App() {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        const path = (file as any).path || `C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust\\cfg\\${file.name}`;
+        const path =
+          (file as any).path ||
+          `C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust\\cfg\\${file.name}`;
         handleConfigPathChange(path);
       }
     };
@@ -342,7 +352,9 @@ function App() {
         window.clearTimeout(closingDropdownTimeoutRef.current);
       }
       closingDropdownTimeoutRef.current = window.setTimeout(() => {
-        setClosingDropdownIndex((current) => (current === closingIndex ? null : current));
+        setClosingDropdownIndex((current) =>
+          current === closingIndex ? null : current,
+        );
       }, 220);
     }
     setOpenDropdownIndex(next);
@@ -403,7 +415,9 @@ function App() {
     // Keep the last direction while closing so the fade-out plays the same
     // way it opened, instead of snapping back to "down".
     if (openDropdownIndex === null) return;
-    const el = document.querySelector(".dropdown-menu.open") as HTMLElement | null;
+    const el = document.querySelector(
+      ".dropdown-menu.open",
+    ) as HTMLElement | null;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     setDropdownDir(rect.bottom > window.innerHeight - 8 ? "up" : "down");
@@ -415,7 +429,9 @@ function App() {
       setThemeDropdownDir("up");
       return;
     }
-    const el = document.querySelector(".theme-dropdown-menu.open") as HTMLElement | null;
+    const el = document.querySelector(
+      ".theme-dropdown-menu.open",
+    ) as HTMLElement | null;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     setThemeDropdownDir(rect.top < 8 ? "down" : "up");
@@ -481,7 +497,8 @@ function App() {
               </div>
               <div className="binds-body">
                 {filteredBinds.map((bind, index) => {
-                  const hasConflict = bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+                  const hasConflict =
+                    bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
                   const isDropdownOpen = openDropdownIndex === index;
                   const isDropdownClosing = closingDropdownIndex === index;
                   return (
@@ -490,12 +507,20 @@ function App() {
                       key={`${bind.key}-${bind.command}-${index}`}
                     >
                       <div className="key-cell">
-                        <Tooltip content={hasConflict ? "Эта клавиша уже используется другим биндом" : null}>
+                        <Tooltip
+                          content={
+                            hasConflict
+                              ? "Эта клавиша уже используется другим биндом"
+                              : null
+                          }
+                        >
                           <div
                             className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
                             onClick={() => setEditingKeyIndex(index)}
                           >
-                            {editingKeyIndex === index ? "Нажмите клавишу..." : bind.key || "—"}
+                            {editingKeyIndex === index
+                              ? "Нажмите клавишу..."
+                              : bind.key || "—"}
                           </div>
                         </Tooltip>
                       </div>
@@ -504,19 +529,32 @@ function App() {
                           <button
                             className="action-cell"
                             type="button"
-                            onClick={() => changeOpenDropdown(openDropdownIndex === index ? null : index)}
+                            onClick={() =>
+                              changeOpenDropdown(
+                                openDropdownIndex === index ? null : index,
+                              )
+                            }
                           >
-                            {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                            {bind.command
+                              ? nameFor(bind.command)
+                              : "Выберите действие"}
                             <ChevronIcon />
                           </button>
                         </Tooltip>
-                        <div className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}>
+                        <div
+                          className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
+                        >
                           {commandPresets.map((preset) => (
-                            <Tooltip key={preset.command} content={preset.description}>
+                            <Tooltip
+                              key={preset.command}
+                              content={preset.description}
+                            >
                               <button
                                 className="dropdown-item"
                                 type="button"
-                                onClick={() => updateBindCommand(index, preset.command)}
+                                onClick={() =>
+                                  updateBindCommand(index, preset.command)
+                                }
                               >
                                 {preset.name}
                               </button>
@@ -524,7 +562,10 @@ function App() {
                           ))}
                         </div>
                       </div>
-                      <div className="delete-btn" onClick={() => removeBind(bind)}>
+                      <div
+                        className="delete-btn"
+                        onClick={() => removeBind(bind)}
+                      >
                         <TrashIcon />
                       </div>
                     </div>
@@ -533,7 +574,9 @@ function App() {
               </div>
             </div>
 
-            {statusMessage && <div className="status-message">{statusMessage}</div>}
+            {statusMessage && (
+              <div className="status-message">{statusMessage}</div>
+            )}
           </div>
         )}
 
@@ -543,9 +586,15 @@ function App() {
               <div className="preset-card">
                 <div className="preset-info">
                   <h3>По умолчанию</h3>
-                  <p>Перечитать текущий keys.cfg с диска, отменив несохранённые правки.</p>
+                  <p>
+                    Перечитать текущий keys.cfg с диска, отменив несохранённые
+                    правки.
+                  </p>
                 </div>
-                <button className="btn-preset-apply" onClick={() => loadFromPath(configPath)}>
+                <button
+                  className="btn-preset-apply"
+                  onClick={() => loadFromPath(configPath)}
+                >
                   Применить
                 </button>
               </div>
@@ -553,9 +602,15 @@ function App() {
               <div className="preset-card">
                 <div className="preset-info">
                   <h3>PvP Набор</h3>
-                  <p>Оптимизировано для боя: быстрое переключение на шприц, зажатое прицеливание.</p>
+                  <p>
+                    Оптимизировано для боя: быстрое переключение на шприц,
+                    зажатое прицеливание.
+                  </p>
                 </div>
-                <button className="btn-preset-apply" onClick={() => applyPreset(PVP_PRESET)}>
+                <button
+                  className="btn-preset-apply"
+                  onClick={() => applyPreset(PVP_PRESET)}
+                >
                   Применить
                 </button>
               </div>
@@ -563,9 +618,15 @@ function App() {
               <div className="preset-card">
                 <div className="preset-info">
                   <h3>Строительство</h3>
-                  <p>Удобные клавиши для быстрого взаимодействия и апгрейда конструкций.</p>
+                  <p>
+                    Удобные клавиши для быстрого взаимодействия и апгрейда
+                    конструкций.
+                  </p>
                 </div>
-                <button className="btn-preset-apply" onClick={() => applyPreset(BUILDING_PRESET)}>
+                <button
+                  className="btn-preset-apply"
+                  onClick={() => applyPreset(BUILDING_PRESET)}
+                >
                   Применить
                 </button>
               </div>
@@ -577,7 +638,9 @@ function App() {
           <div className="settings-container page-container">
             <div className="settings-card">
               <div className="setting-group">
-                <label className="setting-label">Путь к файлу конфигурации (keys.cfg)</label>
+                <label className="setting-label">
+                  Путь к файлу конфигурации (keys.cfg)
+                </label>
                 <input
                   type="text"
                   className="setting-input"
@@ -585,10 +648,19 @@ function App() {
                   onChange={(e) => handleConfigPathChange(e.target.value)}
                 />
                 <div className="path-actions">
-                  <button type="button" className="btn-path" onClick={handleAutoDetect} disabled={detecting}>
+                  <button
+                    type="button"
+                    className="btn-path"
+                    onClick={handleAutoDetect}
+                    disabled={detecting}
+                  >
                     {detecting ? "Поиск..." : "Автоопределение"}
                   </button>
-                  <button type="button" className="btn-path" onClick={handleSelectFile}>
+                  <button
+                    type="button"
+                    className="btn-path"
+                    onClick={handleSelectFile}
+                  >
                     Выбрать файл
                   </button>
                 </div>
@@ -608,7 +680,9 @@ function App() {
                     {theme === "dark" ? "Тёмная" : "Светлая"}
                     <ChevronIcon />
                   </button>
-                  <div className={`theme-dropdown-menu ${themeDropdownOpen ? "open" : ""} ${themeDropdownDir}`}>
+                  <div
+                    className={`theme-dropdown-menu ${themeDropdownOpen ? "open" : ""} ${themeDropdownDir}`}
+                  >
                     <button
                       className="theme-dropdown-item"
                       type="button"

@@ -1,5 +1,5 @@
-mod known_commands;
 mod keys_cfg;
+mod known_commands;
 mod rust_locator;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
