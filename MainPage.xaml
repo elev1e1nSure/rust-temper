@@ -7,6 +7,7 @@
     xmlns:local="using:RustPatch"
     xmlns:models="using:RustPatch.Models"
     xmlns:views="using:RustPatch.Views"
+    xmlns:services="using:RustPatch.Services"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -45,9 +46,22 @@
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
                             ItemsSource="{x:Bind local:MainPage.KnownCommands}"
-                            DisplayMemberPath="Name"
                             SelectedValuePath="Command"
-                            SelectedValue="{x:Bind Command, Mode=TwoWay}" />
+                            SelectedValue="{x:Bind Command, Mode=TwoWay}"
+                            ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:CommandPreset">
+                                    <StackPanel Spacing="2" ToolTipService.ToolTip="{x:Bind Description}">
+                                        <TextBlock Text="{x:Bind Name}" />
+                                        <TextBlock
+                                            Text="{x:Bind Description}"
+                                            FontSize="11"
+                                            Opacity="0.6"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
 
                         <FontIcon
                             Grid.Column="2"
