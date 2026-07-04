@@ -220,7 +220,6 @@ body {
 .table-wrap {
   border: 1px solid var(--row-border);
   border-radius: 12px;
-  overflow: hidden;
   background: var(--panel);
 }
 
@@ -230,6 +229,7 @@ body {
   font-size: 13px;
   color: var(--text-dim);
   border-bottom: 1px solid var(--row-border);
+  border-radius: 12px 12px 0 0;
 }
 
 .col-key {
@@ -303,6 +303,7 @@ body {
 
 .bind-row:last-child {
   border-bottom: none;
+  border-radius: 0 0 12px 12px;
 }
 
 .key-cell {
