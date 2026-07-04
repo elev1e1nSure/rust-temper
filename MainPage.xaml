@@ -11,69 +11,113 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <NavigationView
+        PaneDisplayMode="Left"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="False"
+        OpenPaneLength="160"
+        Header=""
+        SelectionChanged="OnNavigationSelectionChanged">
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="Бинды" Tag="binds" IsSelected="True" />
+            <NavigationViewItem Content="Пресеты" Tag="presets" />
+            <NavigationViewItem Content="Настройки" Tag="settings" />
+        </NavigationView.MenuItems>
 
-        <InfoBar
-            Grid.Row="0"
-            IsOpen="{x:Bind ViewModel.IsRustRunning, Mode=OneWay}"
-            Severity="Warning"
-            Title="Rust is running"
-            Message="Binds saved now may not apply until you restart the game."
-            Margin="0,0,0,12" />
+        <ScrollViewer>
+            <Grid Padding="16">
+                <!-- Binds panel -->
+                <Grid x:Name="BindsPanel">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Margin="0,0,0,12" />
+                    <InfoBar
+                        Grid.Row="0"
+                        IsOpen="{x:Bind ViewModel.IsRustRunning, Mode=OneWay}"
+                        Severity="Warning"
+                        Title="Rust is running"
+                        Message="Binds saved now may not apply until you restart the game."
+                        Margin="0,0,0,12" />
 
-        <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Binds}" SelectionMode="None">
-            <ListView.Resources>
-                <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
-                <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
-                <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent" />
-                <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="Transparent" />
-                <SolidColorBrush x:Key="ListViewItemForegroundPointerOver" Color="{ThemeResource TextFillColorPrimary}" />
-            </ListView.Resources>
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="models:KeyBind">
-                    <Grid Padding="0,4" ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="1" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Margin="0,0,0,12" />
 
-                        <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
+                    <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Binds}" SelectionMode="None">
+                        <ListView.Resources>
+                            <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+                            <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
+                            <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent" />
+                            <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="Transparent" />
+                            <SolidColorBrush x:Key="ListViewItemForegroundPointerOver" Color="{ThemeResource TextFillColorPrimary}" />
+                        </ListView.Resources>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:KeyBind">
+                                <Grid Padding="0,4" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                        <views:SelfDismissComboBox
-                            Grid.Column="1"
-                            Style="{StaticResource BindComboBoxStyle}"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Center"
-                            ItemsSource="{x:Bind local:MainPage.KnownCommands}"
-                            DisplayMemberPath="Name"
-                            SelectedItem="{x:Bind services:KnownCommands.PresetFor(Command), Mode=OneWay}"
-                            SelectionChanged="OnCommandSelectionChanged"
-                            Tag="{x:Bind}"
-                            ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}" />
+                                    <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
 
-                        <FontIcon
-                            Grid.Column="2"
-                            Glyph="&#xE783;"
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                            Visibility="{x:Bind HasConflict, Mode=OneWay}"
-                            ToolTipService.ToolTip="This key is bound more than once" />
+                                    <views:SelfDismissComboBox
+                                        Grid.Column="1"
+                                        Style="{StaticResource BindComboBoxStyle}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        ItemsSource="{x:Bind local:MainPage.KnownCommands}"
+                                        DisplayMemberPath="Name"
+                                        SelectedItem="{x:Bind services:KnownCommands.PresetFor(Command), Mode=OneWay}"
+                                        SelectionChanged="OnCommandSelectionChanged"
+                                        Tag="{x:Bind}"
+                                        ToolTipService.ToolTip="{x:Bind services:KnownCommands.DescriptionFor(Command), Mode=OneWay}" />
 
-                        <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" Background="{StaticResource AppDarkSurfaceBrush}" />
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                                    <FontIcon
+                                        Grid.Column="2"
+                                        Glyph="&#xE783;"
+                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                        Visibility="{x:Bind HasConflict, Mode=OneWay}"
+                                        ToolTipService.ToolTip="This key is bound more than once" />
 
-        <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" Background="{StaticResource AppDarkSurfaceBrush}" />
-    </Grid>
+                                    <Button Grid.Column="3" Content="Remove" Click="OnRemoveBindClick" Tag="{x:Bind}" Background="{StaticResource AppDarkSurfaceBrush}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" Background="{StaticResource AppDarkSurfaceBrush}" />
+                </Grid>
+
+                <!-- Presets panel -->
+                <Grid x:Name="PresetsPanel" Visibility="Collapsed">
+                    <TextBlock Text="Пресеты" FontSize="20" FontWeight="SemiBold" />
+                </Grid>
+
+                <!-- Settings panel -->
+                <Grid x:Name="SettingsPanel" Visibility="Collapsed">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Настройки" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock Text="Путь к keys.cfg" FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}" />
+                        <TextBox
+                            Text="{x:Bind ViewModel.CfgPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="Введите путь к keys.cfg..."
+                            IsSpellCheckEnabled="False" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Определить автоматически" Command="{x:Bind ViewModel.DetectPathCommand}" Background="{StaticResource AppDarkSurfaceBrush}" />
+                            <Button Grid.Column="1" Content="Выбрать файл..." Click="OnBrowseCfgClick" Background="{StaticResource AppDarkSurfaceBrush}" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </ScrollViewer>
+    </NavigationView>
 </Page>

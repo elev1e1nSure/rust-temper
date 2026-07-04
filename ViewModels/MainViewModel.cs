@@ -37,13 +37,63 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
+        LoadFromPathInternal(path);
+    }
+
+    private void LoadFromPathInternal(string path)
+    {
+        _isReloading = true;
         CfgPath = path;
-        foreach (var bind in KeysCfgService.Load(path))
+        var loaded = KeysCfgService.Load(path);
+        Binds.Clear();
+        foreach (var bind in loaded)
         {
             Binds.Add(bind);
         }
 
         RefreshConflicts();
+        _isReloading = false;
+    }
+
+    [RelayCommand]
+    private void DetectPath()
+    {
+        var path = RustPathLocator.FindKeysCfg();
+        if (path is not null)
+        {
+            LoadFromPathInternal(path);
+            StatusMessage = $"Loaded {Binds.Count} binds from {path}";
+        }
+        else
+        {
+            StatusMessage = "Could not find Rust's keys.cfg automatically.";
+        }
+    }
+
+    [RelayCommand]
+    private void LoadFromPath(string path)
+    {
+        _isReloading = true;
+        CfgPath = path;
+        var loaded = KeysCfgService.Load(path);
+        Binds.Clear();
+        foreach (var bind in loaded)
+        {
+            Binds.Add(bind);
+        }
+
+        RefreshConflicts();
+        _isReloading = false;
+    }
+
+    private bool _isReloading;
+
+    partial void OnCfgPathChanged(string? value)
+    {
+        if (!_isReloading && value is not null && System.IO.File.Exists(value))
+        {
+            LoadFromPathInternal(value);
+        }
     }
 
     [RelayCommand]
@@ -84,12 +134,15 @@ public partial class MainViewModel : ObservableObject
         }
 
         RefreshConflicts();
-        SaveToDisk();
+        if (!_isReloading)
+        {
+            SaveToDisk();
+        }
     }
 
     private void OnBindPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(KeyBind.HasConflict))
+        if (e.PropertyName is nameof(KeyBind.HasConflict) || _isReloading)
         {
             return;
         }

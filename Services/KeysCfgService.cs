@@ -35,6 +35,17 @@ public static class KeysCfgService
 
     public static void Save(string path, ObservableCollection<KeyBind> binds)
     {
+        if (binds.Count == 0)
+        {
+            return;
+        }
+
+        var backupPath = path + ".bak";
+        if (!File.Exists(backupPath))
+        {
+            File.Copy(path, backupPath, overwrite: false);
+        }
+
         var sb = new StringBuilder();
         foreach (var bind in binds)
         {
