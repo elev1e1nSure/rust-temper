@@ -351,10 +351,11 @@ body {
   color: var(--text);
   font-family: inherit;
   width: 100%;
+  transition: all 0.15s ease;
 }
 
 .action-cell:hover {
-  background: #222228;
+  filter: brightness(1.25);
 }
 
 .action-cell svg {
