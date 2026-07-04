@@ -155,9 +155,41 @@ function App() {
   const [binds, setBinds] = useState<Bind[]>([]);
   const [search, setSearch] = useState("");
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [closingDropdownIndex, setClosingDropdownIndex] = useState<number | null>(null);
+  const closingDropdownTimeoutRef = useRef<number | null>(null);
   const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
+
+  // Sidebar resizable width
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem("sidebar-width");
+    return saved ? parseInt(saved, 10) : 236;
+  });
+
+  const startResizing = (mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    const startWidth = sidebarWidth;
+    const startX = mouseDownEvent.clientX;
+    let currentWidth = startWidth;
+
+    const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
+      const newWidth = startWidth + (mouseMoveEvent.clientX - startX);
+      if (newWidth >= 160 && newWidth <= 400) {
+        currentWidth = newWidth;
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      localStorage.setItem("sidebar-width", currentWidth.toString());
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
 
   // Settings states
   const [configPath, setConfigPath] = useState(DEFAULT_CONFIG_PATH);
@@ -295,7 +327,24 @@ function App() {
       next[index] = { ...next[index], command: newCommand };
       return next;
     });
-    setOpenDropdownIndex(null);
+    changeOpenDropdown(null);
+  }
+
+  // Switches the open dropdown, keeping the previously open row elevated just
+  // long enough for its own close animation so it never gets covered by a
+  // newly opened dropdown or by a lower row's default stacking order.
+  function changeOpenDropdown(next: number | null) {
+    if (openDropdownIndex !== null && openDropdownIndex !== next) {
+      const closingIndex = openDropdownIndex;
+      setClosingDropdownIndex(closingIndex);
+      if (closingDropdownTimeoutRef.current !== null) {
+        window.clearTimeout(closingDropdownTimeoutRef.current);
+      }
+      closingDropdownTimeoutRef.current = window.setTimeout(() => {
+        setClosingDropdownIndex((current) => (current === closingIndex ? null : current));
+      }, 220);
+    }
+    setOpenDropdownIndex(next);
   }
 
   // Global listener for key rebinding
@@ -329,7 +378,7 @@ function App() {
     const handleOutsideClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest(".action-cell-container")) {
-        setOpenDropdownIndex(null);
+        changeOpenDropdown(null);
       }
       if (!target.closest(".theme-select-container")) {
         setThemeDropdownOpen(false);
@@ -338,14 +387,21 @@ function App() {
 
     window.addEventListener("click", handleOutsideClick);
     return () => window.removeEventListener("click", handleOutsideClick);
+  }, [openDropdownIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (closingDropdownTimeoutRef.current !== null) {
+        window.clearTimeout(closingDropdownTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Smart flip: open action dropdown upward if it overflows the viewport
   useLayoutEffect(() => {
-    if (openDropdownIndex === null) {
-      setDropdownDir("down");
-      return;
-    }
+    // Keep the last direction while closing so the fade-out plays the same
+    // way it opened, instead of snapping back to "down".
+    if (openDropdownIndex === null) return;
     const el = document.querySelector(".dropdown-menu.open") as HTMLElement | null;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -373,7 +429,7 @@ function App() {
 
   return (
     <div className="app">
-      <div className="sidebar">
+      <div className="sidebar" style={{ width: sidebarWidth }}>
         <div className="nav">
           <div
             className="nav-indicator"
@@ -393,6 +449,7 @@ function App() {
             </button>
           ))}
         </div>
+        <div className="sidebar-resizer" onMouseDown={startResizing} />
       </div>
 
       <div className="main">
@@ -425,9 +482,10 @@ function App() {
                 {filteredBinds.map((bind, index) => {
                   const hasConflict = bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
                   const isDropdownOpen = openDropdownIndex === index;
+                  const isDropdownClosing = closingDropdownIndex === index;
                   return (
                     <div
-                      className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""}`}
+                      className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""} ${isDropdownClosing ? "dropdown-closing" : ""}`}
                       key={`${bind.key}-${bind.command}-${index}`}
                     >
                       <div className="key-cell">
@@ -444,7 +502,7 @@ function App() {
                           className="action-cell"
                           type="button"
                           title={descriptionFor(bind.command)}
-                          onClick={() => setOpenDropdownIndex(openDropdownIndex === index ? null : index)}
+                          onClick={() => changeOpenDropdown(openDropdownIndex === index ? null : index)}
                         >
                           {bind.command ? nameFor(bind.command) : "Выберите действие"}
                           <ChevronIcon />
