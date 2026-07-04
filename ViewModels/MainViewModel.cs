@@ -15,7 +15,7 @@ public partial class MainViewModel : ObservableObject
     private string? cfgPath;
 
     [ObservableProperty]
-    private string statusMessage = "Looking for Rust...";
+    private string statusMessage = string.Empty;
 
     [ObservableProperty]
     private bool isRustRunning;
@@ -44,7 +44,6 @@ public partial class MainViewModel : ObservableObject
         }
 
         RefreshConflicts();
-        StatusMessage = $"Loaded {Binds.Count} binds from {path}";
     }
 
     [RelayCommand]
