@@ -11,10 +11,7 @@
                 <ResourceDictionary Source="ms-appx:///Styles/BindComboBoxStyle.xaml" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Explicit (non-theme) brushes so "darker" doesn't depend on which system theme is active. -->
-            <SolidColorBrush x:Key="AppDarkSurfaceBrush" Color="#1A1A1A" />
-            <SolidColorBrush x:Key="AppDarkSurfaceHoverBrush" Color="#262626" />
-            <SolidColorBrush x:Key="AppDarkSurfacePressedBrush" Color="#101010" />
+            <!-- Other app resources here -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>
