@@ -277,8 +277,8 @@
                         </controls:AnimatedIcon>
                         <ContentPresenter x:Name="DescriptionPresenter" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Foreground="{ThemeResource SystemControlDescriptionTextForegroundBrush}" Content="{TemplateBinding Description}" x:Load="False" />
                         <Popup x:Name="Popup">
-                            <Grid MinWidth="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ActualWidth}">
-                                <Border x:Name="PopupBorder" Background="{ThemeResource ComboBoxDropDownBackground}" BackgroundSizing="InnerBorderEdge" BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}" BorderThickness="{ThemeResource ComboBoxDropdownBorderThickness}" Margin="0,-0.5,0,-1" Padding="{ThemeResource ComboBoxDropdownBorderPadding}" HorizontalAlignment="Stretch" CornerRadius="{ThemeResource OverlayCornerRadius}" Translation="0,0,32">
+                            <Grid>
+                                <Border x:Name="PopupBorder" Background="{ThemeResource ComboBoxDropDownBackground}" BackgroundSizing="InnerBorderEdge" BorderBrush="{ThemeResource ComboBoxDropDownBorderBrush}" BorderThickness="{ThemeResource ComboBoxDropdownBorderThickness}" Margin="0,-0.5,0,-1" Padding="{ThemeResource ComboBoxDropdownBorderPadding}" HorizontalAlignment="Stretch" CornerRadius="{ThemeResource OverlayCornerRadius}" Translation="0,0,32" MinWidth="{TemplateBinding ActualWidth}">
                                     <Border.Shadow>
                                         <ThemeShadow />
                                     </Border.Shadow>
