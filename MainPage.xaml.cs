@@ -62,6 +62,7 @@ public sealed partial class MainPage : Page
     {
         var tag = (args.SelectedItemContainer?.Tag as string) ?? "binds";
         BindsPanel.Visibility = tag == "binds" ? Visibility.Visible : Visibility.Collapsed;
+        PresetsPanel.Visibility = tag == "presets" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPanel.Visibility = tag == "settings" ? Visibility.Visible : Visibility.Collapsed;
     }
 

@@ -20,6 +20,7 @@
         SelectionChanged="OnNavigationSelectionChanged">
         <NavigationView.MenuItems>
             <NavigationViewItem Content="Бинды" Tag="binds" IsSelected="True" />
+            <NavigationViewItem Content="Пресеты" Tag="presets" />
             <NavigationViewItem Content="Настройки" Tag="settings" />
         </NavigationView.MenuItems>
 
@@ -89,6 +90,11 @@
                     </ListView>
 
                     <Button Grid.Row="3" Content="Add bind" Click="OnAddBindClick" Margin="0,12,0,0" />
+                </Grid>
+
+                <!-- Presets panel -->
+                <Grid x:Name="PresetsPanel" Visibility="Collapsed">
+                    <TextBlock Text="Пресеты" FontSize="20" FontWeight="SemiBold" />
                 </Grid>
 
                 <!-- Settings panel -->
