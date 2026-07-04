@@ -8,7 +8,7 @@ namespace RustPatch;
 
 public sealed partial class MainPage : Page
 {
-    public static string[] KnownCommands => Services.KnownCommands.All;
+    public static Models.CommandPreset[] KnownCommands => Services.KnownCommands.Presets;
 
     public MainViewModel ViewModel { get; } = new();
 

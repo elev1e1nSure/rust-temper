@@ -44,9 +44,10 @@
                         <ComboBox
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
-                            IsEditable="True"
                             ItemsSource="{x:Bind local:MainPage.KnownCommands}"
-                            Text="{x:Bind Command, Mode=TwoWay}" />
+                            DisplayMemberPath="Name"
+                            SelectedValuePath="Command"
+                            SelectedValue="{x:Bind Command, Mode=TwoWay}" />
 
                         <FontIcon
                             Grid.Column="2"
