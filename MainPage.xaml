@@ -49,8 +49,9 @@
 
                         <views:KeyCaptureControl Grid.Column="0" KeyName="{x:Bind Key, Mode=TwoWay}" />
 
-                        <ComboBox
+                        <views:ClosableComboBox
                             Grid.Column="1"
+                            Style="{StaticResource BindComboBoxStyle}"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"
                             ItemsSource="{x:Bind local:MainPage.KnownCommands}"
