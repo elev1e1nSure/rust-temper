@@ -159,6 +159,8 @@ body {
   padding: 28px 32px;
   min-width: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .header-row {
@@ -943,7 +945,8 @@ body {
   display: flex;
   align-items: stretch;
   gap: 20px;
-  height: calc(100vh - 32px - 56px);
+  flex: 1;
+  min-height: 0;
 }
 
 .graphics-container::after {
