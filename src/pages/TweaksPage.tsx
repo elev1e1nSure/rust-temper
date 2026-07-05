@@ -9,12 +9,12 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
 
   return (
     <div className="tweaks-container page-container">
-      <div className="settings-card">
+      <div className="settings-card settings-card-compact">
         {tweaks.map((tweak, index) => {
           const isOn = valueFor(tweak) === tweak.valueType.on;
           return (
             <div
-              className="setting-row setting-row-clickable"
+              className="setting-row setting-row-clickable setting-row-compact"
               key={tweak.key}
               style={
                 index === 0 ? { borderTop: "none", paddingTop: 0 } : undefined
