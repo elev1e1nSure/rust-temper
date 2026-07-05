@@ -215,11 +215,6 @@ export function GraphicsPage() {
                       className="graphics-slider-fill"
                       style={{ width: `${pct}%` }}
                     />
-                    <div className="graphics-slider-ticks">
-                      {row.tiers.map((_, i) => (
-                        <span key={i} className="graphics-slider-tick" />
-                      ))}
-                    </div>
                     <div
                       className="graphics-slider-thumb"
                       style={{ left: `${pct}%` }}
