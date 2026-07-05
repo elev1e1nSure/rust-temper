@@ -1081,6 +1081,23 @@ body {
   pointer-events: none;
 }
 
+.graphics-slider-ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 3px;
+  pointer-events: none;
+}
+
+.graphics-slider-tick {
+  width: 4px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .graphics-slider-thumb {
   position: absolute;
   top: 50%;
@@ -1104,8 +1121,6 @@ body {
   appearance: none;
   background: transparent;
 }
-
-
 
 .graphics-preview {
   width: 300px;
