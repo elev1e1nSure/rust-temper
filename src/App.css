@@ -125,6 +125,10 @@ body {
   border-radius: 8px;
   color: var(--text-dim);
   font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   cursor: pointer;
   user-select: none;
   background: none;
