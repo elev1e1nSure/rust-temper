@@ -557,22 +557,23 @@ function App() {
                           <div
                             className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
                           >
-                            {commandPresets.map((preset) => (
-                              <Tooltip
-                                key={preset.command}
-                                content={preset.description}
-                              >
-                                <button
-                                  className="dropdown-item"
-                                  type="button"
-                                  onClick={() =>
-                                    updateBindCommand(index, preset.command)
-                                  }
+                            {(isDropdownOpen || isDropdownClosing) &&
+                              commandPresets.map((preset) => (
+                                <Tooltip
+                                  key={preset.command}
+                                  content={preset.description}
                                 >
-                                  {preset.name}
-                                </button>
-                              </Tooltip>
-                            ))}
+                                  <button
+                                    className="dropdown-item"
+                                    type="button"
+                                    onClick={() =>
+                                      updateBindCommand(index, preset.command)
+                                    }
+                                  >
+                                    {preset.name}
+                                  </button>
+                                </Tooltip>
+                              ))}
                           </div>
                         </div>
                         <div
@@ -656,7 +657,7 @@ function App() {
                 </div>
                 <p className="presets-overlay-text">Пресеты в разработке</p>
                 <p className="presets-overlay-sub">
-                  Скоро здесь появятся фильтры, импорт и шаринг раскладок
+                  Скоро здесь появятся пресеты...
                 </p>
               </div>
             </div>
