@@ -555,21 +555,15 @@ body {
   inset: -60%;
   z-index: -1;
   background:
-    radial-gradient(
-      circle at 25% 30%,
+    radial-gradient(circle at 25% 30%,
       rgba(255, 255, 255, 0.22),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 75% 65%,
+      transparent 55%),
+    radial-gradient(circle at 75% 65%,
       rgba(255, 255, 255, 0.15),
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 50% 85%,
+      transparent 50%),
+    radial-gradient(circle at 50% 85%,
       rgba(255, 255, 255, 0.12),
-      transparent 60%
-    );
+      transparent 60%);
   filter: blur(14px);
   animation: float-glass 7s ease-in-out infinite;
 }
@@ -580,6 +574,7 @@ body {
 }
 
 @keyframes float-glass {
+
   0%,
   100% {
     transform: translate(-6%, -4%) scale(1) rotate(0deg);
@@ -763,7 +758,7 @@ body {
   overflow: hidden;
 }
 
-.accordion-section + .accordion-section {
+.accordion-section+.accordion-section {
   margin-top: 12px;
 }
 
@@ -1091,16 +1086,12 @@ body {
   justify-content: center;
   gap: 14px;
   background:
-    radial-gradient(
-      circle at 30% 20%,
+    radial-gradient(circle at 30% 20%,
       rgba(203, 213, 225, 0.1),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 75% 80%,
+      transparent 55%),
+    radial-gradient(circle at 75% 80%,
       rgba(59, 130, 246, 0.12),
-      transparent 60%
-    ),
+      transparent 60%),
     var(--row);
   border: 1px solid var(--row-border);
 }

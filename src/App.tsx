@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { CommandPreset, Bind } from "./types";
+import type { CommandPreset } from "./types";
 import { useConfigFile } from "./hooks/useConfigFile";
 import { useBindEditor } from "./hooks/useBindEditor";
 import { useDropdownBehavior } from "./hooks/useDropdownBehavior";
@@ -8,7 +8,7 @@ import { useSidebarResize } from "./hooks/useSidebarResize";
 import { Sidebar } from "./components/Sidebar";
 import { BindsPage } from "./pages/BindsPage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { PresetsPage } from "./pages/PresetsPage";
+import { GraphicsPage } from "./pages/GraphicsPage";
 import { TweaksPage } from "./pages/TweaksPage";
 import { Titlebar } from "./Titlebar";
 import type { PageId } from "./navigation";
@@ -121,11 +121,6 @@ function App() {
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
-  const applyPreset = useCallback((presetBinds: Bind[]) => {
-    bindEditor.setBinds(presetBinds);
-    setActivePage("binds");
-  }, []);
-
   return (
     <>
       <Titlebar />
@@ -176,13 +171,7 @@ function App() {
             <TweaksPage configPath={configFile.configPath} />
           )}
 
-          {activePage === "presets" && (
-            <PresetsPage
-              configPath={configFile.configPath}
-              loadFromPath={configFile.loadFromPath}
-              applyPreset={applyPreset}
-            />
-          )}
+          {activePage === "graphics" && <GraphicsPage />}
 
           {activePage === "settings" && (
             <SettingsPage

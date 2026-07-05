@@ -1,10 +1,10 @@
-import { KeyboardLine, DocumentLine, Settings6Fill } from "@mingcute/react";
+import { KeyboardLine, MountainLine, Settings6Fill } from "@mingcute/react";
 import { GearFillIcon } from "./icons";
 
 export const NAV_ITEMS = [
   { id: "binds", label: "Бинды", icon: KeyboardLine },
   { id: "tweaks", label: "Твики", icon: Settings6Fill },
-  { id: "presets", label: "Пресеты", icon: DocumentLine },
+  { id: "graphics", label: "Графика", icon: MountainLine },
   { id: "settings", label: "Настройки", icon: GearFillIcon },
 ] as const;
 
