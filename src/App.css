@@ -343,9 +343,9 @@ body {
   align-items: center;
   justify-content: space-between;
   background: var(--row);
-  border: 2px solid var(--row-border);
+  border: none;
   border-radius: 8px;
-  padding: 10px 13px;
+  padding: 12px 15px;
   font-size: 14px;
   cursor: pointer;
   color: var(--text);
