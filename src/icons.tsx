@@ -30,11 +30,11 @@ export function PlusIcon() {
   );
 }
 
-export function GearFillIcon() {
+export function GearFillIcon({ size = 18 }: { size?: number }) {
   return (
     <svg
-      width="18"
-      height="18"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="currentColor"
       stroke="none"
