@@ -621,17 +621,7 @@ function App() {
           )}
 
           {activePage === "tweaks" && (
-            <div className="tweaks-container page-container">
-              <div className="tweaks-overlay">
-                <div className="tweaks-overlay-icon">
-                  <TweaksIcon />
-                </div>
-                <p className="tweaks-overlay-text">Твики в разработке</p>
-                <p className="tweaks-overlay-sub">
-                  Скоро здесь появятся твики...
-                </p>
-              </div>
-            </div>
+            <div className="tweaks-container page-container" />
           )}
 
           {activePage === "presets" && (
@@ -751,7 +741,8 @@ function App() {
                           type="button"
                           disabled
                           onClick={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
                             // If space above is less than 110px, open downward
                             setThemeDropdownDir(rect.top < 110 ? "down" : "up");
                             setThemeDropdownOpen(!themeDropdownOpen);
