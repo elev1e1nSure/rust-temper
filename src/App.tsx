@@ -102,6 +102,31 @@ function PresetsIcon() {
   return <DocumentLine size={18} />;
 }
 
+function TweaksIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 1.5V4" />
+      <path d="M12 20v2.5" />
+      <path d="M4.22 4.22l1.77 1.77" />
+      <path d="M18.01 18.01l1.77 1.77" />
+      <path d="M1.5 12H4" />
+      <path d="M20 12h2.5" />
+      <path d="M4.22 19.78l1.77-1.77" />
+      <path d="M18.01 5.99l1.77-1.77" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return <Settings6Line size={18} />;
 }
@@ -150,6 +175,7 @@ function keyNameFromEvent(e: KeyboardEvent): string {
 
 const NAV_ITEMS = [
   { id: "binds", label: "Бинды", icon: BindsIcon },
+  { id: "tweaks", label: "Твики", icon: TweaksIcon },
   { id: "presets", label: "Пресеты", icon: PresetsIcon },
   { id: "settings", label: "Настройки", icon: SettingsIcon },
 ] as const;
@@ -591,6 +617,20 @@ function App() {
               {statusMessage && (
                 <div className="status-message">{statusMessage}</div>
               )}
+            </div>
+          )}
+
+          {activePage === "tweaks" && (
+            <div className="tweaks-container page-container">
+              <div className="presets-overlay">
+                <div className="presets-overlay-icon">
+                  <TweaksIcon />
+                </div>
+                <p className="presets-overlay-text">Твики в разработке</p>
+                <p className="presets-overlay-sub">
+                  Скоро здесь появятся твики...
+                </p>
+              </div>
             </div>
           )}
 
