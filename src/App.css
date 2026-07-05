@@ -918,6 +918,10 @@ body {
   width: 140px;
 }
 
+.theme-select-wrapper {
+  display: inline-block;
+}
+
 .theme-select-button {
   background: var(--row);
   border: 1px solid transparent;
@@ -930,7 +934,8 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
 }
 
@@ -938,9 +943,17 @@ body {
   background: #222228;
 }
 
+.theme-select-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.theme-select-button:disabled:hover {
+  background: var(--row);
+}
+
 .theme-select-button svg {
   color: var(--text-dim);
-  margin-left: 12px;
   flex-shrink: 0;
 }
 

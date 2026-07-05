@@ -704,19 +704,24 @@ function App() {
                     </div>
                   </div>
                   <div className="theme-select-container">
-                    <button
-                      className="theme-select-button"
-                      type="button"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        // If space above is less than 110px, open downward
-                        setThemeDropdownDir(rect.top < 110 ? "down" : "up");
-                        setThemeDropdownOpen(!themeDropdownOpen);
-                      }}
-                    >
-                      {theme === "dark" ? "Тёмная" : "Светлая"}
-                      <ChevronIcon />
-                    </button>
+                    <Tooltip content="В разработке">
+                      <span className="theme-select-wrapper">
+                        <button
+                          className="theme-select-button"
+                          type="button"
+                          disabled
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            // If space above is less than 110px, open downward
+                            setThemeDropdownDir(rect.top < 110 ? "down" : "up");
+                            setThemeDropdownOpen(!themeDropdownOpen);
+                          }}
+                        >
+                          {theme === "dark" ? "Тёмная" : "Светлая"}
+                          <ChevronIcon />
+                        </button>
+                      </span>
+                    </Tooltip>
                     <div
                       className={`theme-dropdown-menu ${themeDropdownOpen ? "open" : ""} ${themeDropdownDir}`}
                     >
