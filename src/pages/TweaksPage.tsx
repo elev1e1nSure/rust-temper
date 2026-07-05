@@ -14,11 +14,12 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
           const isOn = valueFor(tweak) === tweak.valueType.on;
           return (
             <div
-              className="setting-row"
+              className="setting-row setting-row-clickable"
               key={tweak.key}
               style={
                 index === 0 ? { borderTop: "none", paddingTop: 0 } : undefined
               }
+              onClick={() => toggleTweak(tweak)}
             >
               <div>
                 <div className="setting-name">{tweak.title}</div>
@@ -29,7 +30,10 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
                 className={`toggle-switch${isOn ? " on" : ""}`}
                 role="switch"
                 aria-checked={isOn}
-                onClick={() => toggleTweak(tweak)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTweak(tweak);
+                }}
               >
                 <span className="toggle-switch-knob" />
               </button>

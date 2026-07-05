@@ -908,6 +908,10 @@ body {
   color: var(--text-dim);
 }
 
+.setting-row-clickable {
+  cursor: pointer;
+}
+
 .toggle-switch {
   position: relative;
   width: 42px;
