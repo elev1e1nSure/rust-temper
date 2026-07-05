@@ -535,6 +535,10 @@ body {
   isolation: isolate;
 }
 
+.key-badge:hover {
+  filter: brightness(1.2);
+}
+
 .key-badge:focus {
   outline: none;
   border-color: var(--text-dim);
