@@ -1025,11 +1025,6 @@ body {
 
 .graphics-row {
   padding: 14px 20px;
-  border-top: 1px solid var(--row-border);
-}
-
-.graphics-row:first-child {
-  border-top: none;
 }
 
 .graphics-row-header {
@@ -1107,9 +1102,7 @@ body {
   background: transparent;
 }
 
-.graphics-toggle-row {
-  border-top: 1px solid var(--row-border);
-}
+
 
 .graphics-preview {
   width: 300px;
