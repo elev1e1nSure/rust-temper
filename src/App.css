@@ -593,7 +593,8 @@ body {
 }
 
 /* Presets page styles */
-.presets-container {
+.presets-container,
+.tweaks-container {
   position: relative;
   overflow: hidden;
 }
