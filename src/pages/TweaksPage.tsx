@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTweaks } from "../hooks/useTweaks";
 import { ChevronIcon } from "../icons";
 import { Tooltip } from "../Tooltip";
@@ -24,6 +25,7 @@ function formatSliderValue(slider: AdvancedSlider, value: number) {
 function TweakRow({
   tweak,
   checked,
+  managed,
   disabled,
   sliderValue,
   onToggle,
@@ -31,6 +33,7 @@ function TweakRow({
 }: {
   tweak: TweakDef;
   checked: boolean;
+  managed: boolean;
   disabled: boolean;
   sliderValue: number;
   onToggle: () => void;
@@ -65,6 +68,7 @@ function TweakRow({
               max={tweak.advancedSlider.max}
               step={tweak.advancedSlider.step}
               value={sliderValue}
+              disabled={!managed || disabled}
               onChange={(e) => onSliderChange(Number(e.target.value))}
               className="tweak-slider"
             />
@@ -88,16 +92,81 @@ function TweakRow({
   );
 }
 
+function UnmanagedTweakModal({
+  tweak,
+  pending,
+  onBack,
+  onConfirm,
+}: {
+  tweak: TweakDef;
+  pending: boolean;
+  onBack: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !pending) onBack();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onBack, pending]);
+
+  return createPortal(
+    <div
+      className="tweak-confirm-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !pending) onBack();
+      }}
+    >
+      <div
+        className="tweak-confirm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="unmanaged-tweak-title"
+      >
+        <div className="tweak-confirm-kicker">Изменение client.cfg</div>
+        <h2 id="unmanaged-tweak-title">Твик включён вручную</h2>
+        <p>
+          «{tweak.title}» уже активен, но программа не сохраняла исходные
+          значения. При выключении параметры будут перезаписаны стандартными
+          значениями из встроенного конфига.
+        </p>
+        <div className="tweak-confirm-actions">
+          <button
+            type="button"
+            className="tweak-confirm-button secondary"
+            disabled={pending}
+            onClick={onBack}
+          >
+            Назад
+          </button>
+          <button
+            type="button"
+            className="tweak-confirm-button danger"
+            disabled={pending}
+            onClick={onConfirm}
+          >
+            {pending ? "Выключение…" : "Всё равно выключить"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function TweaksPage({ configPath }: TweaksPageProps) {
   const {
     tweaks,
     isOn,
+    isManaged,
     isPending,
     sliderValue,
     toggleTweak,
     setSliderValue,
     error,
   } = useTweaks(configPath);
+  const [unmanagedTweak, setUnmanagedTweak] = useState<TweakDef | null>(null);
   const [openSections, setOpenSections] = useState<Set<TweakSection>>(
     () => new Set<TweakSection>(["qol"]),
   );
@@ -109,6 +178,20 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
       else next.add(key);
       return next;
     });
+  };
+
+  const requestToggle = (tweak: TweakDef) => {
+    if (isOn(tweak) && !isManaged(tweak)) {
+      setUnmanagedTweak(tweak);
+      return;
+    }
+    void toggleTweak(tweak);
+  };
+
+  const forceDisableUnmanagedTweak = async () => {
+    if (!unmanagedTweak) return;
+    const disabled = await toggleTweak(unmanagedTweak, true);
+    if (disabled) setUnmanagedTweak(null);
   };
 
   return (
@@ -139,9 +222,10 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
                       key={tweak.key}
                       tweak={tweak}
                       checked={isOn(tweak)}
+                      managed={isManaged(tweak)}
                       disabled={isPending(tweak)}
                       sliderValue={sliderValue(tweak)}
-                      onToggle={() => toggleTweak(tweak)}
+                      onToggle={() => requestToggle(tweak)}
                       onSliderChange={(value) => setSliderValue(tweak, value)}
                     />
                   ))}
@@ -152,6 +236,14 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
         );
       })}
       {error && <div className="status-message">{error}</div>}
+      {unmanagedTweak && (
+        <UnmanagedTweakModal
+          tweak={unmanagedTweak}
+          pending={isPending(unmanagedTweak)}
+          onBack={() => setUnmanagedTweak(null)}
+          onConfirm={() => void forceDisableUnmanagedTweak()}
+        />
+      )}
     </div>
   );
 }

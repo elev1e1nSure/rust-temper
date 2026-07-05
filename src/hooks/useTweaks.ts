@@ -8,12 +8,16 @@ function clientCfgPathFor(keysCfgPath: string) {
 
 interface ClientCfgState {
   states: Record<string, boolean>;
+  managedStates: Record<string, boolean>;
   rawValues: Record<string, string>;
 }
 
 export function useTweaks(configPath: string) {
   const [tweaks, setTweaks] = useState<TweakDef[]>([]);
   const [states, setStates] = useState<Record<string, boolean>>({});
+  const [managedStates, setManagedStates] = useState<Record<string, boolean>>(
+    {},
+  );
   const [rawValues, setRawValues] = useState<Record<string, string>>({});
   const [pendingTweaks, setPendingTweaks] = useState<Set<string>>(
     () => new Set(),
@@ -36,6 +40,7 @@ export function useTweaks(configPath: string) {
       path: clientCfgPath,
     });
     setStates(data.states);
+    setManagedStates(data.managedStates);
     setRawValues(data.rawValues);
   }, [clientCfgPath]);
 
@@ -50,6 +55,11 @@ export function useTweaks(configPath: string) {
     [states],
   );
 
+  const isManaged = useCallback(
+    (tweak: TweakDef) => managedStates[tweak.key] ?? false,
+    [managedStates],
+  );
+
   const sliderValue = useCallback(
     (tweak: TweakDef) => {
       if (!tweak.advancedSlider) return 0;
@@ -62,8 +72,8 @@ export function useTweaks(configPath: string) {
   );
 
   const toggleTweak = useCallback(
-    async (tweak: TweakDef) => {
-      if (pendingTweaks.has(tweak.key)) return;
+    async (tweak: TweakDef, forceUnmanaged = false) => {
+      if (pendingTweaks.has(tweak.key)) return false;
       const next = !isOn(tweak);
       setPendingTweaks((prev) => new Set(prev).add(tweak.key));
       setError("");
@@ -72,11 +82,14 @@ export function useTweaks(configPath: string) {
           path: clientCfgPath,
           key: tweak.key,
           enabled: next,
+          forceUnmanaged,
         });
         await reload();
+        return true;
       } catch (err) {
         setError(`Не удалось сохранить твик: ${err}`);
         await reload().catch(() => undefined);
+        return false;
       } finally {
         setPendingTweaks((prev) => {
           const nextPending = new Set(prev);
@@ -114,6 +127,7 @@ export function useTweaks(configPath: string) {
   return {
     tweaks,
     isOn,
+    isManaged,
     isPending,
     sliderValue,
     toggleTweak,

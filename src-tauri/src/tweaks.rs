@@ -41,6 +41,7 @@ pub struct TweakDef {
 #[serde(rename_all = "camelCase")]
 pub struct ClientCfgState {
     pub states: HashMap<String, bool>,
+    pub managed_states: HashMap<String, bool>,
     pub raw_values: HashMap<String, String>,
 }
 
@@ -249,13 +250,20 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String) -> Result<ClientCfgS
         .map(|config| &config.active_tweaks);
 
     let mut states = HashMap::new();
+    let mut managed_states = HashMap::new();
     let mut raw_values = HashMap::new();
 
     for tweak in known_tweaks() {
-        let is_active = active_tweaks
-            .map(|active| active.contains_key(&tweak.key))
-            .unwrap_or(false);
-        states.insert(tweak.key.clone(), is_active);
+        let managed_tweak = active_tweaks.and_then(|active| active.get(&tweak.key));
+        let expected_values = managed_tweak
+            .map(|active| active.desired_values.clone())
+            .unwrap_or_else(|| desired_values(&tweak));
+        let is_on = !expected_values.is_empty()
+            && expected_values
+                .iter()
+                .all(|(key, value)| parsed.get(key) == Some(value));
+        states.insert(tweak.key.clone(), is_on);
+        managed_states.insert(tweak.key.clone(), managed_tweak.is_some());
 
         if tweak.advanced_slider.is_some() {
             if let Some(first) = tweak.backend_keys.first() {
@@ -266,7 +274,11 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String) -> Result<ClientCfgS
         }
     }
 
-    Ok(ClientCfgState { states, raw_values })
+    Ok(ClientCfgState {
+        states,
+        managed_states,
+        raw_values,
+    })
 }
 
 #[tauri::command]
@@ -275,6 +287,7 @@ pub fn toggle_tweak(
     path: String,
     key: String,
     enabled: bool,
+    force_unmanaged: bool,
 ) -> Result<(), String> {
     let _guard = operation_lock()?;
     let tweak = known_tweaks()
@@ -298,6 +311,20 @@ pub fn toggle_tweak(
             &tweak,
         )
     } else {
+        let is_managed = state
+            .configs
+            .get(&config_key)
+            .map(|config| config.active_tweaks.contains_key(&tweak.key))
+            .unwrap_or(false);
+        if !is_managed {
+            if force_unmanaged {
+                return force_disable_unmanaged_tweak(cfg_path, &content, &tweak);
+            }
+            return Err(format!(
+                "Твик {} включён вручную; требуется подтверждение перезаписи",
+                tweak.key
+            ));
+        }
         disable_tweak(
             &app,
             cfg_path,
@@ -397,12 +424,25 @@ fn enable_tweak(
         .collect::<BTreeMap<_, _>>();
     let config = state.configs.entry(config_key.to_string()).or_default();
 
-    if config.active_tweaks.contains_key(&tweak.key) {
+    if let Some(active_tweak) = config.active_tweaks.get(&tweak.key) {
+        let desired_values = active_tweak.desired_values.clone();
+        config.activation_order.retain(|key| key != &tweak.key);
+        config.activation_order.push(tweak.key.clone());
         log::info!(
-            "Ignoring repeated tweak enable: path={}, tweak={}",
+            "Reapplying managed tweak: path={}, tweak={}, applying={:?}",
             cfg_path.display(),
-            tweak.key
+            tweak.key,
+            desired_values
         );
+        tweak_state::save(app, state)?;
+        let changes = desired_values
+            .into_iter()
+            .map(|(key, value)| (key, Some(value)))
+            .collect();
+        let updated_content = client_cfg::apply_values(content, &changes);
+        if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content) {
+            return Err(rollback_state(app, &previous_state, error));
+        }
         return Ok(());
     }
 
@@ -451,6 +491,32 @@ fn enable_tweak(
 
     log::info!(
         "Tweak enabled: path={}, tweak={}",
+        cfg_path.display(),
+        tweak.key
+    );
+    Ok(())
+}
+
+fn force_disable_unmanaged_tweak(
+    cfg_path: &Path,
+    content: &str,
+    tweak: &TweakDef,
+) -> Result<(), String> {
+    let changes = tweak
+        .backend_keys
+        .iter()
+        .map(|backend_key| (backend_key.key.clone(), Some(backend_key.off.clone())))
+        .collect();
+    log::warn!(
+        "Force-disabling unmanaged tweak with hardcoded values: path={}, tweak={}, applying={:?}",
+        cfg_path.display(),
+        tweak.key,
+        changes
+    );
+    let updated_content = client_cfg::apply_values(content, &changes);
+    client_cfg::write_atomic(cfg_path, &updated_content)?;
+    log::info!(
+        "Unmanaged tweak force-disabled: path={}, tweak={}",
         cfg_path.display(),
         tweak.key
     );
