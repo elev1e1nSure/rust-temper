@@ -1,11 +1,14 @@
+mod client_cfg;
 mod keys_cfg;
 mod known_commands;
 mod rust_locator;
+mod tweak_state;
 mod tweaks;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             rust_locator::find_keys_cfg,

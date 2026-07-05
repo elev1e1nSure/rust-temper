@@ -1,6 +1,11 @@
+use crate::client_cfg;
+use crate::tweak_state::{self, ActiveTweak, StoredValue};
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
+use std::sync::{Mutex, OnceLock};
+
+static TWEAK_OPERATION_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
 #[derive(Serialize, Clone)]
 pub struct BackendKeyRule {
@@ -225,113 +230,32 @@ fn known_tweaks() -> Vec<TweakDef> {
     ]
 }
 
-/// Rust cfg files store values quoted (`key "value"`); this strips the quotes.
-fn parse_cfg(content: &str) -> HashMap<String, String> {
-    let mut map = HashMap::new();
-    for line in content.lines() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with("//") || trimmed.starts_with('#') {
-            continue;
-        }
-        let Some(quote_start) = trimmed.find('"') else {
-            continue;
-        };
-        let key = trimmed[..quote_start].trim();
-        if key.is_empty() {
-            continue;
-        }
-        let rest = &trimmed[quote_start + 1..];
-        let Some(quote_end) = rest.find('"') else {
-            continue;
-        };
-        map.insert(key.to_string(), rest[..quote_end].to_string());
-    }
-    map
-}
-
-fn read_cfg_file(path: &str) -> Result<String, String> {
-    match std::fs::read_to_string(path) {
-        Ok(c) => Ok(c),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-/// Writes `key "value"` into a cfg file, preserving other lines and indentation.
-fn write_cfg_value(path: &str, key: &str, value: &str) -> Result<(), String> {
-    let p = Path::new(path);
-    if let Some(parent) = p.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-
-    let content = read_cfg_file(path)?;
-    let mut found = false;
-    let new_line = format!("{key} \"{value}\"");
-
-    let mut lines: Vec<String> = content
-        .lines()
-        .map(|line| {
-            if found {
-                return line.to_string();
-            }
-            let trimmed = line.trim();
-            if trimmed.is_empty() || trimmed.starts_with("//") || trimmed.starts_with('#') {
-                return line.to_string();
-            }
-            let Some(quote_start) = trimmed.find('"') else {
-                return line.to_string();
-            };
-            if trimmed[..quote_start].trim() == key {
-                found = true;
-                new_line.clone()
-            } else {
-                line.to_string()
-            }
-        })
-        .collect();
-
-    if !found {
-        lines.push(new_line);
-    }
-
-    if p.exists() {
-        let backup_path = format!("{path}.bak");
-        std::fs::copy(path, &backup_path).map_err(|e| e.to_string())?;
-    }
-
-    std::fs::write(path, lines.join("\n") + "\n").map_err(|e| e.to_string())
-}
-
 #[tauri::command]
 pub fn get_known_tweaks() -> Vec<TweakDef> {
     known_tweaks()
 }
 
-/// A grouped tweak is considered "on" only if every backend key currently matches its on-value.
 #[tauri::command]
-pub fn read_client_cfg(path: String) -> Result<ClientCfgState, String> {
-    let content = read_cfg_file(&path)?;
-    let parsed = parse_cfg(&content);
+pub fn read_client_cfg(app: tauri::AppHandle, path: String) -> Result<ClientCfgState, String> {
+    let _guard = operation_lock()?;
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+    let parsed = client_cfg::parse(&content);
+    let state = tweak_state::load(&app)?;
+    let config_key = tweak_state::config_key(cfg_path)?;
+    let active_tweaks = state
+        .configs
+        .get(&config_key)
+        .map(|config| &config.active_tweaks);
 
     let mut states = HashMap::new();
     let mut raw_values = HashMap::new();
 
     for tweak in known_tweaks() {
-        if tweak.backend_keys.is_empty() {
-            continue;
-        }
-
-        let mut all_on = true;
-        for bk in &tweak.backend_keys {
-            match parsed.get(&bk.key) {
-                Some(value) if value == &bk.on => {}
-                _ => {
-                    all_on = false;
-                    break;
-                }
-            }
-        }
-        states.insert(tweak.key.clone(), all_on);
+        let is_active = active_tweaks
+            .map(|active| active.contains_key(&tweak.key))
+            .unwrap_or(false);
+        states.insert(tweak.key.clone(), is_active);
 
         if tweak.advanced_slider.is_some() {
             if let Some(first) = tweak.backend_keys.first() {
@@ -346,39 +270,312 @@ pub fn read_client_cfg(path: String) -> Result<ClientCfgState, String> {
 }
 
 #[tauri::command]
-pub fn toggle_tweak(path: String, key: String, enabled: bool) -> Result<(), String> {
+pub fn toggle_tweak(
+    app: tauri::AppHandle,
+    path: String,
+    key: String,
+    enabled: bool,
+) -> Result<(), String> {
+    let _guard = operation_lock()?;
     let tweak = known_tweaks()
         .into_iter()
         .find(|t| t.key == key)
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
+    let cfg_path = Path::new(&path);
+    let config_key = tweak_state::config_key(cfg_path)?;
+    let content = client_cfg::read(cfg_path)?;
+    let current_values = client_cfg::parse(&content);
+    let mut state = tweak_state::load(&app)?;
 
-    for bk in &tweak.backend_keys {
-        let value = if enabled {
-            match &tweak.advanced_slider {
-                Some(slider) if bk.key == tweak.backend_keys[0].key => {
-                    format!("{}", slider.default_value)
-                }
-                _ => bk.on.clone(),
-            }
-        } else {
-            bk.off.clone()
-        };
-        write_cfg_value(&path, &bk.key, &value)?;
+    if enabled {
+        enable_tweak(
+            &app,
+            cfg_path,
+            &config_key,
+            &content,
+            &current_values,
+            &mut state,
+            &tweak,
+        )
+    } else {
+        disable_tweak(
+            &app,
+            cfg_path,
+            &config_key,
+            &content,
+            &mut state,
+            &tweak.key,
+        )
     }
-
-    Ok(())
 }
 
 #[tauri::command]
-pub fn set_tweak_slider(path: String, key: String, value: f64) -> Result<(), String> {
+pub fn set_tweak_slider(
+    app: tauri::AppHandle,
+    path: String,
+    key: String,
+    value: f64,
+) -> Result<(), String> {
+    let _guard = operation_lock()?;
     let tweak = known_tweaks()
         .into_iter()
         .find(|t| t.key == key)
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
+    let slider = tweak
+        .advanced_slider
+        .as_ref()
+        .ok_or_else(|| format!("У твика {key} нет настраиваемого значения"))?;
+
+    if !value.is_finite() || value < slider.min || value > slider.max {
+        return Err(format!(
+            "Значение {value} вне диапазона {}..{}",
+            slider.min, slider.max
+        ));
+    }
 
     let Some(bk) = tweak.backend_keys.first() else {
         return Err(format!("У твика {key} нет backend-ключа"));
     };
 
-    write_cfg_value(&path, &bk.key, &value.to_string())
+    let cfg_path = Path::new(&path);
+    let config_key = tweak_state::config_key(cfg_path)?;
+    let content = client_cfg::read(cfg_path)?;
+    let mut state = tweak_state::load(&app)?;
+    let previous_state = state.clone();
+    let desired_value = value.to_string();
+
+    let active_tweak = state
+        .configs
+        .get_mut(&config_key)
+        .and_then(|config| config.active_tweaks.get_mut(&key))
+        .ok_or_else(|| format!("Твик {key} не включён"))?;
+    active_tweak
+        .desired_values
+        .insert(bk.key.clone(), desired_value.clone());
+
+    log::info!(
+        "Updating tweak slider: path={}, tweak={}, backend_key={}, value={}",
+        path,
+        key,
+        bk.key,
+        desired_value
+    );
+    tweak_state::save(&app, &state)?;
+
+    let mut changes = BTreeMap::new();
+    changes.insert(bk.key.clone(), Some(desired_value));
+    let updated_content = client_cfg::apply_values(&content, &changes);
+    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content, true) {
+        return Err(rollback_state(&app, &previous_state, error));
+    }
+
+    log::info!("Tweak slider updated: path={}, tweak={}", path, key);
+    Ok(())
+}
+
+fn enable_tweak(
+    app: &tauri::AppHandle,
+    cfg_path: &Path,
+    config_key: &str,
+    content: &str,
+    current_values: &BTreeMap<String, String>,
+    state: &mut tweak_state::TweakState,
+    tweak: &TweakDef,
+) -> Result<(), String> {
+    let previous_state = state.clone();
+    let desired_values = desired_values(tweak);
+    let captured_values = desired_values
+        .keys()
+        .map(|backend_key| {
+            (
+                backend_key.clone(),
+                StoredValue {
+                    value: current_values.get(backend_key).cloned(),
+                },
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    let config = state.configs.entry(config_key.to_string()).or_default();
+
+    if config.active_tweaks.contains_key(&tweak.key) {
+        log::info!(
+            "Ignoring repeated tweak enable: path={}, tweak={}",
+            cfg_path.display(),
+            tweak.key
+        );
+        return Ok(());
+    }
+
+    // Shared keys keep the first untouched value until their final owner is disabled.
+    for backend_key in desired_values.keys() {
+        let already_owned = config
+            .active_tweaks
+            .values()
+            .any(|active| active.desired_values.contains_key(backend_key));
+        if !already_owned {
+            config.baselines.insert(
+                backend_key.clone(),
+                StoredValue {
+                    value: current_values.get(backend_key).cloned(),
+                },
+            );
+        }
+    }
+
+    log::info!(
+        "Enabling tweak: path={}, tweak={}, captured={:?}, applying={:?}",
+        cfg_path.display(),
+        tweak.key,
+        captured_values,
+        desired_values
+    );
+    config.active_tweaks.insert(
+        tweak.key.clone(),
+        ActiveTweak {
+            captured_values,
+            desired_values: desired_values.clone(),
+        },
+    );
+    config.activation_order.push(tweak.key.clone());
+
+    // Restore data must reach disk before any user configuration is changed.
+    tweak_state::save(app, state)?;
+    let changes = desired_values
+        .into_iter()
+        .map(|(key, value)| (key, Some(value)))
+        .collect();
+    let updated_content = client_cfg::apply_values(content, &changes);
+    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content, true) {
+        return Err(rollback_state(app, &previous_state, error));
+    }
+
+    log::info!(
+        "Tweak enabled: path={}, tweak={}",
+        cfg_path.display(),
+        tweak.key
+    );
+    Ok(())
+}
+
+fn disable_tweak(
+    app: &tauri::AppHandle,
+    cfg_path: &Path,
+    config_key: &str,
+    content: &str,
+    state: &mut tweak_state::TweakState,
+    tweak_key: &str,
+) -> Result<(), String> {
+    let previous_state = state.clone();
+    let Some(config) = state.configs.get_mut(config_key) else {
+        log::info!(
+            "Ignoring repeated tweak disable: path={}, tweak={}",
+            cfg_path.display(),
+            tweak_key
+        );
+        return Ok(());
+    };
+    let Some(removed_tweak) = config.active_tweaks.remove(tweak_key) else {
+        log::info!(
+            "Ignoring repeated tweak disable: path={}, tweak={}",
+            cfg_path.display(),
+            tweak_key
+        );
+        return Ok(());
+    };
+    config.activation_order.retain(|key| key != tweak_key);
+
+    let mut changes = BTreeMap::new();
+    for backend_key in removed_tweak.desired_values.keys() {
+        let remaining_value = config.activation_order.iter().rev().find_map(|active_key| {
+            config
+                .active_tweaks
+                .get(active_key)
+                .and_then(|active| active.desired_values.get(backend_key))
+                .cloned()
+        });
+
+        if let Some(value) = remaining_value {
+            changes.insert(backend_key.clone(), Some(value));
+        } else {
+            let baseline = config
+                .baselines
+                .remove(backend_key)
+                .ok_or_else(|| format!("Нет сохранённого значения для {backend_key}"))?;
+            changes.insert(backend_key.clone(), baseline.value);
+        }
+    }
+
+    log::info!(
+        "Disabling tweak: path={}, tweak={}, restoring={:?}",
+        cfg_path.display(),
+        tweak_key,
+        changes
+    );
+    let updated_content = client_cfg::apply_values(content, &changes);
+    client_cfg::write_atomic(cfg_path, &updated_content, true).map_err(|error| {
+        log::error!(
+            "Failed to disable tweak: path={}, tweak={}, error={}",
+            cfg_path.display(),
+            tweak_key,
+            error
+        );
+        error
+    })?;
+
+    let config_is_empty = config.active_tweaks.is_empty();
+    if config_is_empty {
+        state.configs.remove(config_key);
+    }
+
+    if let Err(state_error) = tweak_state::save(app, state) {
+        let restore_error = client_cfg::write_atomic(cfg_path, content, false).err();
+        *state = previous_state;
+        return Err(match restore_error {
+            Some(error) => format!("{state_error}; также не удалось откатить client.cfg: {error}"),
+            None => state_error,
+        });
+    }
+
+    log::info!(
+        "Tweak disabled: path={}, tweak={}",
+        cfg_path.display(),
+        tweak_key
+    );
+    Ok(())
+}
+
+fn desired_values(tweak: &TweakDef) -> BTreeMap<String, String> {
+    tweak
+        .backend_keys
+        .iter()
+        .enumerate()
+        .map(|(index, backend_key)| {
+            let value = match &tweak.advanced_slider {
+                Some(slider) if index == 0 => slider.default_value.to_string(),
+                _ => backend_key.on.clone(),
+            };
+            (backend_key.key.clone(), value)
+        })
+        .collect()
+}
+
+fn rollback_state(
+    app: &tauri::AppHandle,
+    previous_state: &tweak_state::TweakState,
+    operation_error: String,
+) -> String {
+    log::error!("Tweak operation failed: {operation_error}");
+    match tweak_state::save(app, previous_state) {
+        Ok(()) => operation_error,
+        Err(rollback_error) => format!(
+            "{operation_error}; также не удалось откатить состояние твиков: {rollback_error}"
+        ),
+    }
+}
+
+fn operation_lock() -> Result<std::sync::MutexGuard<'static, ()>, String> {
+    TWEAK_OPERATION_LOCK
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .map_err(|_| "Внутренняя блокировка твиков повреждена".to_string())
 }
