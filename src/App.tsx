@@ -197,6 +197,7 @@ function App() {
   const [exitingBindIndex, setExitingBindIndex] = useState<number | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
+  const [commandSearch, setCommandSearch] = useState("");
 
   // Sidebar resizable width
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -246,6 +247,14 @@ function App() {
     () => new Map(commandPresets.map((p) => [p.command, p])),
     [commandPresets],
   );
+
+  const filteredCommandPresets = useMemo(() => {
+    const query = commandSearch.trim().toLowerCase();
+    if (!query) return commandPresets;
+    return commandPresets.filter((preset) =>
+      preset.name.toLowerCase().includes(query),
+    );
+  }, [commandPresets, commandSearch]);
 
   const descriptionFor = (command: string) =>
     presetByCommand.get(command)?.description ?? FALLBACK_DESCRIPTION;
@@ -406,6 +415,7 @@ function App() {
       }, 220);
     }
     setOpenDropdownIndex(next);
+    setCommandSearch("");
   }
 
   // Global listener for key rebinding
@@ -583,8 +593,23 @@ function App() {
                           <div
                             className={`dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
                           >
+                            {(isDropdownOpen || isDropdownClosing) && (
+                              <div className="dropdown-search">
+                                <SearchIcon />
+                                <input
+                                  type="text"
+                                  placeholder="Поиск действия..."
+                                  value={commandSearch}
+                                  onChange={(e) =>
+                                    setCommandSearch(e.target.value)
+                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                  autoFocus
+                                />
+                              </div>
+                            )}
                             {(isDropdownOpen || isDropdownClosing) &&
-                              commandPresets.map((preset) => (
+                              filteredCommandPresets.map((preset) => (
                                 <Tooltip
                                   key={preset.command}
                                   content={preset.description}

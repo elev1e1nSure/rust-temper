@@ -476,6 +476,41 @@ body {
   display: none;
 }
 
+.dropdown-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  padding: 8px 8px 6px;
+  margin: 0 -4px 2px;
+  border-bottom: 1px solid var(--row-border);
+}
+
+.dropdown-search svg {
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+
+.dropdown-search input {
+  flex: 1;
+  min-width: 0;
+  background: var(--row);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.dropdown-search input::placeholder {
+  color: var(--text-dim);
+}
+
 .dropdown-item {
   padding: 8px 12px;
   font-size: 14px;
