@@ -27,7 +27,11 @@ const HIDE_DURATION = 140;
 export function Tooltip({ content, children }: TooltipProps) {
   const [visible, setVisible] = useState(false);
   const [rendered, setRendered] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0, placement: "top" as "top" | "bottom" });
+  const [pos, setPos] = useState({
+    top: 0,
+    left: 0,
+    placement: "top" as "top" | "bottom",
+  });
   const [shift, setShift] = useState(0);
   const anchorRef = useRef<HTMLElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -45,9 +49,15 @@ export function Tooltip({ content, children }: TooltipProps) {
     const rect = el.getBoundingClientRect();
     const gap = 9;
     const placement: "top" | "bottom" = rect.top > 56 ? "top" : "bottom";
+    // CSS `zoom` on <html> re-scales inline px styles set on descendants
+    // (the portal lands under document.body, still inside the zoomed tree),
+    // so the rect coords must be un-scaled before being written back as style.
+    const zoomFactor =
+      parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
     setPos({
-      top: placement === "top" ? rect.top - gap : rect.bottom + gap,
-      left: rect.left + rect.width / 2,
+      top:
+        (placement === "top" ? rect.top - gap : rect.bottom + gap) / zoomFactor,
+      left: (rect.left + rect.width / 2) / zoomFactor,
       placement,
     });
   }, []);
@@ -64,7 +74,10 @@ export function Tooltip({ content, children }: TooltipProps) {
   const hide = () => {
     clearTimers();
     setVisible(false);
-    hideTimer.current = window.setTimeout(() => setRendered(false), HIDE_DURATION);
+    hideTimer.current = window.setTimeout(
+      () => setRendered(false),
+      HIDE_DURATION,
+    );
   };
 
   useEffect(() => {
@@ -90,8 +103,13 @@ export function Tooltip({ content, children }: TooltipProps) {
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const margin = 8;
-    if (rect.left < margin) setShift(margin - rect.left);
-    else if (rect.right > window.innerWidth - margin) setShift(window.innerWidth - margin - rect.right);
+    // rect/innerWidth are real viewport px; shift is added to the un-zoomed
+    // pos.left before it's written back as style, so it must match that scale.
+    const zoomFactor =
+      parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+    if (rect.left < margin) setShift((margin - rect.left) / zoomFactor);
+    else if (rect.right > window.innerWidth - margin)
+      setShift((window.innerWidth - margin - rect.right) / zoomFactor);
     else setShift(0);
   }, [rendered, pos]);
 
@@ -106,7 +124,8 @@ export function Tooltip({ content, children }: TooltipProps) {
     ref: (node: HTMLElement | null) => {
       anchorRef.current = node;
       if (typeof originalRef === "function") originalRef(node);
-      else if (originalRef && typeof originalRef === "object") originalRef.current = node;
+      else if (originalRef && typeof originalRef === "object")
+        originalRef.current = node;
     },
     onMouseEnter: (e: React.MouseEvent) => {
       childProps.onMouseEnter?.(e);

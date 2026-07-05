@@ -24,20 +24,22 @@ function formatSliderValue(slider: AdvancedSlider, value: number) {
 function TweakRow({
   tweak,
   checked,
+  disabled,
   sliderValue,
   onToggle,
   onSliderChange,
 }: {
   tweak: TweakDef;
   checked: boolean;
+  disabled: boolean;
   sliderValue: number;
   onToggle: () => void;
   onSliderChange: (value: number) => void;
 }) {
   return (
     <div
-      className="setting-row setting-row-clickable tweak-row"
-      onClick={onToggle}
+      className={`setting-row setting-row-clickable tweak-row${disabled ? " disabled" : ""}`}
+      onClick={disabled ? undefined : onToggle}
     >
       <div>
         <Tooltip content={tweak.description}>
@@ -74,6 +76,7 @@ function TweakRow({
         className={`toggle-switch${checked ? " on" : ""}`}
         role="switch"
         aria-checked={checked}
+        disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
           onToggle();
@@ -86,8 +89,15 @@ function TweakRow({
 }
 
 export function TweaksPage({ configPath }: TweaksPageProps) {
-  const { tweaks, isOn, sliderValue, toggleTweak, setSliderValue, error } =
-    useTweaks(configPath);
+  const {
+    tweaks,
+    isOn,
+    isPending,
+    sliderValue,
+    toggleTweak,
+    setSliderValue,
+    error,
+  } = useTweaks(configPath);
   const [openSections, setOpenSections] = useState<Set<TweakSection>>(
     () => new Set<TweakSection>(["qol"]),
   );
@@ -129,6 +139,7 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
                       key={tweak.key}
                       tweak={tweak}
                       checked={isOn(tweak)}
+                      disabled={isPending(tweak)}
                       sliderValue={sliderValue(tweak)}
                       onToggle={() => toggleTweak(tweak)}
                       onSliderChange={(value) => setSliderValue(tweak, value)}

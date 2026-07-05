@@ -15,6 +15,9 @@ export function useTweaks(configPath: string) {
   const [tweaks, setTweaks] = useState<TweakDef[]>([]);
   const [states, setStates] = useState<Record<string, boolean>>({});
   const [rawValues, setRawValues] = useState<Record<string, string>>({});
+  const [pendingTweaks, setPendingTweaks] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -27,18 +30,19 @@ export function useTweaks(configPath: string) {
 
   const clientCfgPath = clientCfgPathFor(configPath);
 
-  const reload = useCallback(() => {
+  const reload = useCallback(async () => {
     if (!clientCfgPath) return;
-    invoke<ClientCfgState>("read_client_cfg", { path: clientCfgPath })
-      .then((data) => {
-        setStates(data.states);
-        setRawValues(data.rawValues);
-      })
-      .catch((err) => setError(`Не удалось прочитать client.cfg: ${err}`));
+    const data = await invoke<ClientCfgState>("read_client_cfg", {
+      path: clientCfgPath,
+    });
+    setStates(data.states);
+    setRawValues(data.rawValues);
   }, [clientCfgPath]);
 
   useEffect(() => {
-    reload();
+    reload().catch((err) =>
+      setError(`Не удалось прочитать client.cfg: ${err}`),
+    );
   }, [reload]);
 
   const isOn = useCallback(
@@ -58,30 +62,62 @@ export function useTweaks(configPath: string) {
   );
 
   const toggleTweak = useCallback(
-    (tweak: TweakDef) => {
+    async (tweak: TweakDef) => {
+      if (pendingTweaks.has(tweak.key)) return;
       const next = !isOn(tweak);
-      setStates((prev) => ({ ...prev, [tweak.key]: next }));
-      invoke("toggle_tweak", {
-        path: clientCfgPath,
-        key: tweak.key,
-        enabled: next,
-      }).catch((err) => setError(`Не удалось сохранить твик: ${err}`));
+      setPendingTweaks((prev) => new Set(prev).add(tweak.key));
+      setError("");
+      try {
+        await invoke("toggle_tweak", {
+          path: clientCfgPath,
+          key: tweak.key,
+          enabled: next,
+        });
+        await reload();
+      } catch (err) {
+        setError(`Не удалось сохранить твик: ${err}`);
+        await reload().catch(() => undefined);
+      } finally {
+        setPendingTweaks((prev) => {
+          const nextPending = new Set(prev);
+          nextPending.delete(tweak.key);
+          return nextPending;
+        });
+      }
     },
-    [clientCfgPath, isOn],
+    [clientCfgPath, isOn, pendingTweaks, reload],
   );
 
   const setSliderValue = useCallback(
-    (tweak: TweakDef, value: number) => {
+    async (tweak: TweakDef, value: number) => {
       setRawValues((prev) => ({ ...prev, [tweak.key]: String(value) }));
       if (!isOn(tweak)) return;
-      invoke("set_tweak_slider", {
-        path: clientCfgPath,
-        key: tweak.key,
-        value,
-      }).catch((err) => setError(`Не удалось сохранить значение: ${err}`));
+      try {
+        await invoke("set_tweak_slider", {
+          path: clientCfgPath,
+          key: tweak.key,
+          value,
+        });
+      } catch (err) {
+        setError(`Не удалось сохранить значение: ${err}`);
+        await reload().catch(() => undefined);
+      }
     },
-    [clientCfgPath, isOn],
+    [clientCfgPath, isOn, reload],
   );
 
-  return { tweaks, isOn, sliderValue, toggleTweak, setSliderValue, error };
+  const isPending = useCallback(
+    (tweak: TweakDef) => pendingTweaks.has(tweak.key),
+    [pendingTweaks],
+  );
+
+  return {
+    tweaks,
+    isOn,
+    isPending,
+    sliderValue,
+    toggleTweak,
+    setSliderValue,
+    error,
+  };
 }
