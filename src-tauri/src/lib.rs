@@ -14,7 +14,8 @@ pub fn run() {
             keys_cfg::write_keys_cfg,
             tweaks::get_known_tweaks,
             tweaks::read_client_cfg,
-            tweaks::write_tweak,
+            tweaks::toggle_tweak,
+            tweaks::set_tweak_slider,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { TweakDef } from "../types";
 
@@ -6,9 +6,15 @@ function clientCfgPathFor(keysCfgPath: string) {
   return keysCfgPath.replace(/keys\.cfg$/i, "client.cfg");
 }
 
+interface ClientCfgState {
+  states: Record<string, boolean>;
+  rawValues: Record<string, string>;
+}
+
 export function useTweaks(configPath: string) {
   const [tweaks, setTweaks] = useState<TweakDef[]>([]);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [states, setStates] = useState<Record<string, boolean>>({});
+  const [rawValues, setRawValues] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,29 +27,61 @@ export function useTweaks(configPath: string) {
 
   const clientCfgPath = clientCfgPathFor(configPath);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!clientCfgPath) return;
-    invoke<Record<string, string>>("read_client_cfg", { path: clientCfgPath })
-      .then(setValues)
+    invoke<ClientCfgState>("read_client_cfg", { path: clientCfgPath })
+      .then((data) => {
+        setStates(data.states);
+        setRawValues(data.rawValues);
+      })
       .catch((err) => setError(`Не удалось прочитать client.cfg: ${err}`));
   }, [clientCfgPath]);
 
-  const valueFor = (tweak: TweakDef) => values[tweak.key] ?? tweak.default;
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
-  const setTweakValue = (tweak: TweakDef, value: string) => {
-    setValues((prev) => ({ ...prev, [tweak.key]: value }));
-    invoke("write_tweak", { path: clientCfgPath, key: tweak.key, value }).catch(
-      (err) => setError(`Не удалось сохранить твик: ${err}`),
-    );
-  };
+  const isOn = useCallback(
+    (tweak: TweakDef) => states[tweak.key] ?? false,
+    [states],
+  );
 
-  const toggleTweak = (tweak: TweakDef) => {
-    if (tweak.valueType.type !== "bool") return;
-    const current = valueFor(tweak);
-    const next =
-      current === tweak.valueType.on ? tweak.valueType.off : tweak.valueType.on;
-    setTweakValue(tweak, next);
-  };
+  const sliderValue = useCallback(
+    (tweak: TweakDef) => {
+      if (!tweak.advancedSlider) return 0;
+      const raw = rawValues[tweak.key];
+      return raw !== undefined
+        ? Number(raw)
+        : tweak.advancedSlider.defaultValue;
+    },
+    [rawValues],
+  );
 
-  return { tweaks, valueFor, toggleTweak, error };
+  const toggleTweak = useCallback(
+    (tweak: TweakDef) => {
+      const next = !isOn(tweak);
+      setStates((prev) => ({ ...prev, [tweak.key]: next }));
+      invoke("toggle_tweak", {
+        path: clientCfgPath,
+        key: tweak.key,
+        enabled: next,
+      }).catch((err) => setError(`Не удалось сохранить твик: ${err}`));
+    },
+    [clientCfgPath, isOn],
+  );
+
+  const setSliderValue = useCallback(
+    (tweak: TweakDef, value: number) => {
+      setRawValues((prev) => ({ ...prev, [tweak.key]: String(value) }));
+      if (!isOn(tweak)) return;
+      invoke("set_tweak_slider", {
+        path: clientCfgPath,
+        key: tweak.key,
+        value,
+      }).catch((err) => setError(`Не удалось сохранить значение: ${err}`));
+    },
+    [clientCfgPath, isOn],
+  );
+
+  return { tweaks, isOn, sliderValue, toggleTweak, setSliderValue, error };
 }
