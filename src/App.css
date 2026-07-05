@@ -936,7 +936,7 @@ body {
 }
 
 .toggle-switch.on {
-  background: var(--accent);
+  background: #3b82f6;
 }
 
 .toggle-switch-knob {
