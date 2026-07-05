@@ -196,6 +196,8 @@ export function GraphicsPage() {
         <div className="settings-card settings-card-compact graphics-settings-card">
           {QUALITY_ROWS.map((row) => {
             const value = values[row.key] ?? 0;
+            const pct =
+              row.tiers.length > 1 ? (value / (row.tiers.length - 1)) * 100 : 0;
             return (
               <div
                 key={row.key}
@@ -207,19 +209,28 @@ export function GraphicsPage() {
                   <span className="setting-name">{row.label}</span>
                   <span className="graphics-row-value">{row.tiers[value]}</span>
                 </div>
-                <input
-                  type="range"
-                  className="graphics-slider"
-                  min={0}
-                  max={row.tiers.length - 1}
-                  step={1}
-                  value={value}
-                  onChange={(e) => setRowValue(row.key, Number(e.target.value))}
-                />
-                <div className="graphics-slider-ticks">
-                  {row.tiers.map((_, i) => (
-                    <span key={i} className="graphics-slider-tick" />
-                  ))}
+                <div className="graphics-slider-wrap">
+                  <div className="graphics-slider-track">
+                    <div
+                      className="graphics-slider-fill"
+                      style={{ width: `${pct}%` }}
+                    />
+                    <div
+                      className="graphics-slider-thumb"
+                      style={{ left: `${pct}%` }}
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    className="graphics-slider-input"
+                    min={0}
+                    max={row.tiers.length - 1}
+                    step={1}
+                    value={value}
+                    onChange={(e) =>
+                      setRowValue(row.key, Number(e.target.value))
+                    }
+                  />
                 </div>
               </div>
             );

@@ -24,8 +24,8 @@ textarea {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
@@ -34,11 +34,16 @@ textarea {
 
 ::-webkit-scrollbar-thumb {
   background: var(--row-border);
-  border-radius: 4px;
+  border-radius: 7px;
+  border: 3px solid var(--bg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--key-bg);
+}
+
+html {
+  zoom: 1.2;
 }
 
 html,
@@ -1030,74 +1035,56 @@ body {
   color: var(--text-dim);
 }
 
-.graphics-slider {
+/* Custom-drawn slider: the native <input type=range> is kept for
+   accessibility/drag interaction but rendered fully transparent, since
+   Chromium's own thumb painting (accent-color halo, focus/hover rings)
+   can't reliably be suppressed via ::-webkit-slider-thumb overrides. */
+.graphics-slider-wrap {
+  position: relative;
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+.graphics-slider-track {
+  position: relative;
   width: 100%;
-  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--row-border);
+}
+
+.graphics-slider-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 999px;
+  background: #3b82f6;
+  pointer-events: none;
+}
+
+.graphics-slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.graphics-slider-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
-  height: 14px;
-  margin: 0;
-}
-
-.graphics-slider:focus {
-  outline: none;
-}
-
-.graphics-slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 999px;
-  background: var(--row-border);
-}
-
-.graphics-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: none;
-  box-shadow: none;
-  outline: none;
-  cursor: pointer;
-  margin-top: -5px;
-}
-
-.graphics-slider::-moz-range-track {
-  height: 4px;
-  border-radius: 999px;
-  background: var(--row-border);
-}
-
-.graphics-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: none;
-  box-shadow: none;
-  outline: none;
-  cursor: pointer;
-}
-
-.graphics-slider::-moz-focus-outer {
-  border: 0;
-}
-
-.graphics-slider-ticks {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2px;
-  margin-top: 4px;
-}
-
-.graphics-slider-tick {
-  width: 2px;
-  height: 4px;
-  border-radius: 1px;
-  background: var(--row-border);
 }
 
 .graphics-toggle-row {
