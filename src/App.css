@@ -941,8 +941,13 @@ body {
 /* Graphics page */
 .graphics-container {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 20px;
+  height: calc(100vh - 32px - 56px);
+}
+
+.graphics-container::after {
+  content: none;
 }
 
 .graphics-main {
@@ -951,6 +956,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
 }
 
 .graphics-preset-card {
@@ -960,12 +966,23 @@ body {
 .graphics-preset-header {
   border-top: none;
   padding-top: 0;
+  gap: 12px;
+}
+
+.graphics-preset-header .setting-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .graphics-preset-value {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .graphics-preset-tabs {
@@ -979,12 +996,16 @@ body {
   color: var(--text-dim);
   border: 1px solid transparent;
   border-radius: 8px;
-  padding: 10px 8px;
-  font-size: 13px;
+  padding: 9px 4px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
   transition: all 0.15s ease;
 }
 
@@ -1015,12 +1036,23 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 10px;
+}
+
+.graphics-row-header .setting-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .graphics-row-value {
   font-size: 13px;
   color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Custom-drawn slider: the native <input type=range> is kept for
@@ -1085,6 +1117,8 @@ body {
   position: sticky;
   top: 0;
   gap: 18px;
+  display: flex;
+  flex-direction: column;
 }
 
 .graphics-preview-title {
@@ -1102,7 +1136,7 @@ body {
 
 .graphics-preview-art {
   position: relative;
-  aspect-ratio: 4 / 5;
+  flex: 1;
   border-radius: 12px;
   overflow: hidden;
   display: flex;
