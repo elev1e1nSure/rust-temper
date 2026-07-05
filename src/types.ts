@@ -8,3 +8,13 @@ export interface CommandPreset {
   command: string;
   description: string;
 }
+
+export type TweakValueType = { type: "bool"; on: string; off: string };
+
+export interface TweakDef {
+  key: string;
+  title: string;
+  description: string;
+  valueType: TweakValueType;
+  default: string;
+}

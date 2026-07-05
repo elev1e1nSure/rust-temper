@@ -43,14 +43,17 @@ function App() {
     autoDetectRan.current = true;
     configFile.autoDetectConfigPath().then((found) => {
       if (found) {
-        configFile.loadFromPath(found).then((loaded) => {
-          if (loaded) {
-            bindEditor.setBinds(loaded);
-            setStatusMessage(`Загружено биндов: ${loaded.length}`);
-          }
-        }).catch((err) => {
-          setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
-        });
+        configFile
+          .loadFromPath(found)
+          .then((loaded) => {
+            if (loaded) {
+              bindEditor.setBinds(loaded);
+              setStatusMessage(`Загружено биндов: ${loaded.length}`);
+            }
+          })
+          .catch((err) => {
+            setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
+          });
       } else {
         setStatusMessage("Не удалось найти keys.cfg автоматически.");
       }
@@ -60,28 +63,34 @@ function App() {
   // Load binds when configPath changes (from user input or auto-detection)
   const handleConfigPathChange = useCallback((path: string) => {
     configFile.setConfigPath(path);
-    configFile.loadFromPath(path).then((loaded) => {
-      if (loaded) {
-        bindEditor.setBinds(loaded);
-        setStatusMessage(`Загружено биндов: ${loaded.length}`);
-      }
-    }).catch((err) => {
-      setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
-    });
+    configFile
+      .loadFromPath(path)
+      .then((loaded) => {
+        if (loaded) {
+          bindEditor.setBinds(loaded);
+          setStatusMessage(`Загружено биндов: ${loaded.length}`);
+        }
+      })
+      .catch((err) => {
+        setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
+      });
   }, []);
 
   // User-triggered auto-detection
   const handleAutoDetect = useCallback(() => {
     configFile.autoDetectConfigPath().then((found) => {
       if (found) {
-        configFile.loadFromPath(found).then((loaded) => {
-          if (loaded) {
-            bindEditor.setBinds(loaded);
-            setStatusMessage(`Загружено биндов: ${loaded.length}`);
-          }
-        }).catch((err) => {
-          setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
-        });
+        configFile
+          .loadFromPath(found)
+          .then((loaded) => {
+            if (loaded) {
+              bindEditor.setBinds(loaded);
+              setStatusMessage(`Загружено биндов: ${loaded.length}`);
+            }
+          })
+          .catch((err) => {
+            setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
+          });
       } else {
         setStatusMessage("Не удалось найти keys.cfg автоматически.");
       }
@@ -163,7 +172,9 @@ function App() {
             </>
           )}
 
-          {activePage === "tweaks" && <TweaksPage />}
+          {activePage === "tweaks" && (
+            <TweaksPage configPath={configFile.configPath} />
+          )}
 
           {activePage === "presets" && (
             <PresetsPage

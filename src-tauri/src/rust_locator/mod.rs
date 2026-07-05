@@ -34,7 +34,10 @@ fn steam_library_folders() -> Vec<PathBuf> {
         let vdf_path = steam_path.join("steamapps").join("libraryfolders.vdf");
         match std::fs::read_to_string(&vdf_path) {
             Ok(content) => folders.extend(parse_library_paths(&content)),
-            Err(e) => log::warn!("Не удалось прочитать libraryfolders.vdf по пути {}: {e}", vdf_path.display()),
+            Err(e) => log::warn!(
+                "Не удалось прочитать libraryfolders.vdf по пути {}: {e}",
+                vdf_path.display()
+            ),
         }
         folders.push(steam_path);
     }
