@@ -48,7 +48,7 @@ pub fn load(app: &tauri::AppHandle) -> Result<TweakState, String> {
 pub fn save(app: &tauri::AppHandle, state: &TweakState) -> Result<(), String> {
     let path = state_path(app)?;
     let content = serde_json::to_string_pretty(state).map_err(|error| error.to_string())? + "\n";
-    client_cfg::write_atomic(&path, &content, false).map_err(|error| {
+    client_cfg::write_atomic(&path, &content).map_err(|error| {
         format!(
             "Не удалось сохранить состояние твиков {}: {error}",
             path.display()

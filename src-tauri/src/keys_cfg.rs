@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::path::Path;
+
+use crate::client_cfg;
 
 /// keys.cfg only ever contains bind lines in this game, so the file is
 /// fully regenerated from the in-memory bind list on every save.
@@ -37,16 +40,6 @@ pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
         return Ok(());
     }
 
-    let p = std::path::Path::new(&path);
-    if let Some(parent) = p.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-
-    if p.exists() {
-        let backup_path = format!("{path}.bak");
-        std::fs::copy(&path, &backup_path).map_err(|e| e.to_string())?;
-    }
-
     let mut content = String::new();
     for bind in &binds {
         content.push_str("bind ");
@@ -56,5 +49,5 @@ pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
         content.push('\n');
     }
 
-    std::fs::write(&path, content).map_err(|e| e.to_string())
+    client_cfg::write_atomic(Path::new(&path), &content)
 }

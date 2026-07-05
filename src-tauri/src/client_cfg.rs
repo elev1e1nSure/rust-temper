@@ -94,7 +94,7 @@ pub fn apply_values(content: &str, changes: &BTreeMap<String, Option<String>>) -
     }
 }
 
-pub fn write_atomic(path: &Path, content: &str, create_backup: bool) -> Result<(), String> {
+pub fn write_atomic(path: &Path, content: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
     }
@@ -109,10 +109,6 @@ pub fn write_atomic(path: &Path, content: &str, create_backup: bool) -> Result<(
         file.write_all(content.as_bytes())
             .and_then(|_| file.sync_all())
             .map_err(|error| error.to_string())?;
-
-        if create_backup && path.exists() {
-            std::fs::copy(path, backup_path(path)).map_err(|error| error.to_string())?;
-        }
 
         std::fs::rename(&temporary_path, path).map_err(|error| error.to_string())
     })();
@@ -151,12 +147,4 @@ fn temporary_path(path: &Path) -> PathBuf {
         std::process::id(),
         counter
     ))
-}
-
-fn backup_path(path: &Path) -> PathBuf {
-    let file_name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("client.cfg");
-    path.with_file_name(format!("{file_name}.bak"))
 }

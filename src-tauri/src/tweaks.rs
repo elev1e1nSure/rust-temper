@@ -365,7 +365,7 @@ pub fn set_tweak_slider(
     let mut changes = BTreeMap::new();
     changes.insert(bk.key.clone(), Some(desired_value));
     let updated_content = client_cfg::apply_values(&content, &changes);
-    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content, true) {
+    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content) {
         return Err(rollback_state(&app, &previous_state, error));
     }
 
@@ -445,7 +445,7 @@ fn enable_tweak(
         .map(|(key, value)| (key, Some(value)))
         .collect();
     let updated_content = client_cfg::apply_values(content, &changes);
-    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content, true) {
+    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content) {
         return Err(rollback_state(app, &previous_state, error));
     }
 
@@ -512,7 +512,7 @@ fn disable_tweak(
         changes
     );
     let updated_content = client_cfg::apply_values(content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated_content, true).map_err(|error| {
+    client_cfg::write_atomic(cfg_path, &updated_content).map_err(|error| {
         log::error!(
             "Failed to disable tweak: path={}, tweak={}, error={}",
             cfg_path.display(),
@@ -528,7 +528,7 @@ fn disable_tweak(
     }
 
     if let Err(state_error) = tweak_state::save(app, state) {
-        let restore_error = client_cfg::write_atomic(cfg_path, content, false).err();
+        let restore_error = client_cfg::write_atomic(cfg_path, content).err();
         *state = previous_state;
         return Err(match restore_error {
             Some(error) => format!("{state_error}; также не удалось откатить client.cfg: {error}"),
