@@ -15,12 +15,12 @@ fn parse_bind_line(line: &str) -> Option<KeyBind> {
     let rest = line.trim().strip_prefix("bind")?;
     let rest = rest.strip_prefix(char::is_whitespace)?.trim_start();
 
-    let mut parts = rest.splitn(2, char::is_whitespace);
-    let key = parts.next()?.to_string();
+    let split_pos = rest.find(char::is_whitespace)?;
+    let key = rest[..split_pos].to_string();
     if key.is_empty() {
         return None;
     }
-    let command = parts.next().unwrap_or("").trim_start().to_string();
+    let command = rest[split_pos..].trim_start().to_string();
 
     Some(KeyBind { key, command })
 }
@@ -37,8 +37,13 @@ pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
         return Ok(());
     }
 
-    let backup_path = format!("{path}.bak");
-    if !std::path::Path::new(&backup_path).exists() {
+    let p = std::path::Path::new(&path);
+    if let Some(parent) = p.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    if p.exists() {
+        let backup_path = format!("{path}.bak");
         std::fs::copy(&path, &backup_path).map_err(|e| e.to_string())?;
     }
 
