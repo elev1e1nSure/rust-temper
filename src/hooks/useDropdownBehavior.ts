@@ -7,17 +7,19 @@ export function useDropdownBehavior(commandPresets: CommandPreset[]) {
   const closingDropdownTimeoutRef = useRef<number | null>(null);
   const [commandSearch, setCommandSearch] = useState("");
   const [dropdownDir, setDropdownDir] = useState<"down" | "up">("down");
+  const [filterKind, setFilterKind] = useState<"single" | "combination">("single");
 
   const filteredCommandPresets = useMemo(() => {
+    let filtered = commandPresets.filter((p) => p.kind === filterKind);
     const query = commandSearch.trim().toLowerCase();
-    if (!query) return commandPresets;
-    return commandPresets.filter(
+    if (!query) return filtered;
+    return filtered.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
         p.command.toLowerCase().includes(query) ||
         p.description.toLowerCase().includes(query),
     );
-  }, [commandPresets, commandSearch]);
+  }, [commandPresets, commandSearch, filterKind]);
 
   const changeOpenDropdown = (next: number | null) => {
     if (openDropdownIndex !== null && openDropdownIndex !== next) {
@@ -64,5 +66,7 @@ export function useDropdownBehavior(commandPresets: CommandPreset[]) {
     dropdownDir,
     setDropdownDir,
     changeOpenDropdown,
+    filterKind,
+    setFilterKind,
   };
 }

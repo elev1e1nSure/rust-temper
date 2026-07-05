@@ -27,6 +27,8 @@ interface BindsPageProps {
   filteredCommandPresets: CommandPreset[];
   dropdownDir: "down" | "up";
   setDropdownDir: (v: "down" | "up") => void;
+  filterKind: "single" | "combination";
+  setFilterKind: (v: "single" | "combination") => void;
 }
 
 export function BindsPage({
@@ -53,6 +55,8 @@ export function BindsPage({
   filteredCommandPresets,
   dropdownDir,
   setDropdownDir,
+  filterKind,
+  setFilterKind,
 }: BindsPageProps) {
   return (
     <div className="page-container binds-page">
@@ -144,19 +148,37 @@ export function BindsPage({
                     className={`dropdown-base dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
                   >
                     {(isDropdownOpen || isDropdownClosing) && (
-                      <div className="dropdown-search">
-                        <SearchIcon />
-                        <input
-                          type="text"
-                          placeholder="Поиск действия..."
-                          value={commandSearch}
-                          onChange={(e) =>
-                            setCommandSearch(e.target.value)
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                          autoFocus
-                        />
-                      </div>
+                      <>
+                        <div className="dropdown-kind-toggle">
+                          <button
+                            className={`kind-btn${filterKind === "single" ? " active" : ""}`}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFilterKind("single"); }}
+                          >
+                            Обычные
+                          </button>
+                          <button
+                            className={`kind-btn${filterKind === "combination" ? " active" : ""}`}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFilterKind("combination"); }}
+                          >
+                            Комбинации
+                          </button>
+                        </div>
+                        <div className="dropdown-search">
+                          <SearchIcon />
+                          <input
+                            type="text"
+                            placeholder="Поиск действия..."
+                            value={commandSearch}
+                            onChange={(e) =>
+                              setCommandSearch(e.target.value)
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                          />
+                        </div>
+                      </>
                     )}
                     {(isDropdownOpen || isDropdownClosing) &&
                       filteredCommandPresets.map((preset) => (

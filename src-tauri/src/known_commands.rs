@@ -10,13 +10,20 @@ pub struct CommandPreset {
     pub name: String,
     pub command: String,
     pub description: String,
+    pub kind: String,
 }
 
 fn preset(name: &str, command: &str, description: &str) -> CommandPreset {
+    let kind = if command.contains(';') || command.contains('~') || command.starts_with("+meta.") {
+        String::from("combination")
+    } else {
+        String::from("single")
+    };
     CommandPreset {
         name: name.to_string(),
         command: command.to_string(),
         description: description.to_string(),
+        kind,
     }
 }
 
@@ -158,11 +165,6 @@ pub fn presets() -> Vec<CommandPreset> {
             "Принудительная сборка мусора (GC)",
             "gc.collect",
             "Запускает сборщик мусора: может кратковременно подвесить игру, но поднять FPS в долгих сессиях.",
-        ),
-        preset(
-            "Отразить оружие",
-            "~graphics.vm_horizontal_flip 1;graphics.vm_horizontal_flip 0",
-            "При нажатии зеркалит вид рук на противоположный.",
         ),
         preset(
             "Приближение",

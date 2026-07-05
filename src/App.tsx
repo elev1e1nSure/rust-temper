@@ -160,6 +160,8 @@ function App() {
                 filteredCommandPresets={dropdown.filteredCommandPresets}
                 dropdownDir={dropdown.dropdownDir}
                 setDropdownDir={dropdown.setDropdownDir}
+                filterKind={dropdown.filterKind}
+                setFilterKind={dropdown.setFilterKind}
               />
               {statusMessage && (
                 <div className="status-message">{statusMessage}</div>

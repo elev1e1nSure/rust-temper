@@ -7,6 +7,7 @@ export interface CommandPreset {
   name: string;
   command: string;
   description: string;
+  kind: "single" | "combination";
 }
 
 export interface BackendKeyRule {
