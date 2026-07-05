@@ -593,10 +593,16 @@ body {
 }
 
 /* Presets page styles */
-.presets-container,
-.tweaks-container {
+.presets-container {
   position: relative;
   overflow: hidden;
+}
+
+.tweaks-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .presets-blur-wrapper {
@@ -754,6 +760,102 @@ body {
 }
 
 .presets-overlay-sub {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 10px 0 0 0;
+  opacity: 0.5;
+  letter-spacing: 0.12px;
+  animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+/* ── Tweaks Overlay (non-absolute, uses flex centering) ── */
+.tweaks-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 100%;
+  pointer-events: none;
+}
+
+.tweaks-overlay-icon {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
+  background: linear-gradient(
+    145deg,
+    rgba(203, 213, 225, 0.07),
+    rgba(203, 213, 225, 0.02)
+  );
+  border: 1px solid rgba(203, 213, 225, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1;
+  margin-bottom: 28px;
+  animation: icon-float 5s ease-in-out infinite;
+}
+
+.tweaks-overlay-icon::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(203, 213, 225, 0.3),
+    rgba(203, 213, 225, 0.06),
+    rgba(203, 213, 225, 0.3)
+  );
+  background-size: 200% 200%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-shimmer 6s ease-in-out infinite alternate;
+}
+
+.tweaks-overlay-icon::after {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(203, 213, 225, 0.2),
+    transparent 70%
+  );
+  animation: pulse-glow 3.5s ease-in-out infinite;
+}
+
+.tweaks-overlay-icon svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 14px rgba(203, 213, 225, 0.2));
+  animation: tool-wiggle 5s ease-in-out infinite;
+}
+
+.tweaks-overlay-text {
+  position: relative;
+  z-index: 1;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0;
+  color: var(--text);
+  animation: text-glow 4s ease-in-out infinite;
+}
+
+.tweaks-overlay-sub {
   position: relative;
   z-index: 1;
   font-size: 13px;

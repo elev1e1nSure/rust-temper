@@ -622,12 +622,12 @@ function App() {
 
           {activePage === "tweaks" && (
             <div className="tweaks-container page-container">
-              <div className="presets-overlay">
-                <div className="presets-overlay-icon">
+              <div className="tweaks-overlay">
+                <div className="tweaks-overlay-icon">
                   <TweaksIcon />
                 </div>
-                <p className="presets-overlay-text">Твики в разработке</p>
-                <p className="presets-overlay-sub">
+                <p className="tweaks-overlay-text">Твики в разработке</p>
+                <p className="tweaks-overlay-sub">
                   Скоро здесь появятся твики...
                 </p>
               </div>
