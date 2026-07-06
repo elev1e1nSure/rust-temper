@@ -767,11 +767,34 @@ body {
 }
 
 .tweak-name {
-  margin-bottom: 4px;
+  margin-bottom: 0;
+}
+
+.tweak-desc-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s ease;
+}
+
+.tweak-row:hover .tweak-desc-wrap {
+  grid-template-rows: 1fr;
 }
 
 .tweak-desc {
   max-width: 480px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tweak-desc::before {
+  content: "";
+  display: block;
+  height: 4px;
+}
+
+.tweak-row:hover .tweak-desc {
+  opacity: 1;
 }
 
 .toggle-switch {

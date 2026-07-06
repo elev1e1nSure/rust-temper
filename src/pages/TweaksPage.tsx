@@ -51,7 +51,9 @@ function TweakRow({
             <span className="tweak-badge">рекомендовано</span>
           )}
         </div>
-        <div className="setting-desc tweak-desc">{tweak.description}</div>
+        <div className="tweak-desc-wrap">
+          <div className="setting-desc tweak-desc">{tweak.description}</div>
+        </div>
         {tweak.advancedSlider && checked && (
           <div
             className="tweak-slider-group"
