@@ -304,16 +304,6 @@ const GRASS_TIERS: &[TierConfig] = &[
         ("grass.quality", "100"),
         ("graphics.grassshadows", "True"),
     ],
-    &[
-        ("grass.displacement", "True"),
-        ("grass.quality", "100"),
-        ("graphics.grassshadows", "True"),
-    ],
-    &[
-        ("grass.displacement", "True"),
-        ("grass.quality", "100"),
-        ("graphics.grassshadows", "True"),
-    ],
 ];
 
 #[tauri::command]

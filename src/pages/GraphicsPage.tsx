@@ -50,7 +50,7 @@ const QUALITY_ROWS: QualityRow[] = [
     label: "Качество травы",
     description:
       "Чем выше качество, тем сложнее стрелять. Трава оказывает минимальное влияние на FPS, при выборе руководствуйтесь своим стилем игры.",
-    tiers: ["Отключено", "Производительность", "Комбат", "Баланс", "Качество"],
+    tiers: ["Отключено", "Баланс", "Качество"],
   },
   {
     key: "clouds",
@@ -73,9 +73,9 @@ const DEFAULT_VALUES: Record<string, number> = {
   textures: 0,
   lighting: 0,
   trees: 0,
-  water: 0,
-  grass: 2,
-  clouds: 0,
+        water: 0,
+        grass: 1,
+        clouds: 0,
   smoothing: 0,
 };
 
@@ -106,7 +106,7 @@ const QUICK_PRESETS: {
         lighting: 0,
         trees: 0,
         water: 0,
-        grass: 2,
+  grass: 1,
         clouds: 0,
         smoothing: 0,
       },
@@ -120,7 +120,7 @@ const QUICK_PRESETS: {
         lighting: 1,
         trees: 2,
         water: 1,
-        grass: 3,
+        grass: 1,
         clouds: 1,
         smoothing: 1,
       },
@@ -134,7 +134,7 @@ const QUICK_PRESETS: {
         lighting: 2,
         trees: 3,
         water: 2,
-        grass: 4,
+        grass: 2,
         clouds: 2,
         smoothing: 2,
       },
