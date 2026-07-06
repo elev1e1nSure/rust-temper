@@ -87,7 +87,7 @@ const QUICK_PRESETS: {
       label: "Производительность",
       values: {
         shadows: 0,
-        textures: 0,
+        textures: 3,
         lighting: 0,
         trees: 0,
         water: 0,
