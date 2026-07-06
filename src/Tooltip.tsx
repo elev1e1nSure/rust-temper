@@ -17,7 +17,7 @@ interface TooltipProps {
   children: ReactElement;
 }
 
-const SHOW_DELAY = 700;
+const SHOW_DELAY = 200;
 const HIDE_DURATION = 140;
 
 // Wraps a single child via cloneElement instead of an extra DOM node, so it

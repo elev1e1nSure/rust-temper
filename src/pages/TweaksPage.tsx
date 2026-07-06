@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTweaks } from "../hooks/useTweaks";
 import { ChevronIcon } from "../icons";
@@ -156,6 +156,59 @@ function UnmanagedTweakModal({
   );
 }
 
+function AccordionSection({
+  title,
+  isExpanded,
+  onToggle,
+  children,
+}: {
+  title: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState(0);
+
+  // Measuring scrollHeight directly (instead of animating grid-template-rows
+  // fr units) avoids a Chromium/WebView2 quirk where the first grid-based
+  // expand of a section doesn't animate because the target height isn't
+  // resolved yet, making the accordion appear to open every other click.
+  useLayoutEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    if (!isExpanded) {
+      setHeight(0);
+      return;
+    }
+    setHeight(el.scrollHeight);
+    const observer = new ResizeObserver(() => setHeight(el.scrollHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isExpanded]);
+
+  return (
+    <div className="accordion-section">
+      <button
+        type="button"
+        className="accordion-header"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+      >
+        <span className="accordion-title">{title}</span>
+        <span className={`accordion-arrow${isExpanded ? " open" : ""}`}>
+          <ChevronIcon />
+        </span>
+      </button>
+      <div className="accordion-content" style={{ height }}>
+        <div className="accordion-content-inner" ref={innerRef}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TweaksPage({ configPath }: TweaksPageProps) {
   const {
     tweaks,
@@ -203,37 +256,27 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
         const isExpanded = openSections.has(section.key);
 
         return (
-          <div className="accordion-section" key={section.key}>
-            <button
-              type="button"
-              className="accordion-header"
-              onClick={() => toggleSection(section.key)}
-              aria-expanded={isExpanded}
-            >
-              <span className="accordion-title">{section.title}</span>
-              <span className={`accordion-arrow${isExpanded ? " open" : ""}`}>
-                <ChevronIcon />
-              </span>
-            </button>
-            <div className={`accordion-content${isExpanded ? " open" : ""}`}>
-              <div className="accordion-content-inner">
-                <div className="settings-card settings-card-compact">
-                  {sectionTweaks.map((tweak) => (
-                    <TweakRow
-                      key={tweak.key}
-                      tweak={tweak}
-                      checked={isOn(tweak)}
-                      managed={isManaged(tweak)}
-                      disabled={isPending(tweak)}
-                      sliderValue={sliderValue(tweak)}
-                      onToggle={() => requestToggle(tweak)}
-                      onSliderChange={(value) => setSliderValue(tweak, value)}
-                    />
-                  ))}
-                </div>
-              </div>
+          <AccordionSection
+            key={section.key}
+            title={section.title}
+            isExpanded={isExpanded}
+            onToggle={() => toggleSection(section.key)}
+          >
+            <div className="settings-card settings-card-compact">
+              {sectionTweaks.map((tweak) => (
+                <TweakRow
+                  key={tweak.key}
+                  tweak={tweak}
+                  checked={isOn(tweak)}
+                  managed={isManaged(tweak)}
+                  disabled={isPending(tweak)}
+                  sliderValue={sliderValue(tweak)}
+                  onToggle={() => requestToggle(tweak)}
+                  onSliderChange={(value) => setSliderValue(tweak, value)}
+                />
+              ))}
             </div>
-          </div>
+          </AccordionSection>
         );
       })}
       {error && <div className="status-message">{error}</div>}
