@@ -14,7 +14,7 @@ pub struct CommandPreset {
 }
 
 fn preset(name: &str, command: &str, description: &str) -> CommandPreset {
-    let kind = if command.contains(';') || command.contains('~') || command.starts_with("+meta.") {
+    let kind = if command.contains(';') || command.starts_with("+meta.") {
         String::from("combination")
     } else {
         String::from("single")
