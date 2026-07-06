@@ -31,9 +31,12 @@ interface BindsPageProps {
   handleKeyboardKey: (rustKey: string) => void;
 }
 
-// Target of the command-list modal: "new" adds a bind, a number edits the
-// action of the bind row at that index. null means the modal is closed.
-type ManualModalTarget = number | "new" | null;
+type CommandModalKind = CommandPreset["kind"];
+
+interface CommandModalState {
+  kind: CommandModalKind;
+  target: number | "new";
+}
 
 export function BindsPage({
   filteredBinds,
@@ -53,28 +56,31 @@ export function BindsPage({
   updateBindCommand,
   handleKeyboardKey,
 }: BindsPageProps) {
-  const [manualModalTarget, setManualModalTarget] =
-    useState<ManualModalTarget>(null);
+  const [commandModal, setCommandModal] = useState<CommandModalState | null>(
+    null,
+  );
   const [manualModalClosing, setManualModalClosing] = useState(false);
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
 
   const manualPresets = useMemo(() => {
+    if (!commandModal) return [];
     const q = manualSearch.trim().toLowerCase();
-    if (!q) return commandPresets;
     return commandPresets.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.command.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q),
+      (preset) =>
+        preset.kind === commandModal.kind &&
+        (!q ||
+          preset.name.toLowerCase().includes(q) ||
+          preset.command.toLowerCase().includes(q) ||
+          preset.description.toLowerCase().includes(q)),
     );
-  }, [commandPresets, manualSearch]);
+  }, [commandModal, commandPresets, manualSearch]);
 
   // Defers unmounting until the close animation finishes (see
   // handleManualModalAnimationEnd), instead of clearing the target instantly.
   const closeManualModal = () => {
-    if (manualModalTarget === null || manualModalClosing) return;
+    if (commandModal === null || manualModalClosing) return;
     setManualModalClosing(true);
   };
 
@@ -82,7 +88,7 @@ export function BindsPage({
     e: React.AnimationEvent<HTMLDivElement>,
   ) => {
     if (e.target !== e.currentTarget || !manualModalClosing) return;
-    setManualModalTarget(null);
+    setCommandModal(null);
     setManualModalClosing(false);
     setManualSearch("");
     setManualCustomMode(false);
@@ -91,7 +97,7 @@ export function BindsPage({
 
   // Lock background scroll and allow Escape to close while the modal is open.
   useEffect(() => {
-    if (manualModalTarget === null) return;
+    if (commandModal === null) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -103,15 +109,29 @@ export function BindsPage({
       window.removeEventListener("keydown", handleKeyDown);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manualModalTarget]);
+  }, [commandModal]);
 
   const selectCommand = (command: string) => {
-    if (manualModalTarget === "new") {
+    if (commandModal?.target === "new") {
       addFromPreset(command);
-    } else if (typeof manualModalTarget === "number") {
-      updateBindCommand(manualModalTarget, command);
+    } else if (typeof commandModal?.target === "number") {
+      updateBindCommand(commandModal.target, command);
     }
     closeManualModal();
+  };
+
+  const openCommandModal = (
+    kind: CommandModalKind,
+    target: CommandModalState["target"],
+  ) => {
+    setCommandModal({ kind, target });
+  };
+
+  const openBindCommandModal = (index: number, command: string) => {
+    const kind =
+      commandPresets.find((preset) => preset.command === command)?.kind ??
+      "single";
+    openCommandModal(kind, index);
   };
 
   const submitManualCustomCommand = () => {
@@ -150,12 +170,16 @@ export function BindsPage({
           <button
             className="btn-add"
             type="button"
-            onClick={() => setManualModalTarget("new")}
+            onClick={() => openCommandModal("single", "new")}
           >
             <PlusIcon />
             Создать вручную
           </button>
-          <button className="btn-add" type="button" disabled>
+          <button
+            className="btn-add"
+            type="button"
+            onClick={() => openCommandModal("combination", "new")}
+          >
             Выбрать из списка
             <ChevronIcon />
           </button>
@@ -186,7 +210,7 @@ export function BindsPage({
               <button
                 className="action-cell"
                 type="button"
-                onClick={() => setManualModalTarget(index)}
+                onClick={() => openBindCommandModal(index, bind.command)}
               >
                 {bind.command ? nameFor(bind.command) : "Выберите действие"}
                 <ChevronIcon />
@@ -206,7 +230,7 @@ export function BindsPage({
         })}
       </div>
 
-      {manualModalTarget !== null &&
+      {commandModal !== null &&
         createPortal(
           <div
             className={`manual-modal-backdrop ${manualModalClosing ? "closing" : ""}`}
@@ -215,7 +239,11 @@ export function BindsPage({
           >
             <div className="manual-modal" onClick={(e) => e.stopPropagation()}>
               <div className="manual-modal-header">
-                <h2>Список команд</h2>
+                <h2>
+                  {commandModal.kind === "single"
+                    ? "Простые команды"
+                    : "Составные команды"}
+                </h2>
                 <button
                   className="manual-modal-close"
                   type="button"
@@ -236,17 +264,19 @@ export function BindsPage({
                     autoFocus
                   />
                 </div>
-                <button
-                  className={`manual-modal-plus ${manualCustomMode ? "active" : ""}`}
-                  type="button"
-                  title="Ввести команду вручную"
-                  onClick={() => setManualCustomMode((v) => !v)}
-                >
-                  <PlusIcon />
-                </button>
+                {commandModal.kind === "single" && (
+                  <button
+                    className={`manual-modal-plus ${manualCustomMode ? "active" : ""}`}
+                    type="button"
+                    title="Ввести команду вручную"
+                    onClick={() => setManualCustomMode((v) => !v)}
+                  >
+                    <PlusIcon />
+                  </button>
+                )}
               </div>
 
-              {manualCustomMode && (
+              {commandModal.kind === "single" && manualCustomMode && (
                 <div className="manual-modal-custom-row">
                   <input
                     type="text"
