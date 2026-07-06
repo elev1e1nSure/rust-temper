@@ -23,18 +23,25 @@
   align-items: center;
   gap: 8px;
   min-width: 280px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--row);
 }
 
 .binds-search svg {
   position: static;
   transform: none;
+  flex-shrink: 0;
+  color: var(--text-dim);
 }
 
 .binds-search input {
   flex: 1;
   min-width: 0;
   width: auto;
-  padding-left: 8px;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
 }
 
 .key-filter-chip {
@@ -507,11 +514,6 @@
 .bind-config-add-action:hover,
 .bind-config-cancel:hover {
   background: #222228;
-  transform: scale(1.02);
-}
-
-.bind-config-remove:hover {
-  transform: scale(1.04);
 }
 
 .bind-config-footer {
@@ -538,7 +540,6 @@
 
 .bind-config-submit:hover:not(:disabled) {
   background: rgba(59, 130, 246, 0.48);
-  transform: scale(1.02);
 }
 
 .bind-config-add-action:active,
