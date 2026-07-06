@@ -19,6 +19,18 @@ pub struct KeyBind {
     pub command: String,
 }
 
+pub fn serialize_binds(binds: &[KeyBind]) -> String {
+    let mut content = String::new();
+    for bind in binds {
+        content.push_str("bind ");
+        content.push_str(&bind.key);
+        content.push(' ');
+        content.push_str(&bind.command);
+        content.push('\n');
+    }
+    content
+}
+
 fn parse_bind_line(line: &str) -> Option<KeyBind> {
     let rest = line.trim().strip_prefix("bind")?;
     let rest = rest.strip_prefix(char::is_whitespace)?.trim_start();
@@ -35,8 +47,7 @@ fn parse_bind_line(line: &str) -> Option<KeyBind> {
 
 #[tauri::command]
 pub fn read_keys_cfg(path: String) -> Result<Vec<KeyBind>, String> {
-    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    Ok(content.lines().filter_map(parse_bind_line).collect())
+    load_binds(Path::new(&path))
 }
 
 #[tauri::command]
@@ -45,14 +56,6 @@ pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
         return Ok(());
     }
 
-    let mut content = String::new();
-    for bind in &binds {
-        content.push_str("bind ");
-        content.push_str(&bind.key);
-        content.push(' ');
-        content.push_str(&bind.command);
-        content.push('\n');
-    }
-
+    let content = serialize_binds(&binds);
     client_cfg::write_atomic(Path::new(&path), &content)
 }

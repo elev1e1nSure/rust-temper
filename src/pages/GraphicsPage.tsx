@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Mountain2Line, Refresh1Line } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
+import { clientCfgPathFor } from "../utils/paths";
 
 interface QualityRow {
   key: string;
@@ -143,9 +144,6 @@ const QUICK_PRESETS: {
   },
 ];
 
-function clientCfgPathFor(keysCfgPath: string) {
-  return keysCfgPath.replace(/keys\.cfg$/i, "client.cfg");
-}
 
 interface GraphicsPageProps {
   configPath: string;

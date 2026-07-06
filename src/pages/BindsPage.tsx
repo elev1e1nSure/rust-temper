@@ -1,7 +1,5 @@
 import {
-  ReactNode,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -19,6 +17,8 @@ import {
 } from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
+import { parseCombo, formatCombo } from "../utils/bindKey";
+import { AnimatedHeight } from "../components/layout/AnimatedHeight";
 
 interface BindsPageProps {
   filteredBinds: FilteredBind[];
@@ -57,36 +57,6 @@ interface DraftAction {
 
 function commandWithoutMode(command: string): string {
   return command.replace(/^[+~]/, "");
-}
-
-function AnimatedHeight({
-  className,
-  children,
-}: {
-  className: string;
-  children: ReactNode;
-}) {
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const [height, setHeight] = useState<number>();
-
-  useLayoutEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-    const updateHeight = () => setHeight(content.scrollHeight);
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(content);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      className={`bind-config-animated-height ${className}`}
-      style={height === undefined ? undefined : { height }}
-    >
-      <div ref={contentRef}>{children}</div>
-    </div>
-  );
 }
 
 export function BindsPage({
@@ -207,10 +177,7 @@ export function BindsPage({
         (fb) => fb.sourceIndex === target,
       )?.bind;
       const keys = existingBind?.key
-        ? existingBind.key
-            .replace(/^\[|\]$/g, "")
-            .split("+")
-            .filter(Boolean)
+        ? parseCombo(existingBind.key)
         : [];
       setDraftKeys(keys);
     } else {
@@ -341,8 +308,7 @@ export function BindsPage({
 
   const submitBind = () => {
     if (draftKeys.length === 0 || draftActions.length === 0) return;
-    const key =
-      draftKeys.length === 1 ? draftKeys[0] : `[${draftKeys.join("+")}]`;
+    const key = formatCombo(draftKeys);
     const command = draftActions
       .map((action) => {
         if (commandModal?.kind !== "single") return action.command;

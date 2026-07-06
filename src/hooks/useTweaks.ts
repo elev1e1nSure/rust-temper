@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { TweakDef } from "../types";
-
-function clientCfgPathFor(keysCfgPath: string) {
-  return keysCfgPath.replace(/keys\.cfg$/i, "client.cfg");
-}
+import { clientCfgPathFor } from "../utils/paths";
 
 interface ClientCfgState {
   states: Record<string, boolean>;

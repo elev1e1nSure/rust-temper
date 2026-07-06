@@ -4,6 +4,8 @@
 // bind.key equals a cap's rustKey. Keys with no `rustKey` (FN, decorative
 // labels) are non-bindable and rendered dimmed.
 
+import { parseCombo } from "./utils/bindKey";
+
 export interface KeyDef {
   label: string;
   rustKey?: string;
@@ -213,10 +215,9 @@ const DISPLAY_NAMES: Record<string, string> = {
 export function keyDisplayName(rustKey: string): string {
   if (!rustKey) return "—";
   // Combination bind, stored by Rust as "[a+b]" — display each part.
-  const combo = rustKey.replace(/^\[|\]$/g, "");
-  if (combo.includes("+")) {
-    return combo.split("+").filter(Boolean).map(keyDisplayName).join(" + ");
-  }
+  const parts = parseCombo(rustKey);
+  if (parts.length > 1) return parts.map(keyDisplayName).join(" + ");
+  const combo = parts[0];
   if (DISPLAY_NAMES[combo]) return DISPLAY_NAMES[combo];
   const kp = combo.match(/^kp(\d)$/);
   if (kp) return `Num ${kp[1]}`;

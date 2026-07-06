@@ -410,18 +410,12 @@ fn toggle_bind_tweak(
             key: bind_tweak.default_key.clone(),
             command: bind_tweak.command.clone(),
         });
-        let mut content = String::new();
-        for bind in &binds {
-            content.push_str(&format!("bind {} {}\n", bind.key, bind.command));
-        }
+        let content = keys_cfg::serialize_binds(&binds);
         client_cfg::write_atomic(keys_cfg_path, &content)?;
         log::info!("Bind tweak enabled: tweak={}, key={}", tweak.key, bind_tweak.default_key);
     } else {
         binds.retain(|b| b.key != bind_tweak.default_key);
-        let mut content = String::new();
-        for bind in &binds {
-            content.push_str(&format!("bind {} {}\n", bind.key, bind.command));
-        }
+        let content = keys_cfg::serialize_binds(&binds);
         client_cfg::write_atomic(keys_cfg_path, &content)?;
         log::info!("Bind tweak disabled: tweak={}, key={}", tweak.key, bind_tweak.default_key);
     }
