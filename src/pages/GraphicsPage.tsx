@@ -204,6 +204,20 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
       .catch((err) => {
         console.error("Не удалось прочитать качество травы:", err);
       });
+    invoke<number>("read_clouds_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, clouds: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать качество облаков:", err);
+      });
+    invoke<number>("read_smoothing_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, smoothing: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать сглаживание:", err);
+      });
   }, [clientCfgPath]);
 
   const previewRow =
@@ -288,6 +302,14 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         path: clientCfgPath,
         tier: values.grass,
       });
+      await invoke("apply_clouds_quality", {
+        path: clientCfgPath,
+        tier: values.clouds,
+      });
+      await invoke("apply_smoothing_quality", {
+        path: clientCfgPath,
+        tier: values.smoothing,
+      });
       await applyTreeQuality(values.trees);
       setApplyStatus({
         type: "success",
@@ -301,7 +323,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.trees, applyTreeQuality]);
+  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.clouds, values.smoothing, values.trees, applyTreeQuality]);
 
   return (
     <div className="graphics-container page-container">
