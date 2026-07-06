@@ -104,7 +104,7 @@ const QUICK_PRESETS: {
         lighting: 0,
         trees: 0,
         water: 0,
-  grass: 1,
+        grass: 1,
         clouds: 0,
         smoothing: 0,
       },
@@ -240,13 +240,10 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     [clientCfgPath, configPath],
   );
 
-  const setRowValue = useCallback(
-    (key: string, value: number) => {
-      setValues((prev) => ({ ...prev, [key]: value }));
-      setPresetLabel("Пользовательский");
-    },
-    [],
-  );
+  const setRowValue = useCallback((key: string, value: number) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+    setPresetLabel("Пользовательский");
+  }, []);
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
@@ -358,6 +355,15 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                       className="graphics-slider-fill"
                       style={{ width: `${pct}%` }}
                     />
+                    {row.tiers.map((_, i) => (
+                      <div
+                        key={i}
+                        className="graphics-slider-tick"
+                        style={{
+                          left: `${(i / (row.tiers.length - 1)) * 100}%`,
+                        }}
+                      />
+                    ))}
                     <div
                       className="graphics-slider-thumb"
                       style={{ left: `${pct}%` }}

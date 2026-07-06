@@ -17,7 +17,8 @@
   scrollbar-width: none;
 }
 
-html, body {
+html,
+body {
   user-select: auto;
 }
 
@@ -482,7 +483,6 @@ body {
 }
 
 @keyframes float-glass {
-
   0%,
   100% {
     transform: translate(-6%, -4%) scale(1) rotate(0deg);
@@ -519,7 +519,7 @@ body {
   gap: 24px;
 }
 
-.settings-card+.settings-card {
+.settings-card + .settings-card {
   margin-top: 12px;
 }
 
@@ -696,7 +696,7 @@ body {
   border-radius: 12px;
 }
 
-.accordion-section+.accordion-section {
+.accordion-section + .accordion-section {
   margin-top: 12px;
 }
 
@@ -1110,6 +1110,17 @@ body {
   transition: width 0.12s ease-out;
 }
 
+.graphics-slider-tick {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 6px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.55);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 .graphics-slider-thumb {
   position: absolute;
   top: 50%;
@@ -1135,12 +1146,14 @@ body {
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,
-.graphics-slider-wrap:has(.graphics-slider-input:focus-visible) .graphics-slider-track {
+.graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
+  .graphics-slider-track {
   background: #323239;
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-thumb,
-.graphics-slider-wrap:has(.graphics-slider-input:focus-visible) .graphics-slider-thumb {
+.graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
+  .graphics-slider-thumb {
   background: #f0f0f2;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42);
 }
@@ -1192,12 +1205,16 @@ body {
   justify-content: center;
   gap: 14px;
   background:
-    radial-gradient(circle at 30% 20%,
+    radial-gradient(
+      circle at 30% 20%,
       rgba(203, 213, 225, 0.1),
-      transparent 55%),
-    radial-gradient(circle at 75% 80%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 75% 80%,
       rgba(59, 130, 246, 0.12),
-      transparent 60%),
+      transparent 60%
+    ),
     var(--row);
   border: 1px solid var(--row-border);
 }

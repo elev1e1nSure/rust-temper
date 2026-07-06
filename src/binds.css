@@ -103,6 +103,7 @@
   place-items: center;
   padding: 24px;
   background: rgba(0, 0, 0, 0.72);
+  user-select: auto;
   animation: manualModalBackdropIn 0.18s ease forwards;
 }
 
@@ -140,6 +141,7 @@
   border-radius: 14px;
   background: var(--panel);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+  user-select: auto;
   transform-origin: center;
   animation: manualModalIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
@@ -387,6 +389,7 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
+  user-select: auto;
   animation: bindConfigContentIn 0.22s ease-out both;
 }
 
@@ -394,6 +397,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  user-select: auto;
   animation: bindConfigSectionIn 0.24s ease-out both;
 }
 
@@ -416,6 +420,7 @@
 .bind-config-animated-height {
   overflow: hidden;
   transition: height 0.22s ease;
+  user-select: auto;
 }
 
 .bind-config-key-height {
@@ -475,10 +480,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  user-select: auto;
 }
 
-.bind-config-action,
-.bind-config-action * {
+.bind-config-action-copy,
+.bind-config-action-copy * {
   user-select: auto;
 }
 
@@ -503,10 +509,6 @@
   transform: scale(0.985);
 }
 
-.bind-config-action.drag-over {
-  background: #222228;
-}
-
 .bind-config-drag-handle {
   width: 24px;
   flex-shrink: 0;
@@ -517,7 +519,12 @@
   cursor: grab;
 }
 
-.bind-config-action:active .bind-config-drag-handle {
+.bind-config-action:active .bind-config-drag-handle,
+.bind-config-action.dragging .bind-config-drag-handle {
+  cursor: grabbing;
+}
+
+body:has(.bind-config-action.dragging) {
   cursor: grabbing;
 }
 
