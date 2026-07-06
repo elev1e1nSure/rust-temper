@@ -1,0 +1,11 @@
+interval = 20
+stabilize = 10
+max_delays = 5
+model = 'deepseek/deepseek-v4-flash'
+strategy = 'standard'
+preset = 'aggressive'
+include_context = true
+context_budget = 32000
+recent_commits = 10
+session_id = ''
+delays_enabled = true
