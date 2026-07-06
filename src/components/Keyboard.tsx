@@ -9,17 +9,23 @@ import {
 interface KeyboardProps {
   /** rustKeys forming the current key combination */
   selectedKeys: string[];
+  exitingKeys?: Set<string>;
   onKeyClick: (rustKey: string) => void;
 }
 
-export function Keyboard({ selectedKeys, onKeyClick }: KeyboardProps) {
+export function Keyboard({
+  selectedKeys,
+  exitingKeys,
+  onKeyClick,
+}: KeyboardProps) {
   const renderKey = (key: KeyDef, fill = false) => {
     const bindable = Boolean(key.rustKey);
     const selected = bindable && selectedKeys.includes(key.rustKey!);
+    const exiting = bindable && exitingKeys?.has(key.rustKey!);
     return (
       <button
         type="button"
-        className={`kb-key${selected ? " selected" : ""}${bindable ? "" : " kb-key-static"}${fill ? " kb-key-fill" : ""}`}
+        className={`kb-key${selected ? " selected" : ""}${exiting ? " exiting" : ""}${bindable ? "" : " kb-key-static"}${fill ? " kb-key-fill" : ""}`}
         disabled={!bindable}
         onClick={() => key.rustKey && onKeyClick(key.rustKey)}
       >

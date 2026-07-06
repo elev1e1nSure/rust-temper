@@ -144,7 +144,6 @@ function App() {
                 exitingBindIndex={bindEditor.exitingBindIndex}
                 keyConflicts={bindEditor.keyConflicts}
                 selectedKeys={bindEditor.selectedKeys}
-                setSelectedKeys={bindEditor.setSelectedKeys}
                 nameFor={bindEditor.nameFor}
                 updateBindCommand={bindEditor.updateBindCommand}
                 handleKeyboardKey={bindEditor.handleKeyboardKey}

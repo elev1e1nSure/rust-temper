@@ -33,7 +33,6 @@ interface BindsPageProps {
   exitingBindIndex: number | null;
   keyConflicts: Map<string, number>;
   selectedKeys: string[];
-  setSelectedKeys: (v: string[]) => void;
   nameFor: (command: string) => string;
   updateBindCommand: (idx: number, cmd: string) => void;
   handleKeyboardKey: (rustKey: string) => void;
@@ -48,6 +47,7 @@ interface CommandModalState {
 }
 
 type ActionMode = "toggle" | "hold";
+const KEY_EXIT_MS = 120;
 
 interface DraftAction {
   id: number;
@@ -102,7 +102,6 @@ export function BindsPage({
   exitingBindIndex,
   keyConflicts,
   selectedKeys,
-  setSelectedKeys,
   nameFor,
   updateBindCommand,
   handleKeyboardKey,
@@ -116,10 +115,18 @@ export function BindsPage({
   const [manualCustomCommand, setManualCustomCommand] = useState("");
   const [draftActions, setDraftActions] = useState<DraftAction[]>([]);
   const [draftKeys, setDraftKeys] = useState<string[]>([]);
+  const [exitingDraftKeys, setExitingDraftKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [exitingSelectedKeys, setExitingSelectedKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [draggedActionId, setDraggedActionId] = useState<number | null>(null);
   const [dragOverActionId, setDragOverActionId] = useState<number | null>(null);
   const nextDraftActionId = useRef(0);
   const draggedActionIdRef = useRef<number | null>(null);
+  const draftKeyRemovalTimers = useRef(new Map<string, number>());
+  const selectedKeyRemovalTimers = useRef(new Map<string, number>());
 
   const manualPresets = useMemo(() => {
     if (!commandModal) return [];
@@ -152,6 +159,11 @@ export function BindsPage({
     setManualCustomCommand("");
     setDraftActions([]);
     setDraftKeys([]);
+    setExitingDraftKeys(new Set());
+    for (const timer of draftKeyRemovalTimers.current.values()) {
+      window.clearTimeout(timer);
+    }
+    draftKeyRemovalTimers.current.clear();
     setDraggedActionId(null);
     setDragOverActionId(null);
     draggedActionIdRef.current = null;
@@ -218,12 +230,78 @@ export function BindsPage({
   };
 
   const toggleDraftKey = (rustKey: string) => {
-    setDraftKeys((keys) =>
-      keys.includes(rustKey)
-        ? keys.filter((key) => key !== rustKey)
-        : [...keys, rustKey],
-    );
+    const pendingRemoval = draftKeyRemovalTimers.current.get(rustKey);
+    if (pendingRemoval !== undefined) {
+      window.clearTimeout(pendingRemoval);
+      draftKeyRemovalTimers.current.delete(rustKey);
+      setExitingDraftKeys((keys) => {
+        const next = new Set(keys);
+        next.delete(rustKey);
+        return next;
+      });
+      return;
+    }
+
+    if (!draftKeys.includes(rustKey)) {
+      setDraftKeys((keys) => [...keys, rustKey]);
+      return;
+    }
+
+    setExitingDraftKeys((keys) => new Set(keys).add(rustKey));
+    const timer = window.setTimeout(() => {
+      setDraftKeys((keys) => keys.filter((key) => key !== rustKey));
+      setExitingDraftKeys((keys) => {
+        const next = new Set(keys);
+        next.delete(rustKey);
+        return next;
+      });
+      draftKeyRemovalTimers.current.delete(rustKey);
+    }, KEY_EXIT_MS);
+    draftKeyRemovalTimers.current.set(rustKey, timer);
   };
+
+  const toggleSelectedKey = (rustKey: string) => {
+    const pendingRemoval = selectedKeyRemovalTimers.current.get(rustKey);
+    if (pendingRemoval !== undefined) {
+      window.clearTimeout(pendingRemoval);
+      selectedKeyRemovalTimers.current.delete(rustKey);
+      setExitingSelectedKeys((keys) => {
+        const next = new Set(keys);
+        next.delete(rustKey);
+        return next;
+      });
+      return;
+    }
+
+    if (!selectedKeys.includes(rustKey)) {
+      handleKeyboardKey(rustKey);
+      return;
+    }
+
+    setExitingSelectedKeys((keys) => new Set(keys).add(rustKey));
+    const timer = window.setTimeout(() => {
+      handleKeyboardKey(rustKey);
+      setExitingSelectedKeys((keys) => {
+        const next = new Set(keys);
+        next.delete(rustKey);
+        return next;
+      });
+      selectedKeyRemovalTimers.current.delete(rustKey);
+    }, KEY_EXIT_MS);
+    selectedKeyRemovalTimers.current.set(rustKey, timer);
+  };
+
+  useEffect(
+    () => () => {
+      for (const timer of draftKeyRemovalTimers.current.values()) {
+        window.clearTimeout(timer);
+      }
+      for (const timer of selectedKeyRemovalTimers.current.values()) {
+        window.clearTimeout(timer);
+      }
+    },
+    [],
+  );
 
   const removeDraftAction = (id: number) => {
     setDraftActions((actions) => actions.filter((action) => action.id !== id));
@@ -280,10 +358,8 @@ export function BindsPage({
             <button
               key={k}
               type="button"
-              className="key-filter-chip"
-              onClick={() =>
-                setSelectedKeys(selectedKeys.filter((x) => x !== k))
-              }
+              className={`key-filter-chip ${exitingSelectedKeys.has(k) ? "exiting" : ""}`}
+              onClick={() => toggleSelectedKey(k)}
               title="Убрать клавишу из комбинации"
             >
               {keyDisplayName(k)}
@@ -318,47 +394,55 @@ export function BindsPage({
       </div>
 
       <div className="keyboard-panel">
-        <Keyboard selectedKeys={selectedKeys} onKeyClick={handleKeyboardKey} />
+        <Keyboard
+          selectedKeys={selectedKeys}
+          exitingKeys={exitingSelectedKeys}
+          onKeyClick={toggleSelectedKey}
+        />
       </div>
 
       <div className="binds-list-wrap">
-        {filteredBinds.map((bind, index) => {
-          const hasConflict =
-            bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-          return (
-            <div
-              className={`bind-row ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
-              key={`${bind.key}-${bind.command}-${index}`}
-              onAnimationEnd={() => {
-                if (exitingBindIndex === index) {
-                  confirmRemoveBind(index);
-                }
-                if (newBindIndex === index) {
-                  setNewBindIndex(null);
-                }
-              }}
-            >
-              <button
-                className="action-cell"
-                type="button"
-                onClick={() => openBindCommandModal(index, bind.command)}
-              >
-                {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                <ChevronIcon />
-              </button>
+        <AnimatedHeight className="binds-filter-height">
+          <div>
+            {filteredBinds.map((bind, index) => {
+              const hasConflict =
+                bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+              return (
+                <div
+                  className={`bind-row ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
+                  key={`${bind.key}-${bind.command}-${index}`}
+                  onAnimationEnd={() => {
+                    if (exitingBindIndex === index) {
+                      confirmRemoveBind(index);
+                    }
+                    if (newBindIndex === index) {
+                      setNewBindIndex(null);
+                    }
+                  }}
+                >
+                  <button
+                    className="action-cell"
+                    type="button"
+                    onClick={() => openBindCommandModal(index, bind.command)}
+                  >
+                    {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                    <ChevronIcon />
+                  </button>
 
-              <div
-                className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
-              >
-                {bind.key ? keyDisplayName(bind.key) : "—"}
-              </div>
+                  <div
+                    className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                  >
+                    {bind.key ? keyDisplayName(bind.key) : "—"}
+                  </div>
 
-              <div className="delete-btn" onClick={() => removeBind(index)}>
-                <TrashIcon />
-              </div>
-            </div>
-          );
-        })}
+                  <div className="delete-btn" onClick={() => removeBind(index)}>
+                    <TrashIcon />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AnimatedHeight>
       </div>
 
       {commandModal !== null &&
@@ -480,7 +564,7 @@ export function BindsPage({
                         {draftKeys.length > 0 ? (
                           draftKeys.map((key, index) => (
                             <span
-                              className="bind-config-key-group"
+                              className={`bind-config-key-group ${exitingDraftKeys.has(key) ? "exiting" : ""}`}
                               key={key}
                               style={{ animationDelay: `${index * 35}ms` }}
                             >
@@ -502,6 +586,7 @@ export function BindsPage({
                     <div className="bind-config-keyboard">
                       <Keyboard
                         selectedKeys={draftKeys}
+                        exitingKeys={exitingDraftKeys}
                         onKeyClick={toggleDraftKey}
                       />
                     </div>
