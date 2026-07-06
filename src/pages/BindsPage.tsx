@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import type { Bind, CommandPreset } from "../types";
+import type { CommandPreset, FilteredBind } from "../types";
 import {
   ChevronIcon,
   TrashIcon,
@@ -21,7 +21,7 @@ import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
 
 interface BindsPageProps {
-  filteredBinds: Bind[];
+  filteredBinds: FilteredBind[];
   commandPresets: CommandPreset[];
   search: string;
   setSearch: (v: string) => void;
@@ -402,18 +402,18 @@ export function BindsPage({
       </div>
 
       <div className="binds-list-wrap">
-        {filteredBinds.map((bind, index) => {
+        {filteredBinds.map(({ bind, sourceIndex }) => {
           const hasConflict =
             bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
           return (
             <div
-              className={`bind-row ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
-              key={`${bind.key}-${bind.command}-${index}`}
+              className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
+              key={`${bind.key}-${bind.command}-${sourceIndex}`}
               onAnimationEnd={() => {
-                if (exitingBindIndex === index) {
-                  confirmRemoveBind(index);
+                if (exitingBindIndex === sourceIndex) {
+                  confirmRemoveBind(sourceIndex);
                 }
-                if (newBindIndex === index) {
+                if (newBindIndex === sourceIndex) {
                   setNewBindIndex(null);
                 }
               }}
@@ -421,7 +421,7 @@ export function BindsPage({
               <button
                 className="action-cell"
                 type="button"
-                onClick={() => openBindCommandModal(index, bind.command)}
+                onClick={() => openBindCommandModal(sourceIndex, bind.command)}
               >
                 {bind.command ? nameFor(bind.command) : "Выберите действие"}
                 <ChevronIcon />
@@ -433,7 +433,10 @@ export function BindsPage({
                 {bind.key ? keyDisplayName(bind.key) : "—"}
               </div>
 
-              <div className="delete-btn" onClick={() => removeBind(index)}>
+              <div
+                className="delete-btn"
+                onClick={() => removeBind(sourceIndex)}
+              >
                 <TrashIcon />
               </div>
             </div>

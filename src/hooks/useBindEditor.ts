@@ -30,28 +30,30 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   const filteredBinds = useMemo(() => {
     const query = search.trim().toLowerCase();
     const selectedSet = new Set(selectedKeys);
-    return binds.filter((bind) => {
-      if (selectedKeys.length > 0) {
-        // Match the whole combination regardless of the order keys were pressed.
-        // Rust stores combos as "[a+b]"; a single key has no brackets.
-        const tokens = bind.key
-          .replace(/^\[|\]$/g, "")
-          .split("+")
-          .filter(Boolean);
-        if (
-          tokens.length !== selectedSet.size ||
-          !tokens.every((t) => selectedSet.has(t))
-        ) {
-          return false;
+    return binds
+      .map((bind, sourceIndex) => ({ bind, sourceIndex }))
+      .filter(({ bind }) => {
+        if (selectedKeys.length > 0) {
+          // Match the whole combination regardless of the order keys were pressed.
+          // Rust stores combos as "[a+b]"; a single key has no brackets.
+          const tokens = bind.key
+            .replace(/^\[|\]$/g, "")
+            .split("+")
+            .filter(Boolean);
+          if (
+            tokens.length !== selectedSet.size ||
+            !tokens.every((t) => selectedSet.has(t))
+          ) {
+            return false;
+          }
         }
-      }
-      if (!query) return true;
-      return (
-        bind.key.toLowerCase().includes(query) ||
-        nameFor(bind.command).toLowerCase().includes(query) ||
-        bind.command.toLowerCase().includes(query)
-      );
-    });
+        if (!query) return true;
+        return (
+          bind.key.toLowerCase().includes(query) ||
+          nameFor(bind.command).toLowerCase().includes(query) ||
+          bind.command.toLowerCase().includes(query)
+        );
+      });
   }, [binds, search, selectedKeys, presetByCommand]);
 
   const scrollListToTop = () => {

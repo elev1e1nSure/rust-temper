@@ -3,6 +3,11 @@ export interface Bind {
   command: string;
 }
 
+export interface FilteredBind {
+  bind: Bind;
+  sourceIndex: number;
+}
+
 export interface CommandPreset {
   name: string;
   command: string;
