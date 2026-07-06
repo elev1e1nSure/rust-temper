@@ -44,6 +44,8 @@ pub struct TweakDef {
     pub backend_keys: Vec<BackendKeyRule>,
     pub advanced_slider: Option<AdvancedSlider>,
     pub bind: Option<BindTweak>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier_values: Option<Vec<Vec<String>>>,
 }
 
 #[derive(Serialize)]
@@ -108,6 +110,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             ]),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "reduceCameraShake".to_string(),
@@ -123,6 +126,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             ]),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "accessibility.treemarkercolor".to_string(),
@@ -133,6 +137,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("accessibility.treemarkercolor", "2", "0"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "strobelight.forceoff".to_string(),
@@ -143,6 +148,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("strobelight.forceoff", "1", "False"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "inventory.quickcraftdelay".to_string(),
@@ -153,6 +159,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("inventory.quickcraftdelay", "0", "0.75"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "player.footik".to_string(),
@@ -163,6 +170,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("player.footik", "False", "True"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "hitnotify.notification_level".to_string(),
@@ -173,6 +181,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("hitnotify.notification_level", "2", "1"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "legs.enablelegs".to_string(),
@@ -183,6 +192,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("legs.enablelegs", "0", "1"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "client.bag_unclaim_duration".to_string(),
@@ -193,6 +203,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("client.bag_unclaim_duration", "0", "2"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "effects.maxgibdist".to_string(),
@@ -203,6 +214,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("effects.maxgibdist", "0", "150"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "sss.enabled".to_string(),
@@ -213,6 +225,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("sss.enabled", "0", "1"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "gametip.server_event_tips".to_string(),
@@ -223,6 +236,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("gametip.server_event_tips", "True", "False"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "input.holdtime".to_string(),
@@ -240,6 +254,7 @@ fn known_tweaks() -> Vec<TweakDef> {
                 value_format: Some("{value}s".to_string()),
             }),
             bind: None,
+            tier_values: None,
         },
         TweakDef {
             key: "console.erroroverlay".to_string(),
@@ -250,6 +265,33 @@ fn known_tweaks() -> Vec<TweakDef> {
             backend_keys: rule("console.erroroverlay", "0", "1"),
             advanced_slider: None,
             bind: None,
+            tier_values: None,
+        },
+        TweakDef {
+            key: "graphics.tree_quality".to_string(),
+            title: "Качество деревьев".to_string(),
+            description: "Детализация моделей деревьев и дальность их прорисовки. Заметно влияет на FPS в лесистой местности.".to_string(),
+            section: "graphics".to_string(),
+            badge: None,
+            backend_keys: group(&[
+                ("tree.meshes", "100", "100"),
+                ("tree.quality", "200", "100"),
+            ]),
+            advanced_slider: Some(AdvancedSlider {
+                min: 0.0,
+                max: 3.0,
+                step: 1.0,
+                default_value: 0.0,
+                label: "Уровень качества".to_string(),
+                value_format: None,
+            }),
+            bind: None,
+            tier_values: Some(vec![
+                vec!["10".to_string(), "30".to_string()],
+                vec!["50".to_string(), "100".to_string()],
+                vec!["100".to_string(), "150".to_string()],
+                vec!["100".to_string(), "200".to_string()],
+            ]),
         },
     ]
 }
@@ -310,7 +352,21 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Optio
             managed_states.insert(tweak.key.clone(), managed_tweak.is_some());
 
             if tweak.advanced_slider.is_some() {
-                if let Some(first) = tweak.backend_keys.first() {
+                if let Some(ref tiers) = tweak.tier_values {
+                    let tier_idx = tiers.iter().position(|tier| {
+                        tweak
+                            .backend_keys
+                            .iter()
+                            .enumerate()
+                            .all(|(i, bk)| {
+                                tier.get(i)
+                                    .map_or(true, |expected| parsed.get(&bk.key) == Some(expected))
+                            })
+                    });
+                    if let Some(idx) = tier_idx {
+                        raw_values.insert(tweak.key.clone(), idx.to_string());
+                    }
+                } else if let Some(first) = tweak.backend_keys.first() {
                     if let Some(value) = parsed.get(&first.key) {
                         raw_values.insert(tweak.key.clone(), value.clone());
                     }
@@ -454,6 +510,10 @@ pub fn set_tweak_slider(
         ));
     }
 
+    if let Some(tiers) = &tweak.tier_values {
+        return set_tiered_slider(&app, &path, &key, value, &tweak, tiers);
+    }
+
     let Some(bk) = tweak.backend_keys.first() else {
         return Err(format!("У твика {key} нет backend-ключа"));
     };
@@ -491,6 +551,73 @@ pub fn set_tweak_slider(
     }
 
     log::info!("Tweak slider updated: path={}, tweak={}", path, key);
+    Ok(())
+}
+
+fn set_tiered_slider(
+    app: &tauri::AppHandle,
+    path: &str,
+    key: &str,
+    value: f64,
+    tweak: &TweakDef,
+    tiers: &[Vec<String>],
+) -> Result<(), String> {
+    let tier_idx = value as usize;
+    let tier = tiers
+        .get(tier_idx)
+        .ok_or_else(|| format!("Индекс уровня {tier_idx} вне диапазона 0..{}", tiers.len()))?;
+
+    let cfg_path = Path::new(path);
+    let config_key = tweak_state::config_key(cfg_path)?;
+    let content = client_cfg::read(cfg_path)?;
+    let mut state = tweak_state::load(app)?;
+    let previous_state = state.clone();
+
+    {
+        let active_tweak = state
+            .configs
+            .get_mut(&config_key)
+            .and_then(|config| config.active_tweaks.get_mut(key))
+            .ok_or_else(|| format!("Твик {key} не включён"))?;
+
+        let mut applied_keys = Vec::new();
+        for (i, bk) in tweak.backend_keys.iter().enumerate() {
+            if let Some(tier_val) = tier.get(i) {
+                active_tweak
+                    .desired_values
+                    .insert(bk.key.clone(), tier_val.clone());
+                applied_keys.push(format!("{}={}", bk.key, tier_val));
+            }
+        }
+
+        log::info!(
+            "Updating tiered slider: path={}, tweak={}, tier={}, values=[{}]",
+            path,
+            key,
+            tier_idx,
+            applied_keys.join(", ")
+        );
+    }
+
+    tweak_state::save(app, &state)?;
+
+    let active_tweak = state
+        .configs
+        .get(&config_key)
+        .and_then(|config| config.active_tweaks.get(key))
+        .ok_or_else(|| format!("Твик {key} не включён"))?;
+
+    let changes: BTreeMap<String, Option<String>> = active_tweak
+        .desired_values
+        .iter()
+        .map(|(k, v)| (k.clone(), Some(v.clone())))
+        .collect();
+    let updated_content = client_cfg::apply_values(&content, &changes);
+    if let Err(error) = client_cfg::write_atomic(cfg_path, &updated_content) {
+        return Err(rollback_state(app, &previous_state, error));
+    }
+
+    log::info!("Tiered slider updated: path={}, tweak={}", path, key);
     Ok(())
 }
 
@@ -705,6 +832,20 @@ fn disable_tweak(
 }
 
 fn desired_values(tweak: &TweakDef) -> BTreeMap<String, String> {
+    if let Some(tiers) = &tweak.tier_values {
+        if let Some(tier) = tiers.first() {
+            return tweak
+                .backend_keys
+                .iter()
+                .enumerate()
+                .filter_map(|(i, bk)| {
+                    tier.get(i)
+                        .map(|val| (bk.key.clone(), val.clone()))
+                })
+                .collect();
+        }
+    }
+
     tweak
         .backend_keys
         .iter()

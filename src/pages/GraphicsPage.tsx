@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Mountain2Line, Refresh1Line } from "@mingcute/react";
+import { invoke } from "@tauri-apps/api/core";
 
 interface QualityRow {
   key: string;
@@ -35,7 +36,7 @@ const QUALITY_ROWS: QualityRow[] = [
     label: "Качество деревьев",
     description:
       "Детализация моделей деревьев и дальность их прорисовки. Заметно влияет на FPS в лесистой местности.",
-    tiers: ["Низкое", "Среднее", "Высокое"],
+    tiers: ["Очень низкое", "Низкое", "Среднее", "Высокое"],
   },
   {
     key: "water",
@@ -117,7 +118,7 @@ const QUICK_PRESETS: {
         shadows: 2,
         textures: 2,
         lighting: 1,
-        trees: 1,
+        trees: 2,
         water: 1,
         grass: 3,
         clouds: 1,
@@ -131,7 +132,7 @@ const QUICK_PRESETS: {
         shadows: 3,
         textures: 4,
         lighting: 2,
-        trees: 2,
+        trees: 3,
         water: 2,
         grass: 4,
         clouds: 2,
@@ -144,7 +145,13 @@ const QUICK_PRESETS: {
 const MIRRORS_DESCRIPTION =
   "Отключает отражения в зеркалах и стёклах. Может заметно повысить FPS в застроенных базах.";
 
-export function GraphicsPage() {
+const TREE_TWEAK_KEY = "graphics.tree_quality";
+
+interface GraphicsPageProps {
+  configPath: string;
+}
+
+export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
   const [mirrorsOff, setMirrorsOff] = useState(false);
   const [presetLabel, setPresetLabel] = useState("Пользовательский");
@@ -154,21 +161,59 @@ export function GraphicsPage() {
   const previewRow =
     QUALITY_ROWS.find((r) => r.key === previewKey) ?? QUALITY_ROWS[0];
 
-  const setRowValue = (key: string, value: number) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    setPresetLabel("Пользовательский");
-  };
+  const clientCfgPath = configPath.replace(/keys\.cfg$/i, "client.cfg");
+
+  const applyTreeQuality = useCallback(
+    async (tier: number) => {
+      try {
+        await invoke("toggle_tweak", {
+          path: clientCfgPath,
+          key: TREE_TWEAK_KEY,
+          enabled: true,
+          forceUnmanaged: false,
+          keysCfgPath: configPath,
+        });
+      } catch {
+        // Already enabled, ignore errors
+      }
+      try {
+        await invoke("set_tweak_slider", {
+          path: clientCfgPath,
+          key: TREE_TWEAK_KEY,
+          value: tier,
+        });
+      } catch (err) {
+        console.error("Не удалось применить качество деревьев:", err);
+      }
+    },
+    [clientCfgPath, configPath],
+  );
+
+  const setRowValue = useCallback(
+    (key: string, value: number) => {
+      setValues((prev) => ({ ...prev, [key]: value }));
+      setPresetLabel("Пользовательский");
+      if (key === "trees") {
+        void applyTreeQuality(value);
+      }
+    },
+    [applyTreeQuality],
+  );
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
     setMirrorsOff(preset.mirrorsOff);
     setPresetLabel(preset.label);
+    if (preset.values.trees !== undefined) {
+      void applyTreeQuality(preset.values.trees);
+    }
   };
 
   const resetToDefaults = () => {
     setValues(DEFAULT_VALUES);
     setMirrorsOff(false);
     setPresetLabel("Пользовательский");
+    void applyTreeQuality(DEFAULT_VALUES.trees);
   };
 
   return (
@@ -305,7 +350,7 @@ export function GraphicsPage() {
         </div>
         {applied && (
           <p className="status-message graphics-preview-status">
-            Пока не подключено к client.cfg — сохранение появится позже
+            Графические настройки применены
           </p>
         )}
       </div>

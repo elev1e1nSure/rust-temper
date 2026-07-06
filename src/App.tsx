@@ -158,7 +158,7 @@ function App() {
             <TweaksPage configPath={configFile.configPath} />
           )}
 
-          {activePage === "graphics" && <GraphicsPage />}
+          {activePage === "graphics" && <GraphicsPage configPath={configFile.configPath} />}
 
           {activePage === "settings" && (
             <SettingsPage
