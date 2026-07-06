@@ -58,8 +58,7 @@ export function BindsPage({
   filterKind,
   setFilterKind,
 }: BindsPageProps) {
-  const isAnyDropdownOpen =
-    openDropdownIndex !== null || closingDropdownIndex !== null;
+  const isAnyDropdownOpen = openDropdownIndex !== null;
 
   return (
     <div className="page-container binds-page">
