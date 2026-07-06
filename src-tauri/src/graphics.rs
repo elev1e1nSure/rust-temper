@@ -1,477 +1,353 @@
+//! Graphics quality settings for client.cfg.
+//!
+//! Every setting is a discrete slider whose position ("tier") maps to a bundle
+//! of raw config keys. Adding a new setting is data-only: declare a `Quality`
+//! descriptor below, expose two thin command wrappers, and register them in
+//! `lib.rs`. The read/write mechanics are shared and never duplicated per key.
+
 use crate::client_cfg;
 use std::collections::BTreeMap;
 use std::path::Path;
 
+/// One tier = the set of `(config key, value)` pairs written together for that
+/// slider position.
 type TierConfig = &'static [(&'static str, &'static str)];
 
-const SHADOW_TIERS: &[TierConfig] = &[
-    &[
-        ("graphics.shadowlights", "1"),
-        ("graphicssettings.shadowqualitypreset", "0"),
-    ],
-    &[
-        ("graphics.shadowlights", "1"),
-        ("graphicssettings.shadowqualitypreset", "0"),
-    ],
-    &[
-        ("graphics.shadowlights", "1"),
-        ("graphicssettings.shadowqualitypreset", "2"),
-    ],
-    &[
-        ("graphics.shadowlights", "1"),
-        ("graphicssettings.shadowqualitypreset", "2"),
-    ],
-];
+/// How to reverse-map an on-disk config back to a tier index for the UI.
+enum ReadSpec {
+    /// Look up a single key and translate its value to a tier index.
+    Lookup {
+        key: &'static str,
+        /// Ordered `(config value, tier)` pairs. First match wins.
+        map: &'static [(&'static str, u32)],
+        /// Tier used when the key is missing or holds an unexpected value.
+        default: u32,
+    },
+    /// Bespoke detection for settings a single key can't describe.
+    Custom(fn(&BTreeMap<String, String>) -> u32),
+}
 
-#[tauri::command]
-pub fn apply_shadow_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
+/// A graphics quality setting: the tiers it can write and how to read them back.
+struct Quality {
+    /// Genitive name spliced into range-error messages, e.g. `"качества теней"`.
+    label: &'static str,
+    /// Stable identifier for log lines.
+    log_name: &'static str,
+    tiers: &'static [TierConfig],
+    read: ReadSpec,
+}
 
-    let config = SHADOW_TIERS
-        .get(tier)
-        .ok_or_else(|| {
+impl Quality {
+    /// Write the config bundle for `tier` into the file at `path`.
+    fn apply(&self, path: &str, tier: u32) -> Result<(), String> {
+        let config = self.tiers.get(tier as usize).ok_or_else(|| {
             format!(
-                "Недопустимый уровень качества теней: {tier}. Допустимый диапазон: 0..{}",
-                SHADOW_TIERS.len().saturating_sub(1)
+                "Недопустимый уровень {}: {tier}. Допустимый диапазон: 0..{}",
+                self.label,
+                self.tiers.len().saturating_sub(1)
             )
         })?;
 
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
+        let cfg_path = Path::new(path);
+        let content = client_cfg::read(cfg_path)?;
 
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
+        let changes: BTreeMap<String, Option<String>> = config
+            .iter()
+            .map(|(key, value)| (key.to_string(), Some(value.to_string())))
+            .collect();
 
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
+        let updated = client_cfg::apply_values(&content, &changes);
+        client_cfg::write_atomic(cfg_path, &updated)?;
 
-    log::info!("Shadow quality applied: path={path}, tier={tier}");
-    Ok(())
+        log::info!("{} applied: path={path}, tier={tier}", self.log_name);
+        Ok(())
+    }
+
+    /// Infer the current tier from the config file at `path`.
+    fn read(&self, path: &str) -> Result<u32, String> {
+        let content = client_cfg::read(Path::new(path))?;
+        let parsed = client_cfg::parse(&content);
+
+        let tier = match &self.read {
+            ReadSpec::Lookup { key, map, default } => match parsed.get(*key) {
+                None => *default,
+                Some(value) => map
+                    .iter()
+                    .find(|(candidate, _)| candidate == value)
+                    .map(|(_, tier)| *tier)
+                    .unwrap_or_else(|| {
+                        log::warn!(
+                            "Unexpected {key} value: {value:?}, falling back to tier {default}"
+                        );
+                        *default
+                    }),
+            },
+            ReadSpec::Custom(detect) => detect(&parsed),
+        };
+
+        Ok(tier)
+    }
+}
+
+// --- Setting descriptors -----------------------------------------------------
+
+const SHADOWS: Quality = Quality {
+    label: "качества теней",
+    log_name: "Shadow quality",
+    tiers: &[
+        &[
+            ("graphics.shadowlights", "1"),
+            ("graphicssettings.shadowqualitypreset", "0"),
+        ],
+        &[
+            ("graphics.shadowlights", "1"),
+            ("graphicssettings.shadowqualitypreset", "0"),
+        ],
+        &[
+            ("graphics.shadowlights", "1"),
+            ("graphicssettings.shadowqualitypreset", "2"),
+        ],
+        &[
+            ("graphics.shadowlights", "1"),
+            ("graphicssettings.shadowqualitypreset", "2"),
+        ],
+    ],
+    // Tiers 0/1 and 2/3 collapse to the same preset on disk, so reads round to 1 or 2.
+    read: ReadSpec::Lookup {
+        key: "graphicssettings.shadowqualitypreset",
+        map: &[("2", 2), ("0", 1)],
+        default: 1,
+    },
+};
+
+const TEXTURES: Quality = Quality {
+    label: "качества текстур",
+    log_name: "Texture quality",
+    tiers: &[
+        &[
+            ("graphicssettings.globaltexturemipmaplimit", "0"),
+            ("graphics.af", "8"),
+            ("graphics.lodbias", "1"),
+            ("graphics.shaderlod", "5"),
+            ("graphicssettings.anisotropicfiltering", "0"),
+            ("mesh.quality", "150"),
+            ("terrain.quality", "100"),
+        ],
+        &[
+            ("graphicssettings.globaltexturemipmaplimit", "1"),
+            ("graphics.af", "8"),
+            ("graphics.lodbias", "1"),
+            ("graphics.shaderlod", "3"),
+            ("graphicssettings.anisotropicfiltering", "1"),
+            ("mesh.quality", "150"),
+            ("terrain.quality", "100"),
+        ],
+        &[
+            ("graphicssettings.globaltexturemipmaplimit", "2"),
+            ("graphics.af", "2"),
+            ("graphics.lodbias", "0.6"),
+            ("graphics.shaderlod", "2"),
+            ("graphicssettings.anisotropicfiltering", "1"),
+            ("mesh.quality", "30"),
+            ("terrain.quality", "100"),
+        ],
+        &[
+            ("graphicssettings.globaltexturemipmaplimit", "3"),
+            ("graphics.af", "1"),
+            ("graphics.lodbias", "0.5"),
+            ("graphics.shaderlod", "1"),
+            ("graphicssettings.anisotropicfiltering", "0"),
+            ("mesh.quality", "0"),
+            ("terrain.quality", "100"),
+        ],
+        &[
+            ("graphicssettings.globaltexturemipmaplimit", "3"),
+            ("graphics.af", "1"),
+            ("graphics.lodbias", "0.5"),
+            ("graphics.shaderlod", "1"),
+            ("graphicssettings.anisotropicfiltering", "0"),
+            ("mesh.quality", "0"),
+            ("terrain.quality", "100"),
+        ],
+    ],
+    read: ReadSpec::Lookup {
+        key: "graphicssettings.globaltexturemipmaplimit",
+        map: &[("0", 0), ("1", 1), ("2", 2), ("3", 3)],
+        default: 0,
+    },
+};
+
+const WATER: Quality = Quality {
+    label: "качества воды",
+    log_name: "Water quality",
+    tiers: &[
+        &[("water.quality", "0"), ("water.reflections", "0")],
+        &[("water.quality", "0"), ("water.reflections", "1")],
+        &[("water.quality", "0"), ("water.reflections", "2")],
+    ],
+    read: ReadSpec::Lookup {
+        key: "water.reflections",
+        map: &[("0", 0), ("1", 1), ("2", 2)],
+        default: 0,
+    },
+};
+
+const LIGHTING: Quality = Quality {
+    label: "качества освещения",
+    log_name: "Lighting quality",
+    tiers: &[
+        &[
+            ("graphics.contactshadows", "False"),
+            ("effects.ao", "False"),
+        ],
+        &[("graphics.contactshadows", "False"), ("effects.ao", "True")],
+        &[("graphics.contactshadows", "True"), ("effects.ao", "True")],
+    ],
+    read: ReadSpec::Custom(read_lighting_tier),
+};
+
+/// Lighting tier is defined by two independent flags, so it needs a joint check.
+fn read_lighting_tier(parsed: &BTreeMap<String, String>) -> u32 {
+    let ao = parsed.get("effects.ao").map(String::as_str).unwrap_or("");
+    let contact = parsed
+        .get("graphics.contactshadows")
+        .map(String::as_str)
+        .unwrap_or("");
+
+    match (ao, contact) {
+        ("True", "True") => 2,
+        ("True", _) => 1,
+        _ => 0,
+    }
+}
+
+const GRASS: Quality = Quality {
+    label: "качества травы",
+    log_name: "Grass quality",
+    tiers: &[
+        &[
+            ("grass.displacement", "True"),
+            ("grass.quality", "0"),
+            ("graphics.grassshadows", "False"),
+        ],
+        &[
+            ("grass.displacement", "True"),
+            ("grass.quality", "50"),
+            ("graphics.grassshadows", "False"),
+        ],
+        &[
+            ("grass.displacement", "True"),
+            ("grass.quality", "100"),
+            ("graphics.grassshadows", "True"),
+        ],
+    ],
+    read: ReadSpec::Lookup {
+        key: "grass.quality",
+        map: &[("0", 0), ("50", 1), ("100", 2)],
+        default: 2,
+    },
+};
+
+const CLOUDS: Quality = Quality {
+    label: "качества облаков",
+    log_name: "Clouds quality",
+    tiers: &[
+        &[("graphics.volumetric_clouds", "0")],
+        &[("graphics.volumetric_clouds", "1")],
+        &[("graphics.volumetric_clouds", "4")],
+        &[("graphics.volumetric_clouds", "4")],
+    ],
+    read: ReadSpec::Lookup {
+        key: "graphics.volumetric_clouds",
+        map: &[("0", 0), ("1", 1), ("4", 2)],
+        default: 0,
+    },
+};
+
+const SMOOTHING: Quality = Quality {
+    label: "сглаживания",
+    log_name: "Smoothing quality",
+    tiers: &[
+        &[("effects.sharpen", "True"), ("effects.antialiasing", "1")],
+        &[("effects.sharpen", "True"), ("effects.antialiasing", "2")],
+        &[("effects.sharpen", "True"), ("effects.antialiasing", "3")],
+        &[("effects.sharpen", "True"), ("effects.antialiasing", "3")],
+    ],
+    read: ReadSpec::Lookup {
+        key: "effects.antialiasing",
+        map: &[("1", 0), ("2", 1), ("3", 2)],
+        default: 0,
+    },
+};
+
+// --- Command wrappers --------------------------------------------------------
+
+#[tauri::command]
+pub fn apply_shadow_quality(path: String, tier: u32) -> Result<(), String> {
+    SHADOWS.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_shadow_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    match parsed.get("graphicssettings.shadowqualitypreset").map(String::as_str) {
-        Some("2") => Ok(2),
-        Some("0") | None => Ok(1),
-        Some(other) => {
-            log::warn!(
-                "Unexpected shadowqualitypreset value: {other:?}, falling back to tier 1"
-            );
-            Ok(1)
-        }
-    }
+    SHADOWS.read(&path)
 }
-
-const TEXTURE_TIERS: &[TierConfig] = &[
-    &[
-        ("graphicssettings.globaltexturemipmaplimit", "0"),
-        ("graphics.af", "8"),
-        ("graphics.lodbias", "1"),
-        ("graphics.shaderlod", "5"),
-        ("graphicssettings.anisotropicfiltering", "0"),
-        ("mesh.quality", "150"),
-        ("terrain.quality", "100"),
-    ],
-    &[
-        ("graphicssettings.globaltexturemipmaplimit", "1"),
-        ("graphics.af", "8"),
-        ("graphics.lodbias", "1"),
-        ("graphics.shaderlod", "3"),
-        ("graphicssettings.anisotropicfiltering", "1"),
-        ("mesh.quality", "150"),
-        ("terrain.quality", "100"),
-    ],
-    &[
-        ("graphicssettings.globaltexturemipmaplimit", "2"),
-        ("graphics.af", "2"),
-        ("graphics.lodbias", "0.6"),
-        ("graphics.shaderlod", "2"),
-        ("graphicssettings.anisotropicfiltering", "1"),
-        ("mesh.quality", "30"),
-        ("terrain.quality", "100"),
-    ],
-    &[
-        ("graphicssettings.globaltexturemipmaplimit", "3"),
-        ("graphics.af", "1"),
-        ("graphics.lodbias", "0.5"),
-        ("graphics.shaderlod", "1"),
-        ("graphicssettings.anisotropicfiltering", "0"),
-        ("mesh.quality", "0"),
-        ("terrain.quality", "100"),
-    ],
-    &[
-        ("graphicssettings.globaltexturemipmaplimit", "3"),
-        ("graphics.af", "1"),
-        ("graphics.lodbias", "0.5"),
-        ("graphics.shaderlod", "1"),
-        ("graphicssettings.anisotropicfiltering", "0"),
-        ("mesh.quality", "0"),
-        ("terrain.quality", "100"),
-    ],
-];
 
 #[tauri::command]
 pub fn apply_texture_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
-
-    let config = TEXTURE_TIERS
-        .get(tier)
-        .ok_or_else(|| {
-            format!(
-                "Недопустимый уровень качества текстур: {tier}. Допустимый диапазон: 0..{}",
-                TEXTURE_TIERS.len().saturating_sub(1)
-            )
-        })?;
-
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
-
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
-
-    log::info!("Texture quality applied: path={path}, tier={tier}");
-    Ok(())
+    TEXTURES.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_texture_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    match parsed.get("graphicssettings.globaltexturemipmaplimit").map(String::as_str) {
-        Some("0") => Ok(0),
-        Some("1") => Ok(1),
-        Some("2") => Ok(2),
-        Some("3") => Ok(3),
-        None => Ok(0),
-        Some(other) => {
-            log::warn!(
-                "Unexpected globaltexturemipmaplimit value: {other:?}, falling back to tier 0"
-            );
-            Ok(0)
-        }
-    }
+    TEXTURES.read(&path)
 }
-
-const WATER_TIERS: &[TierConfig] = &[
-    &[
-        ("water.quality", "0"),
-        ("water.reflections", "0"),
-    ],
-    &[
-        ("water.quality", "0"),
-        ("water.reflections", "1"),
-    ],
-    &[
-        ("water.quality", "0"),
-        ("water.reflections", "2"),
-    ],
-];
 
 #[tauri::command]
 pub fn apply_water_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
-
-    let config = WATER_TIERS
-        .get(tier)
-        .ok_or_else(|| {
-            format!(
-                "Недопустимый уровень качества воды: {tier}. Допустимый диапазон: 0..{}",
-                WATER_TIERS.len().saturating_sub(1)
-            )
-        })?;
-
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
-
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
-
-    log::info!("Water quality applied: path={path}, tier={tier}");
-    Ok(())
+    WATER.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_water_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    match parsed.get("water.reflections").map(String::as_str) {
-        Some("0") => Ok(0),
-        Some("1") => Ok(1),
-        Some("2") => Ok(2),
-        None => Ok(0),
-        Some(other) => {
-            log::warn!(
-                "Unexpected water.reflections value: {other:?}, falling back to tier 0"
-            );
-            Ok(0)
-        }
-    }
+    WATER.read(&path)
 }
-
-const LIGHTING_TIERS: &[TierConfig] = &[
-    &[
-        ("graphics.contactshadows", "False"),
-        ("effects.ao", "False"),
-    ],
-    &[
-        ("graphics.contactshadows", "False"),
-        ("effects.ao", "True"),
-    ],
-    &[
-        ("graphics.contactshadows", "True"),
-        ("effects.ao", "True"),
-    ],
-];
 
 #[tauri::command]
 pub fn apply_lighting_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
-
-    let config = LIGHTING_TIERS
-        .get(tier)
-        .ok_or_else(|| {
-            format!(
-                "Недопустимый уровень качества освещения: {tier}. Допустимый диапазон: 0..{}",
-                LIGHTING_TIERS.len().saturating_sub(1)
-            )
-        })?;
-
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
-
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
-
-    log::info!("Lighting quality applied: path={path}, tier={tier}");
-    Ok(())
+    LIGHTING.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_lighting_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    let ao = parsed.get("effects.ao").map(String::as_str).unwrap_or("");
-    let contact = parsed.get("graphics.contactshadows").map(String::as_str).unwrap_or("");
-
-    match (ao, contact) {
-        ("True", "True") => Ok(2),
-        ("True", _) => Ok(1),
-        _ => Ok(0),
-    }
+    LIGHTING.read(&path)
 }
-
-const GRASS_TIERS: &[TierConfig] = &[
-    &[
-        ("grass.displacement", "True"),
-        ("grass.quality", "0"),
-        ("graphics.grassshadows", "False"),
-    ],
-    &[
-        ("grass.displacement", "True"),
-        ("grass.quality", "50"),
-        ("graphics.grassshadows", "False"),
-    ],
-    &[
-        ("grass.displacement", "True"),
-        ("grass.quality", "100"),
-        ("graphics.grassshadows", "True"),
-    ],
-];
 
 #[tauri::command]
 pub fn apply_grass_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
-
-    let config = GRASS_TIERS
-        .get(tier)
-        .ok_or_else(|| {
-            format!(
-                "Недопустимый уровень качества травы: {tier}. Допустимый диапазон: 0..{}",
-                GRASS_TIERS.len().saturating_sub(1)
-            )
-        })?;
-
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
-
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
-
-    log::info!("Grass quality applied: path={path}, tier={tier}");
-    Ok(())
+    GRASS.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_grass_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    match parsed.get("grass.quality").map(String::as_str) {
-        Some("0") => Ok(0),
-        Some("50") => Ok(1),
-        Some("100") => Ok(2),
-        None => Ok(2),
-        Some(other) => {
-            log::warn!(
-                "Unexpected grass.quality value: {other:?}, falling back to tier 2"
-            );
-            Ok(2)
-        }
-    }
+    GRASS.read(&path)
 }
-
-const CLOUDS_TIERS: &[TierConfig] = &[
-    &[("graphics.volumetric_clouds", "0")],
-    &[("graphics.volumetric_clouds", "1")],
-    &[("graphics.volumetric_clouds", "4")],
-    &[("graphics.volumetric_clouds", "4")],
-];
 
 #[tauri::command]
 pub fn apply_clouds_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
-
-    let config = CLOUDS_TIERS
-        .get(tier)
-        .ok_or_else(|| {
-            format!(
-                "Недопустимый уровень качества облаков: {tier}. Допустимый диапазон: 0..{}",
-                CLOUDS_TIERS.len().saturating_sub(1)
-            )
-        })?;
-
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
-
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
-
-    log::info!("Clouds quality applied: path={path}, tier={tier}");
-    Ok(())
+    CLOUDS.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_clouds_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    match parsed.get("graphics.volumetric_clouds").map(String::as_str) {
-        Some("0") => Ok(0),
-        Some("1") => Ok(1),
-        Some("4") => Ok(2),
-        None => Ok(0),
-        Some(other) => {
-            log::warn!(
-                "Unexpected graphics.volumetric_clouds value: {other:?}, falling back to tier 0"
-            );
-            Ok(0)
-        }
-    }
+    CLOUDS.read(&path)
 }
-
-const SMOOTHING_TIERS: &[TierConfig] = &[
-    &[
-        ("effects.sharpen", "True"),
-        ("effects.antialiasing", "1"),
-    ],
-    &[
-        ("effects.sharpen", "True"),
-        ("effects.antialiasing", "2"),
-    ],
-    &[
-        ("effects.sharpen", "True"),
-        ("effects.antialiasing", "3"),
-    ],
-    &[
-        ("effects.sharpen", "True"),
-        ("effects.antialiasing", "3"),
-    ],
-];
 
 #[tauri::command]
 pub fn apply_smoothing_quality(path: String, tier: u32) -> Result<(), String> {
-    let tier = tier as usize;
-
-    let config = SMOOTHING_TIERS
-        .get(tier)
-        .ok_or_else(|| {
-            format!(
-                "Недопустимый уровень сглаживания: {tier}. Допустимый диапазон: 0..{}",
-                SMOOTHING_TIERS.len().saturating_sub(1)
-            )
-        })?;
-
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-
-    let changes: BTreeMap<String, Option<String>> = config
-        .iter()
-        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-        .collect();
-
-    let updated = client_cfg::apply_values(&content, &changes);
-    client_cfg::write_atomic(cfg_path, &updated)?;
-
-    log::info!("Smoothing quality applied: path={path}, tier={tier}");
-    Ok(())
+    SMOOTHING.apply(&path, tier)
 }
 
 #[tauri::command]
 pub fn read_smoothing_quality(path: String) -> Result<u32, String> {
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
-    let parsed = client_cfg::parse(&content);
-
-    match parsed.get("effects.antialiasing").map(String::as_str) {
-        Some("1") => Ok(0),
-        Some("2") => Ok(1),
-        Some("3") => Ok(2),
-        None => Ok(0),
-        Some(other) => {
-            log::warn!(
-                "Unexpected effects.antialiasing value: {other:?}, falling back to tier 0"
-            );
-            Ok(0)
-        }
-    }
+    SMOOTHING.read(&path)
 }

@@ -7,6 +7,10 @@ interface QualityRow {
   label: string;
   description: string;
   tiers: string[];
+  /** Tauri command that reads the current tier from client.cfg on mount. */
+  readCmd: string;
+  /** Tauri command that writes the selected tier back to client.cfg. */
+  applyCmd: string;
 }
 
 const QUALITY_ROWS: QualityRow[] = [
@@ -16,6 +20,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Влияет на резкость и дальность прорисовки теней. Сильнее всего сказывается на FPS в помещениях и лесах.",
     tiers: ["Отключены", "Производительность", "Баланс", "Качество"],
+    readCmd: "read_shadow_quality",
+    applyCmd: "apply_shadow_quality",
   },
   {
     key: "textures",
@@ -23,6 +29,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Разрешение текстур построек, предметов и ландшафта. Требует больше видеопамяти на высоких значениях.",
     tiers: ["Картошка", "Низкое", "Среднее", "Высокое", "Ультра"],
+    readCmd: "read_texture_quality",
+    applyCmd: "apply_texture_quality",
   },
   {
     key: "lighting",
@@ -30,6 +38,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Количество источников света и качество их обсчёта в кадре. Слабо влияет на FPS.",
     tiers: ["Низкое", "Среднее", "Высокое"],
+    readCmd: "read_lighting_quality",
+    applyCmd: "apply_lighting_quality",
   },
   {
     key: "water",
@@ -37,6 +47,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Отражения на поверхности воды. Дают заметный прирост FPS у океана, рек и нефтевышек при отключении.",
     tiers: ["Отключены", "Низкие", "Высокие"],
+    readCmd: "read_water_quality",
+    applyCmd: "apply_water_quality",
   },
   {
     key: "grass",
@@ -44,6 +56,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Чем выше качество, тем сложнее стрелять. Трава оказывает минимальное влияние на FPS, при выборе руководствуйтесь своим стилем игры.",
     tiers: ["Отключено", "Баланс", "Качество"],
+    readCmd: "read_grass_quality",
+    applyCmd: "apply_grass_quality",
   },
   {
     key: "clouds",
@@ -51,6 +65,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Детализация и плотность облаков. Минимальное влияние на производительность.",
     tiers: ["Минимальное", "Низкое", "Среднее", "Высокое"],
+    readCmd: "read_clouds_quality",
+    applyCmd: "apply_clouds_quality",
   },
   {
     key: "smoothing",
@@ -58,6 +74,8 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Сглаживает зубчатые края объектов. TAA даёт лучшую картинку, но стоит больше FPS, чем FXAA.",
     tiers: ["Отключено", "FXAA", "SMAA", "TAA"],
+    readCmd: "read_smoothing_quality",
+    applyCmd: "apply_smoothing_quality",
   },
 ];
 
@@ -65,9 +83,9 @@ const DEFAULT_VALUES: Record<string, number> = {
   shadows: 1,
   textures: 0,
   lighting: 0,
-        water: 0,
-        grass: 1,
-        clouds: 0,
+  water: 0,
+  grass: 1,
+  clouds: 0,
   smoothing: 0,
 };
 
@@ -75,55 +93,55 @@ const QUICK_PRESETS: {
   label: string;
   values: Record<string, number>;
 }[] = [
-    {
-      label: "Производительность",
-      values: {
-        shadows: 0,
-        textures: 0,
-        lighting: 0,
-        water: 0,
-        grass: 0,
-        clouds: 0,
-        smoothing: 0,
-      },
+  {
+    label: "Производительность",
+    values: {
+      shadows: 0,
+      textures: 0,
+      lighting: 0,
+      water: 0,
+      grass: 0,
+      clouds: 0,
+      smoothing: 0,
     },
-    {
-      label: "Комбат",
-      values: {
-        shadows: 1,
-        textures: 0,
-        lighting: 0,
-        water: 0,
-        grass: 1,
-        clouds: 0,
-        smoothing: 0,
-      },
+  },
+  {
+    label: "Комбат",
+    values: {
+      shadows: 1,
+      textures: 0,
+      lighting: 0,
+      water: 0,
+      grass: 1,
+      clouds: 0,
+      smoothing: 0,
     },
-    {
-      label: "Баланс",
-      values: {
-        shadows: 2,
-        textures: 2,
-        lighting: 1,
-        water: 1,
-        grass: 1,
-        clouds: 1,
-        smoothing: 1,
-      },
+  },
+  {
+    label: "Баланс",
+    values: {
+      shadows: 2,
+      textures: 2,
+      lighting: 1,
+      water: 1,
+      grass: 1,
+      clouds: 1,
+      smoothing: 1,
     },
-    {
-      label: "Графика",
-      values: {
-        shadows: 3,
-        textures: 0,
-        lighting: 2,
-        water: 2,
-        grass: 2,
-        clouds: 2,
-        smoothing: 2,
-      },
+  },
+  {
+    label: "Графика",
+    values: {
+      shadows: 3,
+      textures: 0,
+      lighting: 2,
+      water: 2,
+      grass: 2,
+      clouds: 2,
+      smoothing: 2,
     },
-  ];
+  },
+];
 
 function clientCfgPathFor(keysCfgPath: string) {
   return keysCfgPath.replace(/keys\.cfg$/i, "client.cfg");
@@ -146,55 +164,15 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
 
   useEffect(() => {
     if (!clientCfgPath) return;
-    invoke<number>("read_shadow_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, shadows: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать качество теней:", err);
-      });
-    invoke<number>("read_texture_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, textures: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать качество текстур:", err);
-      });
-    invoke<number>("read_water_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, water: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать качество воды:", err);
-      });
-    invoke<number>("read_lighting_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, lighting: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать качество освещения:", err);
-      });
-    invoke<number>("read_grass_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, grass: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать качество травы:", err);
-      });
-    invoke<number>("read_clouds_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, clouds: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать качество облаков:", err);
-      });
-    invoke<number>("read_smoothing_quality", { path: clientCfgPath })
-      .then((tier) => {
-        setValues((prev) => ({ ...prev, smoothing: tier }));
-      })
-      .catch((err) => {
-        console.error("Не удалось прочитать сглаживание:", err);
-      });
+    for (const row of QUALITY_ROWS) {
+      invoke<number>(row.readCmd, { path: clientCfgPath })
+        .then((tier) => {
+          setValues((prev) => ({ ...prev, [row.key]: tier }));
+        })
+        .catch((err) => {
+          console.error(`Не удалось прочитать «${row.label}»:`, err);
+        });
+    }
   }, [clientCfgPath]);
 
   const previewRow =
@@ -228,34 +206,12 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     setApplyStatus(undefined);
 
     try {
-      await invoke("apply_shadow_quality", {
-        path: clientCfgPath,
-        tier: values.shadows,
-      });
-      await invoke("apply_texture_quality", {
-        path: clientCfgPath,
-        tier: values.textures,
-      });
-      await invoke("apply_water_quality", {
-        path: clientCfgPath,
-        tier: values.water,
-      });
-      await invoke("apply_lighting_quality", {
-        path: clientCfgPath,
-        tier: values.lighting,
-      });
-      await invoke("apply_grass_quality", {
-        path: clientCfgPath,
-        tier: values.grass,
-      });
-      await invoke("apply_clouds_quality", {
-        path: clientCfgPath,
-        tier: values.clouds,
-      });
-      await invoke("apply_smoothing_quality", {
-        path: clientCfgPath,
-        tier: values.smoothing,
-      });
+      for (const row of QUALITY_ROWS) {
+        await invoke(row.applyCmd, {
+          path: clientCfgPath,
+          tier: values[row.key] ?? 0,
+        });
+      }
       setApplyStatus({
         type: "success",
         message: "Настройки графики применены",
@@ -268,7 +224,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.clouds, values.smoothing]);
+  }, [clientCfgPath, values]);
 
   return (
     <div className="graphics-container page-container">
@@ -343,7 +299,6 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
               </div>
             );
           })}
-
         </div>
       </div>
 
