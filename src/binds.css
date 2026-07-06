@@ -814,33 +814,20 @@
 .kb-key.selected {
   background: rgba(59, 130, 246, 0.3);
   color: var(--text);
-  animation: kbKeySelect 0.14s ease-out;
 }
 
 .kb-key.selected.exiting {
   animation: kbKeyDeselect 0.12s ease-in forwards;
 }
 
-@keyframes kbKeySelect {
-  from {
-    transform: scale(0.94);
-  }
-
-  to {
-    transform: scale(1);
-  }
-}
-
 @keyframes kbKeyDeselect {
   from {
     background: rgba(59, 130, 246, 0.3);
-    transform: scale(1);
   }
 
   to {
     background: var(--key-bg);
     color: var(--text-dim);
-    transform: scale(0.94);
   }
 }
 
