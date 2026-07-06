@@ -400,7 +400,8 @@ body {
   flex: 1;
 }
 
-.dropdown-backdrop {
+.table-wrap::before {
+  content: "";
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.25);
@@ -413,7 +414,7 @@ body {
   transition: opacity 0.15s ease;
 }
 
-.dropdown-backdrop.active {
+.table-wrap.dropdown-open::before {
   opacity: 1;
 }
 

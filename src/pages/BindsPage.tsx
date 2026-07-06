@@ -81,8 +81,7 @@ export function BindsPage({
         </div>
       </div>
 
-      <div className="table-wrap">
-        <div className={`dropdown-backdrop ${isAnyDropdownOpen ? "active" : ""}`} />
+      <div className={`table-wrap ${isAnyDropdownOpen ? "dropdown-open" : ""}`}>
         <div className="col-headers">
           <div className="col-key">Клавиша</div>
           <div className="col-action">Действие</div>
