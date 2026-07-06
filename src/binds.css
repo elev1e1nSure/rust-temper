@@ -59,7 +59,6 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  animation: bindConfigKeyIn 0.14s ease-out both;
 }
 
 .key-filter-chip.exiting {

@@ -34,7 +34,7 @@ interface BindsPageProps {
   keyConflicts: Map<string, number>;
   selectedKeys: string[];
   nameFor: (command: string) => string;
-  updateBindCommand: (idx: number, cmd: string) => void;
+  updateBind: (idx: number, key: string, cmd: string) => void;
   handleKeyboardKey: (rustKey: string) => void;
 }
 
@@ -103,7 +103,7 @@ export function BindsPage({
   keyConflicts,
   selectedKeys,
   nameFor,
-  updateBindCommand,
+  updateBind,
   handleKeyboardKey,
 }: BindsPageProps) {
   const [commandModal, setCommandModal] = useState<CommandModalState | null>(
@@ -118,15 +118,13 @@ export function BindsPage({
   const [exitingDraftKeys, setExitingDraftKeys] = useState<Set<string>>(
     () => new Set(),
   );
-  const [exitingSelectedKeys, setExitingSelectedKeys] = useState<Set<string>>(
-    () => new Set(),
-  );
+
   const [draggedActionId, setDraggedActionId] = useState<number | null>(null);
   const [dragOverActionId, setDragOverActionId] = useState<number | null>(null);
   const nextDraftActionId = useRef(0);
   const draggedActionIdRef = useRef<number | null>(null);
   const draftKeyRemovalTimers = useRef(new Map<string, number>());
-  const selectedKeyRemovalTimers = useRef(new Map<string, number>());
+
 
   const manualPresets = useMemo(() => {
     if (!commandModal) return [];
@@ -186,26 +184,20 @@ export function BindsPage({
   }, [commandModal]);
 
   const selectCommand = (command: string) => {
-    if (commandModal?.target === "new") {
-      setDraftActions((actions) => [
-        ...actions,
-        {
-          id: ++nextDraftActionId.current,
-          command,
-          mode: command.startsWith("~") ? "toggle" : "hold",
-        },
-      ]);
-      setCommandModal((modal) =>
-        modal ? { ...modal, step: "configure" } : null,
-      );
-      setManualSearch("");
-      setManualCustomMode(false);
-      setManualCustomCommand("");
-      return;
-    } else if (typeof commandModal?.target === "number") {
-      updateBindCommand(commandModal.target, command);
-    }
-    closeManualModal();
+    setDraftActions((actions) => [
+      ...actions,
+      {
+        id: ++nextDraftActionId.current,
+        command,
+        mode: command.startsWith("~") ? "toggle" : "hold",
+      },
+    ]);
+    setCommandModal((modal) =>
+      modal ? { ...modal, step: "configure" } : null,
+    );
+    setManualSearch("");
+    setManualCustomMode(false);
+    setManualCustomCommand("");
   };
 
   const openCommandModal = (
@@ -213,7 +205,16 @@ export function BindsPage({
     target: CommandModalState["target"],
   ) => {
     setCommandModal({ kind, target, step: "select" });
-    setDraftKeys(selectedKeys);
+    if (typeof target === "number") {
+      const existingBind = filteredBinds.find((fb) => fb.sourceIndex === target)?.bind;
+      const keys = existingBind?.key
+        ? existingBind.key.replace(/^\[|\]$/g, "").split("+").filter(Boolean)
+        : [];
+      setDraftKeys(keys);
+    } else {
+      setDraftKeys(selectedKeys);
+    }
+    setDraftActions([]);
   };
 
   const openBindCommandModal = (index: number, command: string) => {
@@ -261,42 +262,12 @@ export function BindsPage({
   };
 
   const toggleSelectedKey = (rustKey: string) => {
-    const pendingRemoval = selectedKeyRemovalTimers.current.get(rustKey);
-    if (pendingRemoval !== undefined) {
-      window.clearTimeout(pendingRemoval);
-      selectedKeyRemovalTimers.current.delete(rustKey);
-      setExitingSelectedKeys((keys) => {
-        const next = new Set(keys);
-        next.delete(rustKey);
-        return next;
-      });
-      return;
-    }
-
-    if (!selectedKeys.includes(rustKey)) {
-      handleKeyboardKey(rustKey);
-      return;
-    }
-
-    setExitingSelectedKeys((keys) => new Set(keys).add(rustKey));
-    const timer = window.setTimeout(() => {
-      handleKeyboardKey(rustKey);
-      setExitingSelectedKeys((keys) => {
-        const next = new Set(keys);
-        next.delete(rustKey);
-        return next;
-      });
-      selectedKeyRemovalTimers.current.delete(rustKey);
-    }, KEY_EXIT_MS);
-    selectedKeyRemovalTimers.current.set(rustKey, timer);
+    handleKeyboardKey(rustKey);
   };
 
   useEffect(
     () => () => {
       for (const timer of draftKeyRemovalTimers.current.values()) {
-        window.clearTimeout(timer);
-      }
-      for (const timer of selectedKeyRemovalTimers.current.values()) {
         window.clearTimeout(timer);
       }
     },
@@ -345,7 +316,11 @@ export function BindsPage({
         return `${prefix}${commandWithoutMode(action.command)}`;
       })
       .join(";");
-    addBind(key, command);
+    if (commandModal?.target === "new") {
+      addBind(key, command);
+    } else if (typeof commandModal?.target === "number") {
+      updateBind(commandModal.target, key, command);
+    }
     closeManualModal();
   };
 
@@ -358,7 +333,7 @@ export function BindsPage({
             <button
               key={k}
               type="button"
-              className={`key-filter-chip ${exitingSelectedKeys.has(k) ? "exiting" : ""}`}
+              className="key-filter-chip"
               onClick={() => toggleSelectedKey(k)}
               title="Убрать клавишу из комбинации"
             >
@@ -396,7 +371,6 @@ export function BindsPage({
       <div className="keyboard-panel">
         <Keyboard
           selectedKeys={selectedKeys}
-          exitingKeys={exitingSelectedKeys}
           onKeyClick={toggleSelectedKey}
         />
       </div>
@@ -710,7 +684,7 @@ export function BindsPage({
                       }
                       onClick={submitBind}
                     >
-                      Добавить
+                      {commandModal?.target === "new" ? "Добавить" : "Сохранить"}
                     </button>
                   </div>
                 </div>

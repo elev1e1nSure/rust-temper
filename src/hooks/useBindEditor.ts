@@ -79,10 +79,10 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     setExitingBindIndex(null);
   };
 
-  const updateBindCommand = (index: number, newCommand: string) => {
+  const updateBind = (index: number, newKey: string, newCommand: string) => {
     setBinds((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], command: newCommand };
+      next[index] = { key: newKey, command: newCommand };
       return next;
     });
   };
@@ -113,7 +113,7 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     addBind,
     removeBind,
     confirmRemoveBind,
-    updateBindCommand,
+    updateBind,
     handleKeyboardKey,
   };
 }

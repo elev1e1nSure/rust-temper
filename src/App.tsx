@@ -145,7 +145,7 @@ function App() {
                 keyConflicts={bindEditor.keyConflicts}
                 selectedKeys={bindEditor.selectedKeys}
                 nameFor={bindEditor.nameFor}
-                updateBindCommand={bindEditor.updateBindCommand}
+                updateBind={bindEditor.updateBind}
                 handleKeyboardKey={bindEditor.handleKeyboardKey}
               />
               {statusMessage && (
