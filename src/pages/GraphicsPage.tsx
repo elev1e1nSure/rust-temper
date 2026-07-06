@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { Mountain2Line, Refresh1Line } from "@mingcute/react";
 
 interface QualityRow {
@@ -144,12 +145,43 @@ const QUICK_PRESETS: {
 const MIRRORS_DESCRIPTION =
   "Отключает отражения в зеркалах и стёклах. Может заметно повысить FPS в застроенных базах.";
 
-export function GraphicsPage() {
+function clientCfgPathFor(keysCfgPath: string) {
+  return keysCfgPath.replace(/keys\.cfg$/i, "client.cfg");
+}
+
+interface GraphicsPageProps {
+  configPath: string;
+}
+
+export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
   const [mirrorsOff, setMirrorsOff] = useState(false);
   const [presetLabel, setPresetLabel] = useState("Пользовательский");
   const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0].key);
-  const [applied, setApplied] = useState(false);
+  const [applyStatus, setApplyStatus] = useState<
+    { type: "success" | "error"; message: string } | undefined
+  >();
+  const [applying, setApplying] = useState(false);
+
+  const clientCfgPath = configPath ? clientCfgPathFor(configPath) : "";
+
+  useEffect(() => {
+    if (!clientCfgPath) return;
+    invoke<number>("read_shadow_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, shadows: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать качество теней:", err);
+      });
+    invoke<number>("read_texture_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, textures: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать качество текстур:", err);
+      });
+  }, [clientCfgPath]);
 
   const previewRow =
     QUALITY_ROWS.find((r) => r.key === previewKey) ?? QUALITY_ROWS[0];
@@ -170,6 +202,41 @@ export function GraphicsPage() {
     setMirrorsOff(false);
     setPresetLabel("Пользовательский");
   };
+
+  const handleApply = useCallback(async () => {
+    if (!clientCfgPath) {
+      setApplyStatus({
+        type: "error",
+        message: "Не указан путь к файлам конфигурации",
+      });
+      return;
+    }
+
+    setApplying(true);
+    setApplyStatus(undefined);
+
+    try {
+      await invoke("apply_shadow_quality", {
+        path: clientCfgPath,
+        tier: values.shadows,
+      });
+      await invoke("apply_texture_quality", {
+        path: clientCfgPath,
+        tier: values.textures,
+      });
+      setApplyStatus({
+        type: "success",
+        message: "Настройки графики применены",
+      });
+    } catch (err) {
+      setApplyStatus({
+        type: "error",
+        message: `Не удалось применить настройки: ${err}`,
+      });
+    } finally {
+      setApplying(false);
+    }
+  }, [clientCfgPath, values.shadows]);
 
   return (
     <div className="graphics-container page-container">
@@ -295,17 +362,17 @@ export function GraphicsPage() {
           <button
             type="button"
             className="graphics-apply-btn"
-            onClick={() => {
-              setApplied(true);
-              window.setTimeout(() => setApplied(false), 2000);
-            }}
+            onClick={handleApply}
+            disabled={applying || !configPath}
           >
-            Применить
+            {applying ? "Применение..." : "Применить"}
           </button>
         </div>
-        {applied && (
-          <p className="status-message graphics-preview-status">
-            Пока не подключено к client.cfg — сохранение появится позже
+        {applyStatus && (
+          <p
+            className={`status-message graphics-preview-status${applyStatus.type === "error" ? " status-error" : ""}`}
+          >
+            {applyStatus.message}
           </p>
         )}
       </div>

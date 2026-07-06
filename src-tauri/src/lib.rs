@@ -1,4 +1,5 @@
 mod client_cfg;
+mod graphics;
 mod keys_cfg;
 mod known_commands;
 mod rust_locator;
@@ -19,6 +20,10 @@ pub fn run() {
             tweaks::read_client_cfg,
             tweaks::toggle_tweak,
             tweaks::set_tweak_slider,
+            graphics::apply_shadow_quality,
+            graphics::read_shadow_quality,
+            graphics::apply_texture_quality,
+            graphics::read_texture_quality,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
