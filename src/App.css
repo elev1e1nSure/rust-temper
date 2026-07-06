@@ -514,6 +514,10 @@ body {
   gap: 24px;
 }
 
+.settings-card + .settings-card {
+  margin-top: 12px;
+}
+
 .setting-group {
   display: flex;
   flex-direction: column;
@@ -573,7 +577,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--row-border);
   padding-top: 20px;
 }
 

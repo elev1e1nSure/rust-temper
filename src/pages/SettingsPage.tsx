@@ -61,8 +61,10 @@ export function SettingsPage({
             </button>
           </div>
         </div>
+      </div>
 
-        <div className="setting-row">
+      <div className="settings-card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div className="setting-name">Цветовая тема</div>
             <div className="setting-desc">
