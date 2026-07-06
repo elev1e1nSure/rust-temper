@@ -82,7 +82,6 @@ const DEFAULT_VALUES: Record<string, number> = {
 const QUICK_PRESETS: {
   label: string;
   values: Record<string, number>;
-  mirrorsOff: boolean;
 }[] = [
     {
       label: "Производительность",
@@ -96,7 +95,6 @@ const QUICK_PRESETS: {
         clouds: 0,
         smoothing: 0,
       },
-      mirrorsOff: true,
     },
     {
       label: "Комбат",
@@ -110,7 +108,6 @@ const QUICK_PRESETS: {
         clouds: 0,
         smoothing: 0,
       },
-      mirrorsOff: true,
     },
     {
       label: "Баланс",
@@ -124,13 +121,12 @@ const QUICK_PRESETS: {
         clouds: 1,
         smoothing: 1,
       },
-      mirrorsOff: false,
     },
     {
       label: "Графика",
       values: {
         shadows: 3,
-        textures: 4,
+        textures: 0,
         lighting: 2,
         trees: 3,
         water: 2,
@@ -138,12 +134,8 @@ const QUICK_PRESETS: {
         clouds: 2,
         smoothing: 2,
       },
-      mirrorsOff: false,
     },
   ];
-
-const MIRRORS_DESCRIPTION =
-  "Отключает отражения в зеркалах и стёклах. Может заметно повысить FPS в застроенных базах.";
 
 const TREE_TWEAK_KEY = "graphics.tree_quality";
 
@@ -157,7 +149,6 @@ interface GraphicsPageProps {
 
 export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
-  const [mirrorsOff, setMirrorsOff] = useState(false);
   const [presetLabel, setPresetLabel] = useState("Пользовательский");
   const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0].key);
   const [applyStatus, setApplyStatus] = useState<
@@ -259,13 +250,11 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
-    setMirrorsOff(preset.mirrorsOff);
     setPresetLabel(preset.label);
   };
 
   const resetToDefaults = () => {
     setValues(DEFAULT_VALUES);
-    setMirrorsOff(false);
     setPresetLabel("Пользовательский");
   };
 
@@ -390,42 +379,13 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
             );
           })}
 
-          <div
-            className="setting-row setting-row-clickable tweak-row graphics-toggle-row"
-            onClick={() => setMirrorsOff((v) => !v)}
-            onMouseEnter={() => setPreviewKey("mirrors")}
-          >
-            <span className="setting-name tweak-name">
-              Отключить отражение зеркал и стёкол
-            </span>
-            <button
-              type="button"
-              className={`toggle-switch${mirrorsOff ? " on" : ""}`}
-              role="switch"
-              aria-checked={mirrorsOff}
-              onClick={(e) => {
-                e.stopPropagation();
-                setMirrorsOff((v) => !v);
-              }}
-            >
-              <span className="toggle-switch-knob" />
-            </button>
-          </div>
         </div>
       </div>
 
       <div className="settings-card graphics-preview">
         <div>
-          <div className="graphics-preview-title">
-            {previewKey === "mirrors"
-              ? "Отражения зеркал и стёкол"
-              : previewRow.label}
-          </div>
-          <p className="graphics-preview-desc">
-            {previewKey === "mirrors"
-              ? MIRRORS_DESCRIPTION
-              : previewRow.description}
-          </p>
+          <div className="graphics-preview-title">{previewRow.label}</div>
+          <p className="graphics-preview-desc">{previewRow.description}</p>
         </div>
 
         <div className="graphics-preview-art">
