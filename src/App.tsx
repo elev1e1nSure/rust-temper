@@ -49,7 +49,6 @@ function App() {
           .then((loaded) => {
             if (loaded) {
               bindEditor.setBinds(loaded);
-              setStatusMessage(`${loaded.length} биндов`);
             }
           })
           .catch((err) => {
@@ -67,10 +66,9 @@ function App() {
     configFile
       .loadFromPath(path)
       .then((loaded) => {
-        if (loaded) {
-          bindEditor.setBinds(loaded);
-          setStatusMessage(`${loaded.length} биндов`);
-        }
+            if (loaded) {
+              bindEditor.setBinds(loaded);
+            }
       })
       .catch((err) => {
         setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
@@ -86,7 +84,6 @@ function App() {
           .then((loaded) => {
             if (loaded) {
               bindEditor.setBinds(loaded);
-              setStatusMessage(`${loaded.length} биндов`);
             }
           })
           .catch((err) => {

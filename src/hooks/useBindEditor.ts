@@ -35,7 +35,11 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     return binds.filter((bind) => {
       if (selectedKeys.length > 0) {
         // Match the whole combination regardless of the order keys were pressed.
-        const tokens = bind.key.split("+").filter(Boolean);
+        // Rust stores combos as "[a+b]"; a single key has no brackets.
+        const tokens = bind.key
+          .replace(/^\[|\]$/g, "")
+          .split("+")
+          .filter(Boolean);
         if (
           tokens.length !== selectedSet.size ||
           !tokens.every((t) => selectedSet.has(t))
@@ -52,7 +56,11 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     });
   }, [binds, search, selectedKeys, presetByCommand]);
 
-  const selectedKeyCombo = selectedKeys.join("+");
+  // Rust bind key: bare token for one key, bracketed "[a+b]" for a combination.
+  const selectedKeyCombo =
+    selectedKeys.length <= 1
+      ? (selectedKeys[0] ?? "")
+      : `[${selectedKeys.join("+")}]`;
 
   const scrollListToTop = () => {
     requestAnimationFrame(() => {

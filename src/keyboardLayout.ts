@@ -212,9 +212,13 @@ const DISPLAY_NAMES: Record<string, string> = {
 
 export function keyDisplayName(rustKey: string): string {
   if (!rustKey) return "—";
-  if (DISPLAY_NAMES[rustKey]) return DISPLAY_NAMES[rustKey];
-  const kp = rustKey.match(/^kp(\d)$/);
+  // Combination bind, stored by Rust as "[a+b]" — display each part.
+  const combo = rustKey.replace(/^\[|\]$/g, "");
+  if (combo.includes("+")) {
+    return combo.split("+").filter(Boolean).map(keyDisplayName).join(" + ");
+  }
+  if (DISPLAY_NAMES[combo]) return DISPLAY_NAMES[combo];
+  const kp = combo.match(/^kp(\d)$/);
   if (kp) return `Num ${kp[1]}`;
-  if (rustKey.length === 1) return rustKey.toUpperCase();
-  return rustKey.toUpperCase();
+  return combo.toUpperCase();
 }
