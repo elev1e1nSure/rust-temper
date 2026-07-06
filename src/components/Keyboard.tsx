@@ -14,21 +14,25 @@ function keyWidth(units = 1): number {
 }
 
 interface KeyboardProps {
-  /** rustKeys currently bound to some action */
-  usedKeys: Set<string>;
-  /** a bind row is waiting for a key to be pressed/clicked */
+  /** rustKey currently selected as the list filter */
+  selectedKey: string | null;
+  /** a bind row is waiting for a key to be clicked (re-assign mode) */
   listening: boolean;
   onKeyClick: (rustKey: string) => void;
 }
 
-export function Keyboard({ usedKeys, listening, onKeyClick }: KeyboardProps) {
+export function Keyboard({
+  selectedKey,
+  listening,
+  onKeyClick,
+}: KeyboardProps) {
   const renderKey = (key: KeyDef, fill = false) => {
     const bindable = Boolean(key.rustKey);
-    const used = bindable && usedKeys.has(key.rustKey!);
+    const selected = bindable && key.rustKey === selectedKey;
     return (
       <button
         type="button"
-        className={`kb-key${used ? " used" : ""}${bindable ? "" : " kb-key-static"}${fill ? " kb-key-fill" : ""}`}
+        className={`kb-key${selected ? " selected" : ""}${bindable ? "" : " kb-key-static"}${fill ? " kb-key-fill" : ""}`}
         style={fill ? undefined : { width: keyWidth(key.w) }}
         disabled={!bindable}
         onClick={() => key.rustKey && onKeyClick(key.rustKey)}

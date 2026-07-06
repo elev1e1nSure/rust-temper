@@ -27,32 +27,58 @@
   background: rgba(0, 0, 0, 0.25);
 }
 
-/* Selected row: its key gets assigned by the next on-screen keyboard click. */
-.bind-row.selected {
-  background: rgba(59, 130, 246, 0.07);
-  border-radius: 8px;
-}
-
-.bind-row.flash {
-  animation: bindFlash 0.9s ease;
-}
-
-@keyframes bindFlash {
-  0%,
-  100% {
-    background: transparent;
-  }
-
-  30% {
-    background: rgba(59, 130, 246, 0.12);
-  }
-}
-
 /* Key badge sits on the right (action -> key), fixed width. */
 .bind-key-slot {
   width: 190px;
   flex-shrink: 0;
   padding: 11px 0;
+}
+
+/* Key filter chip inside the top-left search field. */
+.binds-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 280px;
+}
+
+.binds-search svg {
+  position: static;
+  transform: none;
+}
+
+.binds-search input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  padding-left: 0;
+}
+
+.key-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 6px 0 10px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.18);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.key-filter-chip-x {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.key-filter-chip:hover .key-filter-chip-x {
+  color: var(--text);
 }
 
 /* "Выбрать из списка" picker --------------------------------------------- */
@@ -167,10 +193,10 @@
   filter: brightness(1.35);
 }
 
-/* Key already bound to some action. */
-.kb-key.used {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: rgba(59, 130, 246, 0.4);
+/* Key currently selected as the list filter. */
+.kb-key.selected {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.7);
   color: var(--text);
 }
 

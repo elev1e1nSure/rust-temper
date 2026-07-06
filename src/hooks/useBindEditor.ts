@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Bind, CommandPreset } from "../types";
 
 export function useBindEditor(commandPresets: CommandPreset[]) {
   const [binds, setBinds] = useState<Bind[]>([]);
   const [search, setSearch] = useState("");
-  // Index of the selected row; its key is assigned by clicking the on-screen keyboard.
+  // Key picked on the on-screen keyboard; acts as a filter for the list below
+  // and seeds the key of any bind created while it is active.
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // Row whose key is being re-assigned via the next on-screen keyboard click.
   const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
   const [newBindIndex, setNewBindIndex] = useState<number | null>(null);
   const [exitingBindIndex, setExitingBindIndex] = useState<number | null>(null);
-  // Row briefly highlighted after clicking its key on the virtual keyboard.
-  const [flashIndex, setFlashIndex] = useState<number | null>(null);
-  const flashTimeoutRef = useRef<number | null>(null);
 
   const presetByCommand = useMemo(
     () => new Map(commandPresets.map((p) => [p.command, p])),
@@ -29,24 +29,18 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     return counts;
   }, [binds]);
 
-  const usedKeys = useMemo(() => {
-    const set = new Set<string>();
-    for (const bind of binds) {
-      if (bind.key) set.add(bind.key);
-    }
-    return set;
-  }, [binds]);
-
   const filteredBinds = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return binds;
-    return binds.filter(
-      (bind) =>
+    return binds.filter((bind) => {
+      if (selectedKey && bind.key !== selectedKey) return false;
+      if (!query) return true;
+      return (
         bind.key.toLowerCase().includes(query) ||
         nameFor(bind.command).toLowerCase().includes(query) ||
-        bind.command.toLowerCase().includes(query),
-    );
-  }, [binds, search, presetByCommand]);
+        bind.command.toLowerCase().includes(query)
+      );
+    });
+  }, [binds, search, selectedKey, presetByCommand]);
 
   const scrollListToTop = () => {
     requestAnimationFrame(() => {
@@ -56,26 +50,23 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     });
   };
 
-  // "Создать вручную" — empty row, action picked via dropdown, listening for a key.
+  // "Создать вручную" — empty row, action picked via dropdown; key comes from
+  // the currently selected keyboard key (if any).
   const addBind = () => {
-    setBinds((prev) => [{ key: "", command: "" }, ...prev]);
+    setBinds((prev) => [{ key: selectedKey ?? "", command: "" }, ...prev]);
     setNewBindIndex(0);
-    setEditingKeyIndex(0);
     scrollListToTop();
   };
 
-  // "Выбрать из списка" — row seeded with a known action, listening for a key.
+  // "Выбрать из списка" — row seeded with a known action, keyed like addBind.
   const addFromPreset = (command: string) => {
-    setBinds((prev) => [{ key: "", command }, ...prev]);
+    setBinds((prev) => [{ key: selectedKey ?? "", command }, ...prev]);
     setNewBindIndex(0);
-    setEditingKeyIndex(0);
     scrollListToTop();
   };
 
   const removeBind = (index: number) => {
-    if (editingKeyIndex === index) {
-      setEditingKeyIndex(null);
-    }
+    if (editingKeyIndex === index) setEditingKeyIndex(null);
     setExitingBindIndex(index);
   };
 
@@ -101,28 +92,17 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     setEditingKeyIndex(null);
   };
 
-  const flashRow = (index: number) => {
-    if (flashTimeoutRef.current !== null) {
-      window.clearTimeout(flashTimeoutRef.current);
-    }
-    setFlashIndex(index);
-    flashTimeoutRef.current = window.setTimeout(() => {
-      setFlashIndex((current) => (current === index ? null : current));
-    }, 900);
-  };
-
-  // Virtual-keyboard click: assign to the selected row, or reveal the row that
-  // already owns the clicked key.
+  // On-screen keyboard click: assign to a row being edited, otherwise toggle the
+  // key filter (select / deselect).
   const handleKeyboardKey = (rustKey: string) => {
     if (editingKeyIndex !== null) {
       assignKey(editingKeyIndex, rustKey);
       return;
     }
-    const owner = binds.findIndex((b) => b.key === rustKey);
-    if (owner !== -1) flashRow(owner);
+    setSelectedKey((current) => (current === rustKey ? null : rustKey));
   };
 
-  // Escape cancels the current selection; assignment itself is keyboard-click only.
+  // Escape cancels an in-progress key edit.
   useEffect(() => {
     if (editingKeyIndex === null) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -132,29 +112,21 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [editingKeyIndex]);
 
-  useEffect(() => {
-    return () => {
-      if (flashTimeoutRef.current !== null) {
-        window.clearTimeout(flashTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return {
     binds,
     setBinds,
     search,
     setSearch,
+    selectedKey,
+    setSelectedKey,
     editingKeyIndex,
     setEditingKeyIndex,
     newBindIndex,
     setNewBindIndex,
     exitingBindIndex,
     setExitingBindIndex,
-    flashIndex,
     nameFor,
     keyConflicts,
-    usedKeys,
     filteredBinds,
     addBind,
     addFromPreset,

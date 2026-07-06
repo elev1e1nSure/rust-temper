@@ -18,9 +18,9 @@ interface BindsPageProps {
   newBindIndex: number | null;
   setNewBindIndex: (v: number | null) => void;
   exitingBindIndex: number | null;
-  flashIndex: number | null;
   keyConflicts: Map<string, number>;
-  usedKeys: Set<string>;
+  selectedKey: string | null;
+  setSelectedKey: (v: string | null) => void;
   nameFor: (command: string) => string;
   updateBindCommand: (idx: number, cmd: string) => void;
   handleKeyboardKey: (rustKey: string) => void;
@@ -50,9 +50,9 @@ export function BindsPage({
   newBindIndex,
   setNewBindIndex,
   exitingBindIndex,
-  flashIndex,
   keyConflicts,
-  usedKeys,
+  selectedKey,
+  setSelectedKey,
   nameFor,
   updateBindCommand,
   handleKeyboardKey,
@@ -96,8 +96,19 @@ export function BindsPage({
   return (
     <div className="page-container binds-page">
       <div className="header-row">
-        <div className="search">
+        <div className="search binds-search">
           <SearchIcon />
+          {selectedKey && (
+            <button
+              type="button"
+              className="key-filter-chip"
+              onClick={() => setSelectedKey(null)}
+              title="Сбросить фильтр по клавише"
+            >
+              {keyDisplayName(selectedKey)}
+              <span className="key-filter-chip-x">×</span>
+            </button>
+          )}
           <input
             type="text"
             placeholder="Поиск по названию"
@@ -174,7 +185,7 @@ export function BindsPage({
 
       <div className="keyboard-panel">
         <Keyboard
-          usedKeys={usedKeys}
+          selectedKey={selectedKey}
           listening={editingKeyIndex !== null}
           onKeyClick={handleKeyboardKey}
         />
@@ -190,7 +201,7 @@ export function BindsPage({
           const isDropdownClosing = closingDropdownIndex === index;
           return (
             <div
-              className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""} ${isDropdownClosing ? "dropdown-closing" : ""} ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""} ${flashIndex === index ? "flash" : ""} ${editingKeyIndex === index ? "selected" : ""}`}
+              className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""} ${isDropdownClosing ? "dropdown-closing" : ""} ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
               key={`${bind.key}-${bind.command}-${index}`}
               onAnimationEnd={() => {
                 if (exitingBindIndex === index) {

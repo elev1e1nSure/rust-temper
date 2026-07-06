@@ -150,9 +150,9 @@ function App() {
                 newBindIndex={bindEditor.newBindIndex}
                 setNewBindIndex={bindEditor.setNewBindIndex}
                 exitingBindIndex={bindEditor.exitingBindIndex}
-                flashIndex={bindEditor.flashIndex}
                 keyConflicts={bindEditor.keyConflicts}
-                usedKeys={bindEditor.usedKeys}
+                selectedKey={bindEditor.selectedKey}
+                setSelectedKey={bindEditor.setSelectedKey}
                 nameFor={bindEditor.nameFor}
                 updateBindCommand={bindEditor.updateBindCommand}
                 handleKeyboardKey={bindEditor.handleKeyboardKey}
