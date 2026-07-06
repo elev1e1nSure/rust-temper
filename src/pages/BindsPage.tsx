@@ -382,10 +382,29 @@ export function BindsPage({
                     <div className="bind-config-label">
                       Клавиша или сочетание
                     </div>
-                    <div className="bind-config-value">
-                      {draftKeys.length > 0
-                        ? draftKeys.map(keyDisplayName).join(" + ")
-                        : "Выберите клавишу на клавиатуре"}
+                    <div
+                      className={`bind-config-value ${draftKeys.length > 0 ? "has-keys" : ""}`}
+                    >
+                      {draftKeys.length > 0 ? (
+                        draftKeys.map((key, index) => (
+                          <span
+                            className="bind-config-key-group"
+                            key={key}
+                            style={{ animationDelay: `${index * 35}ms` }}
+                          >
+                            <span className="bind-config-key-card">
+                              {keyDisplayName(key)}
+                            </span>
+                            {index < draftKeys.length - 1 && (
+                              <span className="bind-config-key-plus">+</span>
+                            )}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="bind-config-key-placeholder">
+                          Выберите клавишу на клавиатуре
+                        </span>
+                      )}
                     </div>
                     <div className="bind-config-keyboard">
                       <Keyboard
@@ -402,6 +421,7 @@ export function BindsPage({
                         <div
                           className="bind-config-action"
                           key={`${action}-${index}`}
+                          style={{ animationDelay: `${index * 40}ms` }}
                         >
                           <div>
                             <div className="manual-modal-row-name">
