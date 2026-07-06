@@ -1,5 +1,12 @@
 use serde::Serialize;
 
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum CommandKind {
+    Single,
+    Combination,
+}
+
 /// Human-readable dictionary of Rust bind commands — the command picker only
 /// ever selects from this list, no raw command typing. Built from Rust's
 /// common movement/UI commands plus every distinct command found in a real
@@ -9,14 +16,14 @@ use serde::Serialize;
 pub struct CommandPreset {
     pub name: String,
     pub command: String,
-    pub kind: String,
+    pub kind: CommandKind,
 }
 
 fn preset(name: &str, command: &str) -> CommandPreset {
     let kind = if command.contains(';') || command.starts_with("+meta.") {
-        String::from("combination")
+        CommandKind::Combination
     } else {
-        String::from("single")
+        CommandKind::Single
     };
     CommandPreset {
         name: name.to_string(),
