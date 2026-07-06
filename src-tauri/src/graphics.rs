@@ -287,3 +287,79 @@ pub fn read_lighting_quality(path: String) -> Result<u32, String> {
         _ => Ok(0),
     }
 }
+
+const GRASS_TIERS: &[TierConfig] = &[
+    &[
+        ("grass.displacement", "True"),
+        ("grass.quality", "0"),
+        ("graphics.grassshadows", "False"),
+    ],
+    &[
+        ("grass.displacement", "True"),
+        ("grass.quality", "50"),
+        ("graphics.grassshadows", "False"),
+    ],
+    &[
+        ("grass.displacement", "True"),
+        ("grass.quality", "100"),
+        ("graphics.grassshadows", "True"),
+    ],
+    &[
+        ("grass.displacement", "True"),
+        ("grass.quality", "100"),
+        ("graphics.grassshadows", "True"),
+    ],
+    &[
+        ("grass.displacement", "True"),
+        ("grass.quality", "100"),
+        ("graphics.grassshadows", "True"),
+    ],
+];
+
+#[tauri::command]
+pub fn apply_grass_quality(path: String, tier: u32) -> Result<(), String> {
+    let tier = tier as usize;
+
+    let config = GRASS_TIERS
+        .get(tier)
+        .ok_or_else(|| {
+            format!(
+                "Недопустимый уровень качества травы: {tier}. Допустимый диапазон: 0..{}",
+                GRASS_TIERS.len().saturating_sub(1)
+            )
+        })?;
+
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+
+    let changes: BTreeMap<String, Option<String>> = config
+        .iter()
+        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
+        .collect();
+
+    let updated = client_cfg::apply_values(&content, &changes);
+    client_cfg::write_atomic(cfg_path, &updated)?;
+
+    log::info!("Grass quality applied: path={path}, tier={tier}");
+    Ok(())
+}
+
+#[tauri::command]
+pub fn read_grass_quality(path: String) -> Result<u32, String> {
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+    let parsed = client_cfg::parse(&content);
+
+    match parsed.get("grass.quality").map(String::as_str) {
+        Some("0") => Ok(0),
+        Some("50") => Ok(1),
+        Some("100") => Ok(2),
+        None => Ok(2),
+        Some(other) => {
+            log::warn!(
+                "Unexpected grass.quality value: {other:?}, falling back to tier 2"
+            );
+            Ok(2)
+        }
+    }
+}

@@ -197,6 +197,13 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
       .catch((err) => {
         console.error("Не удалось прочитать качество освещения:", err);
       });
+    invoke<number>("read_grass_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, grass: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать качество травы:", err);
+      });
   }, [clientCfgPath]);
 
   const previewRow =
@@ -284,6 +291,10 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         path: clientCfgPath,
         tier: values.lighting,
       });
+      await invoke("apply_grass_quality", {
+        path: clientCfgPath,
+        tier: values.grass,
+      });
       setApplyStatus({
         type: "success",
         message: "Настройки графики применены",
@@ -296,7 +307,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting]);
+  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass]);
 
   return (
     <div className="graphics-container page-container">
