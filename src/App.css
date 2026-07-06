@@ -409,12 +409,12 @@ body {
   z-index: 15;
   border-radius: 12px;
   pointer-events: none;
-  animation: backdropIn 0.15s ease forwards;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
-@keyframes backdropIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.dropdown-backdrop.active {
+  opacity: 1;
 }
 
 .dropdown-base {
@@ -496,7 +496,6 @@ body {
   z-index: 1;
   background: var(--panel);
   margin: 0 -4px 0;
-  border-bottom: 1px solid var(--row-border);
 }
 
 .kind-btn {
