@@ -412,7 +412,7 @@ pub fn read_clouds_quality(path: String) -> Result<u32, String> {
 const SMOOTHING_TIERS: &[TierConfig] = &[
     &[
         ("effects.sharpen", "True"),
-        ("effects.antialiasing", "1"),
+        ("effects.antialiasing", "0"),
     ],
     &[
         ("effects.sharpen", "True"),
@@ -463,8 +463,9 @@ pub fn read_smoothing_quality(path: String) -> Result<u32, String> {
     let parsed = client_cfg::parse(&content);
 
     match parsed.get("effects.antialiasing").map(String::as_str) {
-        Some("1") => Ok(0),
-        Some("2") => Ok(1),
+        Some("0") => Ok(0),
+        Some("1") => Ok(1),
+        Some("2") => Ok(2),
         Some("3") => Ok(2),
         None => Ok(0),
         Some(other) => {
