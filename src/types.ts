@@ -11,7 +11,6 @@ export interface FilteredBind {
 export interface CommandPreset {
   name: string;
   command: string;
-  description: string;
   kind: "single" | "combination";
 }
 
@@ -47,5 +46,4 @@ export interface TweakDef {
   backendKeys: BackendKeyRule[];
   advancedSlider?: AdvancedSlider;
   bind?: BindTweak;
-  tierValues?: string[][];
 }

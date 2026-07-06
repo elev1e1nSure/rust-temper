@@ -133,8 +133,7 @@ export function BindsPage({
         preset.kind === commandModal.kind &&
         (!q ||
           preset.name.toLowerCase().includes(q) ||
-          preset.command.toLowerCase().includes(q) ||
-          preset.description.toLowerCase().includes(q)),
+          preset.command.toLowerCase().includes(q)),
     );
   }, [commandModal, commandPresets, manualSearch]);
 

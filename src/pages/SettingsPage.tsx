@@ -1,5 +1,3 @@
-import { Tooltip } from "../Tooltip";
-import { ChevronIcon } from "../icons";
 import { LoadingLine } from "@mingcute/react";
 
 interface SettingsPageProps {
@@ -8,12 +6,6 @@ interface SettingsPageProps {
   detecting: boolean;
   handleAutoDetect: () => void;
   handleSelectFile: () => void;
-  theme: string;
-  themeDropdownOpen: boolean;
-  themeDropdownDir: "up" | "down";
-  setThemeDropdownDir: (v: "up" | "down") => void;
-  setThemeDropdownOpen: (v: boolean) => void;
-  setTheme: (v: string) => void;
 }
 
 export function SettingsPage({
@@ -22,12 +14,6 @@ export function SettingsPage({
   detecting,
   handleAutoDetect,
   handleSelectFile,
-  theme,
-  themeDropdownOpen,
-  themeDropdownDir,
-  setThemeDropdownDir,
-  setThemeDropdownOpen,
-  setTheme,
 }: SettingsPageProps) {
   return (
     <div className="settings-container page-container">
@@ -59,61 +45,6 @@ export function SettingsPage({
             >
               Выбрать файл
             </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="settings-card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div className="setting-name">Цветовая тема</div>
-            <div className="setting-desc">
-              Выберите тему интерфейса.
-            </div>
-          </div>
-          <div className="theme-select-container">
-            <Tooltip content="В разработке">
-              <span className="theme-select-wrapper">
-                <button
-                  className="theme-select-button"
-                  type="button"
-                  disabled
-                  onClick={(e) => {
-                    const rect =
-                      e.currentTarget.getBoundingClientRect();
-                    setThemeDropdownDir(rect.top < 110 ? "down" : "up");
-                    setThemeDropdownOpen(!themeDropdownOpen);
-                  }}
-                >
-                  {theme === "dark" ? "Тёмная" : "Светлая"}
-                  <ChevronIcon />
-                </button>
-              </span>
-            </Tooltip>
-            <div
-              className={`dropdown-base theme-dropdown-menu ${themeDropdownOpen ? "open" : ""} ${themeDropdownDir}`}
-            >
-              <button
-                className="theme-dropdown-item"
-                type="button"
-                onClick={() => {
-                  setTheme("dark");
-                  setThemeDropdownOpen(false);
-                }}
-              >
-                Тёмная
-              </button>
-              <button
-                className="theme-dropdown-item"
-                type="button"
-                onClick={() => {
-                  setTheme("light");
-                  setThemeDropdownOpen(false);
-                }}
-              >
-                Светлая
-              </button>
-            </div>
           </div>
         </div>
       </div>

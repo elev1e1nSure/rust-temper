@@ -18,10 +18,6 @@ function App() {
   const [activePage, setActivePage] = useState<PageId>("binds");
   const [statusMessage, setStatusMessage] = useState("");
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
-  const [theme, setTheme] = useState("dark");
-  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
-  const [themeDropdownDir, setThemeDropdownDir] = useState<"up" | "down">("up");
-
   const configFile = useConfigFile();
   const bindEditor = useBindEditor(commandPresets);
   const { sidebarWidth, startResizing } = useSidebarResize();
@@ -105,18 +101,6 @@ function App() {
     );
   }, [bindEditor.binds, configFile.configPath]);
 
-  // Close theme dropdown on outside click
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".theme-select-container")) {
-        setThemeDropdownOpen(false);
-      }
-    };
-    window.addEventListener("click", handleOutsideClick);
-    return () => window.removeEventListener("click", handleOutsideClick);
-  }, []);
-
   return (
     <>
       <Titlebar />
@@ -169,12 +153,6 @@ function App() {
               detecting={configFile.detecting}
               handleAutoDetect={handleAutoDetect}
               handleSelectFile={configFile.handleSelectFile}
-              theme={theme}
-              themeDropdownOpen={themeDropdownOpen}
-              themeDropdownDir={themeDropdownDir}
-              setThemeDropdownDir={setThemeDropdownDir}
-              setThemeDropdownOpen={setThemeDropdownOpen}
-              setTheme={setTheme}
             />
           )}
         </div>

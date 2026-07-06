@@ -102,7 +102,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     search,
     setSearch,
     selectedKeys,
-    setSelectedKeys,
     keyConflicts,
     filteredBinds,
     nameFor,

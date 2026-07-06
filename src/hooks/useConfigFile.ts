@@ -7,7 +7,6 @@ export function useConfigFile() {
   const [configPath, setConfigPath] = useState(DEFAULT_CONFIG_PATH);
   const [detecting, setDetecting] = useState(false);
   const isReloadingRef = useRef(false);
-  const autoDetectRanRef = useRef(false);
 
   const loadFromPath = async (path: string) => {
     isReloadingRef.current = true;
@@ -58,7 +57,6 @@ export function useConfigFile() {
     setConfigPath,
     detecting,
     isReloadingRef,
-    autoDetectRanRef,
     loadFromPath,
     handleSelectFile,
     autoDetectConfigPath,
