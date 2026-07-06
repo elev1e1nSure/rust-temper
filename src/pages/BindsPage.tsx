@@ -569,7 +569,14 @@ export function BindsPage({
                   <div className="bind-config-section">
                     <div className="bind-config-label">Действия</div>
                     <AnimatedHeight className="bind-config-actions-height">
-                      <div className="bind-config-actions">
+                      <div
+                        className="bind-config-actions"
+                        onDragOver={(event) => {
+                          if (draggedActionIdRef.current === null) return;
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = "move";
+                        }}
+                      >
                         {draftActions.map((action, index) => (
                           <div
                             className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""} ${dragOverActionId === action.id && draggedActionId !== action.id ? "drag-over" : ""}`}
