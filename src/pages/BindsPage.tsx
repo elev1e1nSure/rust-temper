@@ -120,9 +120,9 @@ export function BindsPage({
   );
 
   const [draggedActionId, setDraggedActionId] = useState<number | null>(null);
-  const [dragOverActionId, setDragOverActionId] = useState<number | null>(null);
   const nextDraftActionId = useRef(0);
   const draggedActionIdRef = useRef<number | null>(null);
+  const actionRowRefs = useRef(new Map<number, HTMLDivElement>());
   const draftKeyRemovalTimers = useRef(new Map<string, number>());
 
   const manualPresets = useMemo(() => {
@@ -162,7 +162,6 @@ export function BindsPage({
     }
     draftKeyRemovalTimers.current.clear();
     setDraggedActionId(null);
-    setDragOverActionId(null);
     draggedActionIdRef.current = null;
   };
 
@@ -290,18 +289,50 @@ export function BindsPage({
     );
   };
 
-  const moveDraftAction = (targetId: number) => {
-    const draggedId = draggedActionIdRef.current;
-    if (draggedId === null || draggedId === targetId) return;
-    setDraftActions((actions) => {
-      const fromIndex = actions.findIndex((action) => action.id === draggedId);
-      const targetIndex = actions.findIndex((action) => action.id === targetId);
-      if (fromIndex === -1 || targetIndex === -1) return actions;
-      const reordered = [...actions];
-      const [draggedAction] = reordered.splice(fromIndex, 1);
-      reordered.splice(targetIndex, 0, draggedAction);
-      return reordered;
-    });
+  // Custom pointer-based reordering: native HTML5 drag-and-drop shows a
+  // permanent "not-allowed" OS cursor in the WebView2 runtime regardless of
+  // dropEffect/preventDefault, so dragging is implemented by hand instead.
+  const startActionDrag = (event: React.MouseEvent, id: number) => {
+    event.preventDefault();
+    draggedActionIdRef.current = id;
+    setDraggedActionId(id);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const draggedId = draggedActionIdRef.current;
+      if (draggedId === null) return;
+      const mouseY = moveEvent.clientY;
+
+      setDraftActions((actions) => {
+        const dragged = actions.find((action) => action.id === draggedId);
+        if (!dragged) return actions;
+        const others = actions.filter((action) => action.id !== draggedId);
+
+        let targetIndex = 0;
+        for (const other of others) {
+          const el = actionRowRefs.current.get(other.id);
+          if (!el) continue;
+          const rect = el.getBoundingClientRect();
+          if (mouseY > rect.top + rect.height / 2) targetIndex++;
+        }
+
+        const reordered = [...others];
+        reordered.splice(targetIndex, 0, dragged);
+        const unchanged = reordered.every(
+          (action, index) => action.id === actions[index].id,
+        );
+        return unchanged ? actions : reordered;
+      });
+    };
+
+    const handleMouseUp = () => {
+      draggedActionIdRef.current = null;
+      setDraggedActionId(null);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
   };
 
   const configureAnotherAction = () => {
@@ -569,51 +600,25 @@ export function BindsPage({
                   <div className="bind-config-section">
                     <div className="bind-config-label">Действия</div>
                     <AnimatedHeight className="bind-config-actions-height">
-                      <div
-                        className="bind-config-actions"
-                        onDragOver={(event) => {
-                          if (draggedActionIdRef.current === null) return;
-                          event.preventDefault();
-                          event.dataTransfer.dropEffect = "move";
-                        }}
-                      >
+                      <div className="bind-config-actions">
                         {draftActions.map((action, index) => (
                           <div
-                            className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""} ${dragOverActionId === action.id && draggedActionId !== action.id ? "drag-over" : ""}`}
+                            ref={(el) => {
+                              if (el) actionRowRefs.current.set(action.id, el);
+                              else actionRowRefs.current.delete(action.id);
+                            }}
+                            className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""}`}
                             key={action.id}
                             style={{ animationDelay: `${index * 40}ms` }}
-                            draggable={
-                              commandModal.kind === "single" &&
-                              draftActions.length > 1
-                            }
-                            onDragStart={(event) => {
-                              draggedActionIdRef.current = action.id;
-                              setDraggedActionId(action.id);
-                              event.dataTransfer.effectAllowed = "move";
-                              event.dataTransfer.setData(
-                                "text/plain",
-                                String(action.id),
-                              );
-                            }}
-                            onDragEnter={() => setDragOverActionId(action.id)}
-                            onDragOver={(event) => {
-                              event.preventDefault();
-                              event.dataTransfer.dropEffect = "move";
-                            }}
-                            onDrop={(event) => {
-                              event.preventDefault();
-                              moveDraftAction(action.id);
-                              setDragOverActionId(null);
-                            }}
-                            onDragEnd={() => {
-                              draggedActionIdRef.current = null;
-                              setDraggedActionId(null);
-                              setDragOverActionId(null);
-                            }}
                           >
                             {commandModal.kind === "single" &&
                               draftActions.length > 1 && (
-                                <div className="bind-config-drag-handle">
+                                <div
+                                  className="bind-config-drag-handle"
+                                  onMouseDown={(event) =>
+                                    startActionDrag(event, action.id)
+                                  }
+                                >
                                   <DragIcon />
                                 </div>
                               )}

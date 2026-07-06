@@ -509,10 +509,6 @@
   transform: scale(0.985);
 }
 
-.bind-config-action.drag-over {
-  background: #222228;
-}
-
 .bind-config-drag-handle {
   width: 24px;
   flex-shrink: 0;
@@ -523,7 +519,12 @@
   cursor: grab;
 }
 
-.bind-config-action:active .bind-config-drag-handle {
+.bind-config-action:active .bind-config-drag-handle,
+.bind-config-action.dragging .bind-config-drag-handle {
+  cursor: grabbing;
+}
+
+body:has(.bind-config-action.dragging) {
   cursor: grabbing;
 }
 
