@@ -2,7 +2,6 @@ import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTweaks } from "../hooks/useTweaks";
 import { ChevronIcon } from "../icons";
-import { Tooltip } from "../Tooltip";
 import type { AdvancedSlider, TweakDef, TweakSection } from "../types";
 
 interface TweaksPageProps {
@@ -46,14 +45,13 @@ function TweakRow({
       onClick={disabled ? undefined : onToggle}
     >
       <div>
-        <Tooltip content={tweak.description}>
-          <div className="setting-name tweak-name">
-            {tweak.title}
-            {tweak.badge === "recommended" && (
-              <span className="tweak-badge">рекомендовано</span>
-            )}
-          </div>
-        </Tooltip>
+        <div className="setting-name tweak-name">
+          {tweak.title}
+          {tweak.badge === "recommended" && (
+            <span className="tweak-badge">рекомендовано</span>
+          )}
+        </div>
+        <div className="setting-desc tweak-desc">{tweak.description}</div>
         {tweak.advancedSlider && checked && (
           <div
             className="tweak-slider-group"

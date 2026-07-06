@@ -767,7 +767,11 @@ body {
 }
 
 .tweak-name {
-  margin-bottom: 0;
+  margin-bottom: 4px;
+}
+
+.tweak-desc {
+  max-width: 480px;
 }
 
 .toggle-switch {
