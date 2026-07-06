@@ -477,6 +477,11 @@
   gap: 6px;
 }
 
+.bind-config-action,
+.bind-config-action * {
+  user-select: auto;
+}
+
 .bind-config-action {
   min-width: 0;
   display: flex;
