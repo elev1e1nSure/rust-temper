@@ -16,7 +16,7 @@ import "./binds.css";
 
 function App() {
   const [activePage, setActivePage] = useState<PageId>("binds");
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info"; text: string } | null>(null);
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
   const configFile = useConfigFile();
   const bindEditor = useBindEditor(commandPresets);
@@ -46,10 +46,10 @@ function App() {
             }
           })
           .catch((err) => {
-            setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
+            setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
           });
       } else {
-        setStatusMessage("Не удалось найти keys.cfg автоматически.");
+        setStatusMessage({ type: "info", text: "Не удалось найти keys.cfg автоматически." });
       }
     });
   }, []);
@@ -65,7 +65,7 @@ function App() {
         }
       })
       .catch((err) => {
-        setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
+        setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
       });
   }, []);
 
@@ -81,10 +81,10 @@ function App() {
             }
           })
           .catch((err) => {
-            setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
+            setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
           });
       } else {
-        setStatusMessage("Не удалось найти keys.cfg автоматически.");
+        setStatusMessage({ type: "info", text: "Не удалось найти keys.cfg автоматически." });
       }
     });
   }, []);
@@ -97,7 +97,7 @@ function App() {
       path: configFile.configPath,
       binds: bindEditor.binds,
     }).catch((err) =>
-      setStatusMessage(`Не удалось сохранить keys.cfg: ${err}`),
+      setStatusMessage({ type: "error", text: `Не удалось сохранить keys.cfg: ${err}` }),
     );
   }, [bindEditor.binds, configFile.configPath]);
 
@@ -133,7 +133,9 @@ function App() {
                 handleKeyboardKey={bindEditor.handleKeyboardKey}
               />
               {statusMessage && (
-                <div className="status-message">{statusMessage}</div>
+                <div className={`status-message${statusMessage.type === "error" ? " status-error" : ""}`}>
+                  {statusMessage.text}
+                </div>
               )}
             </>
           )}

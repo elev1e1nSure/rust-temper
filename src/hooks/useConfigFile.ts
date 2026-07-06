@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import type { Bind } from "../types";
 import { DEFAULT_CONFIG_PATH } from "../constants";
 
@@ -18,19 +19,14 @@ export function useConfigFile() {
     }
   };
 
-  const handleSelectFile = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".cfg";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const path =
-        (file as any).path ||
-        `C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust\\cfg\\${file.name}`;
-      setConfigPath(path);
-    };
-    input.click();
+  const handleSelectFile = async () => {
+    const selected = await open({
+      filters: [{ name: "cfg", extensions: ["cfg"] }],
+      multiple: false,
+    });
+    if (selected) {
+      setConfigPath(selected);
+    }
   };
 
   const autoDetectConfigPath = async () => {

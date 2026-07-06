@@ -118,15 +118,16 @@ export function Tooltip({ content, children }: TooltipProps) {
   if (!isValidElement(children)) return children;
 
   const childProps = children.props as Record<string, any>;
-  const originalRef = (children as any).ref;
+  const childRef = (children as React.RefAttributes<HTMLElement>).ref;
 
-  const cloned = cloneElement(children, {
-    ref: (node: HTMLElement | null) => {
-      anchorRef.current = node;
-      if (typeof originalRef === "function") originalRef(node);
-      else if (originalRef && typeof originalRef === "object")
-        originalRef.current = node;
-    },
+  function mergeRef(node: HTMLElement | null) {
+    anchorRef.current = node;
+    if (typeof childRef === "function") childRef(node);
+    else if (childRef && typeof childRef === "object") (childRef as React.MutableRefObject<HTMLElement | null>).current = node;
+  }
+
+  const cloned = cloneElement(children as React.ReactElement<React.DOMAttributes<HTMLElement> & React.RefAttributes<HTMLElement>>, {
+    ref: mergeRef,
     onMouseEnter: (e: React.MouseEvent) => {
       childProps.onMouseEnter?.(e);
       show();
@@ -143,7 +144,7 @@ export function Tooltip({ content, children }: TooltipProps) {
       childProps.onBlur?.(e);
       hide();
     },
-  } as any);
+  });
 
   return (
     <>

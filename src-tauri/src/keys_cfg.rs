@@ -52,10 +52,6 @@ pub fn read_keys_cfg(path: String) -> Result<Vec<KeyBind>, String> {
 
 #[tauri::command]
 pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
-    if binds.is_empty() {
-        return Ok(());
-    }
-
     let content = serialize_binds(&binds);
     client_cfg::write_atomic(Path::new(&path), &content)
 }

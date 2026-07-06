@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -109,10 +110,10 @@ export function BindsPage({
 
   // Defers unmounting until the close animation finishes (see
   // handleManualModalAnimationEnd), instead of clearing the target instantly.
-  const closeManualModal = () => {
+  const closeManualModal = useCallback(() => {
     if (commandModal === null || manualModalClosing) return;
     setManualModalClosing(true);
-  };
+  }, [commandModal, manualModalClosing]);
 
   const handleManualModalAnimationEnd = (
     e: React.AnimationEvent<HTMLDivElement>,
@@ -147,8 +148,7 @@ export function BindsPage({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commandModal]);
+  }, [commandModal, closeManualModal]);
 
   const selectCommand = (command: string) => {
     setDraftActions((actions) => [
