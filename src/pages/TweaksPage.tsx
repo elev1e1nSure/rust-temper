@@ -239,6 +239,22 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
     [tweaks, previewKey],
   );
 
+  // Crossfades between descriptions instead of swapping text instantly:
+  // fade the old one out, swap the displayed tweak once it's invisible,
+  // then fade the new one in. Avoids the blink a key-based remount causes.
+  const [displayedTweak, setDisplayedTweak] = useState(previewTweak);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (!previewTweak || previewTweak.key === displayedTweak?.key) return;
+    setFading(true);
+    const timer = window.setTimeout(() => {
+      setDisplayedTweak(previewTweak);
+      setFading(false);
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [previewTweak, displayedTweak]);
+
   const toggleSection = (key: TweakSection) => {
     setOpenSections((prev) => {
       const next = new Set(prev);
@@ -299,10 +315,12 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
       </div>
 
       <div className="settings-card graphics-preview tweaks-preview">
-        {previewTweak && (
-          <div key={previewTweak.key} className="tweaks-preview-fade">
-            <div className="graphics-preview-title">{previewTweak.title}</div>
-            <p className="graphics-preview-desc">{previewTweak.description}</p>
+        {displayedTweak && (
+          <div className={`tweaks-preview-body${fading ? " fading" : ""}`}>
+            <div className="graphics-preview-title">{displayedTweak.title}</div>
+            <p className="graphics-preview-desc">
+              {displayedTweak.description}
+            </p>
           </div>
         )}
       </div>

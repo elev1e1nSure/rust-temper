@@ -788,6 +788,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
 }
 
 .tweaks-preview {
@@ -795,23 +796,14 @@ body {
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  align-self: flex-start;
 }
 
-.tweaks-preview-fade {
-  animation: tweaksPreviewFade 0.2s ease;
+.tweaks-preview-body {
+  transition: opacity 0.12s ease;
 }
 
-@keyframes tweaksPreviewFade {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.tweaks-preview-body.fading {
+  opacity: 0;
 }
 
 .toggle-switch {
