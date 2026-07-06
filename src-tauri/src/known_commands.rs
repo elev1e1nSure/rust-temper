@@ -172,9 +172,19 @@ pub fn presets() -> Vec<CommandPreset> {
             "Удерживая клавишу, камера слегка приближается.",
         ),
         preset(
+            "Смена рук",
+            "graphics.vm_horizontal_flip 0; graphics.vm_horizontal_flip 1",
+            "Переключает положение модели оружия (левая/правая рука).",
+        ),
+        preset(
             "Радиус взаимодействия",
             "~meta.exec \"client.lookatradius 0\" \"chat.add 0 0 MIN\";meta.exec \"client.lookatradius 0.2\" \"chat.add 0 0 DEFAULT\";meta.exec \"client.lookatradius 10\" \"chat.add 0 0 MAX\"",
             "По кругу переключает радиус, на котором персонаж может смотреть/взаимодействовать с объектами.",
+        ),
+        preset(
+            "Быстрое переодевание",
+            "inventory.toggle;inventory.container1 0;inventory.container1 1;inventory.container1 2;inventory.container1 3;inventory.toggle",
+            "Мгновенно надевает снаряжение из первых четырёх слотов одежды в инвентаре.",
         ),
 
         // Транспорт: пересадка по местам
