@@ -795,7 +795,6 @@ body {
 .accordion-section {
   background: var(--panel);
   border-radius: 12px;
-  overflow: hidden;
 }
 
 .accordion-section + .accordion-section {

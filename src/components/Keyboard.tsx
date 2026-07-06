@@ -14,21 +14,21 @@ function keyWidth(units = 1): number {
 }
 
 interface KeyboardProps {
-  /** rustKey currently selected as the list filter */
-  selectedKey: string | null;
+  /** rustKeys forming the current filter combination */
+  selectedKeys: string[];
   /** a bind row is waiting for a key to be clicked (re-assign mode) */
   listening: boolean;
   onKeyClick: (rustKey: string) => void;
 }
 
 export function Keyboard({
-  selectedKey,
+  selectedKeys,
   listening,
   onKeyClick,
 }: KeyboardProps) {
   const renderKey = (key: KeyDef, fill = false) => {
     const bindable = Boolean(key.rustKey);
-    const selected = bindable && key.rustKey === selectedKey;
+    const selected = bindable && selectedKeys.includes(key.rustKey!);
     return (
       <button
         type="button"

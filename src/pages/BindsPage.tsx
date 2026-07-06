@@ -19,8 +19,8 @@ interface BindsPageProps {
   setNewBindIndex: (v: number | null) => void;
   exitingBindIndex: number | null;
   keyConflicts: Map<string, number>;
-  selectedKey: string | null;
-  setSelectedKey: (v: string | null) => void;
+  selectedKeys: string[];
+  setSelectedKeys: (v: string[]) => void;
   nameFor: (command: string) => string;
   updateBindCommand: (idx: number, cmd: string) => void;
   handleKeyboardKey: (rustKey: string) => void;
@@ -51,8 +51,8 @@ export function BindsPage({
   setNewBindIndex,
   exitingBindIndex,
   keyConflicts,
-  selectedKey,
-  setSelectedKey,
+  selectedKeys,
+  setSelectedKeys,
   nameFor,
   updateBindCommand,
   handleKeyboardKey,
@@ -98,17 +98,20 @@ export function BindsPage({
       <div className="header-row">
         <div className="search binds-search">
           <SearchIcon />
-          {selectedKey && (
+          {selectedKeys.map((k) => (
             <button
+              key={k}
               type="button"
               className="key-filter-chip"
-              onClick={() => setSelectedKey(null)}
-              title="Сбросить фильтр по клавише"
+              onClick={() =>
+                setSelectedKeys(selectedKeys.filter((x) => x !== k))
+              }
+              title="Убрать клавишу из комбинации"
             >
-              {keyDisplayName(selectedKey)}
+              {keyDisplayName(k)}
               <span className="key-filter-chip-x">×</span>
             </button>
-          )}
+          ))}
           <input
             type="text"
             placeholder="Поиск по названию"
@@ -185,7 +188,7 @@ export function BindsPage({
 
       <div className="keyboard-panel">
         <Keyboard
-          selectedKey={selectedKey}
+          selectedKeys={selectedKeys}
           listening={editingKeyIndex !== null}
           onKeyClick={handleKeyboardKey}
         />

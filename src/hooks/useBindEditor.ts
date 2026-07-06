@@ -4,9 +4,9 @@ import type { Bind, CommandPreset } from "../types";
 export function useBindEditor(commandPresets: CommandPreset[]) {
   const [binds, setBinds] = useState<Bind[]>([]);
   const [search, setSearch] = useState("");
-  // Key picked on the on-screen keyboard; acts as a filter for the list below
-  // and seeds the key of any bind created while it is active.
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // Keys picked on the on-screen keyboard, in press order. Together they form a
+  // combination that filters the list below and seeds the key of new binds.
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   // Row whose key is being re-assigned via the next on-screen keyboard click.
   const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
   const [newBindIndex, setNewBindIndex] = useState<number | null>(null);
@@ -31,8 +31,18 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
 
   const filteredBinds = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const selectedSet = new Set(selectedKeys);
     return binds.filter((bind) => {
-      if (selectedKey && bind.key !== selectedKey) return false;
+      if (selectedKeys.length > 0) {
+        // Match the whole combination regardless of the order keys were pressed.
+        const tokens = bind.key.split("+").filter(Boolean);
+        if (
+          tokens.length !== selectedSet.size ||
+          !tokens.every((t) => selectedSet.has(t))
+        ) {
+          return false;
+        }
+      }
       if (!query) return true;
       return (
         bind.key.toLowerCase().includes(query) ||
@@ -40,7 +50,9 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
         bind.command.toLowerCase().includes(query)
       );
     });
-  }, [binds, search, selectedKey, presetByCommand]);
+  }, [binds, search, selectedKeys, presetByCommand]);
+
+  const selectedKeyCombo = selectedKeys.join("+");
 
   const scrollListToTop = () => {
     requestAnimationFrame(() => {
@@ -51,16 +63,16 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   };
 
   // "Создать вручную" — empty row, action picked via dropdown; key comes from
-  // the currently selected keyboard key (if any).
+  // the currently selected keyboard combination (if any).
   const addBind = () => {
-    setBinds((prev) => [{ key: selectedKey ?? "", command: "" }, ...prev]);
+    setBinds((prev) => [{ key: selectedKeyCombo, command: "" }, ...prev]);
     setNewBindIndex(0);
     scrollListToTop();
   };
 
   // "Выбрать из списка" — row seeded with a known action, keyed like addBind.
   const addFromPreset = (command: string) => {
-    setBinds((prev) => [{ key: selectedKey ?? "", command }, ...prev]);
+    setBinds((prev) => [{ key: selectedKeyCombo, command }, ...prev]);
     setNewBindIndex(0);
     scrollListToTop();
   };
@@ -93,13 +105,17 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   };
 
   // On-screen keyboard click: assign to a row being edited, otherwise toggle the
-  // key filter (select / deselect).
+  // key in the filter combination.
   const handleKeyboardKey = (rustKey: string) => {
     if (editingKeyIndex !== null) {
       assignKey(editingKeyIndex, rustKey);
       return;
     }
-    setSelectedKey((current) => (current === rustKey ? null : rustKey));
+    setSelectedKeys((prev) =>
+      prev.includes(rustKey)
+        ? prev.filter((k) => k !== rustKey)
+        : [...prev, rustKey],
+    );
   };
 
   // Escape cancels an in-progress key edit.
@@ -117,8 +133,8 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     setBinds,
     search,
     setSearch,
-    selectedKey,
-    setSelectedKey,
+    selectedKeys,
+    setSelectedKeys,
     editingKeyIndex,
     setEditingKeyIndex,
     newBindIndex,

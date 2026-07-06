@@ -49,7 +49,7 @@ function App() {
           .then((loaded) => {
             if (loaded) {
               bindEditor.setBinds(loaded);
-              setStatusMessage(`Загружено биндов: ${loaded.length}`);
+              setStatusMessage(`${loaded.length} биндов`);
             }
           })
           .catch((err) => {
@@ -69,7 +69,7 @@ function App() {
       .then((loaded) => {
         if (loaded) {
           bindEditor.setBinds(loaded);
-          setStatusMessage(`Загружено биндов: ${loaded.length}`);
+          setStatusMessage(`${loaded.length} биндов`);
         }
       })
       .catch((err) => {
@@ -86,7 +86,7 @@ function App() {
           .then((loaded) => {
             if (loaded) {
               bindEditor.setBinds(loaded);
-              setStatusMessage(`Загружено биндов: ${loaded.length}`);
+              setStatusMessage(`${loaded.length} биндов`);
             }
           })
           .catch((err) => {
@@ -151,8 +151,8 @@ function App() {
                 setNewBindIndex={bindEditor.setNewBindIndex}
                 exitingBindIndex={bindEditor.exitingBindIndex}
                 keyConflicts={bindEditor.keyConflicts}
-                selectedKey={bindEditor.selectedKey}
-                setSelectedKey={bindEditor.setSelectedKey}
+                selectedKeys={bindEditor.selectedKeys}
+                setSelectedKeys={bindEditor.setSelectedKeys}
                 nameFor={bindEditor.nameFor}
                 updateBindCommand={bindEditor.updateBindCommand}
                 handleKeyboardKey={bindEditor.handleKeyboardKey}
