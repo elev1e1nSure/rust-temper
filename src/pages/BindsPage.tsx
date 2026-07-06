@@ -125,7 +125,6 @@ export function BindsPage({
   const draggedActionIdRef = useRef<number | null>(null);
   const draftKeyRemovalTimers = useRef(new Map<string, number>());
 
-
   const manualPresets = useMemo(() => {
     if (!commandModal) return [];
     const q = manualSearch.trim().toLowerCase();
@@ -206,9 +205,14 @@ export function BindsPage({
   ) => {
     setCommandModal({ kind, target, step: "select" });
     if (typeof target === "number") {
-      const existingBind = filteredBinds.find((fb) => fb.sourceIndex === target)?.bind;
+      const existingBind = filteredBinds.find(
+        (fb) => fb.sourceIndex === target,
+      )?.bind;
       const keys = existingBind?.key
-        ? existingBind.key.replace(/^\[|\]$/g, "").split("+").filter(Boolean)
+        ? existingBind.key
+            .replace(/^\[|\]$/g, "")
+            .split("+")
+            .filter(Boolean)
         : [];
       setDraftKeys(keys);
     } else {
@@ -369,10 +373,7 @@ export function BindsPage({
       </div>
 
       <div className="keyboard-panel">
-        <Keyboard
-          selectedKeys={selectedKeys}
-          onKeyClick={toggleSelectedKey}
-        />
+        <Keyboard selectedKeys={selectedKeys} onKeyClick={toggleSelectedKey} />
       </div>
 
       <div className="binds-list-wrap">
@@ -588,7 +589,10 @@ export function BindsPage({
                               );
                             }}
                             onDragEnter={() => setDragOverActionId(action.id)}
-                            onDragOver={(event) => event.preventDefault()}
+                            onDragOver={(event) => {
+                              event.preventDefault();
+                              event.dataTransfer.dropEffect = "move";
+                            }}
                             onDrop={(event) => {
                               event.preventDefault();
                               moveDraftAction(action.id);
@@ -684,7 +688,9 @@ export function BindsPage({
                       }
                       onClick={submitBind}
                     >
-                      {commandModal?.target === "new" ? "Добавить" : "Сохранить"}
+                      {commandModal?.target === "new"
+                        ? "Добавить"
+                        : "Сохранить"}
                     </button>
                   </div>
                 </div>
