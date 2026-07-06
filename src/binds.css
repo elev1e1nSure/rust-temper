@@ -10,10 +10,6 @@
   margin-top: 16px;
 }
 
-.binds-filter-height {
-  transition-duration: 0.16s;
-}
-
 /* Key badge sits on the right (action -> key), fixed width. */
 .bind-key-slot {
   width: 190px;

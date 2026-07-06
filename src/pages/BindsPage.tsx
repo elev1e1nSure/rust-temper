@@ -402,47 +402,43 @@ export function BindsPage({
       </div>
 
       <div className="binds-list-wrap">
-        <AnimatedHeight className="binds-filter-height">
-          <div>
-            {filteredBinds.map((bind, index) => {
-              const hasConflict =
-                bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-              return (
-                <div
-                  className={`bind-row ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
-                  key={`${bind.key}-${bind.command}-${index}`}
-                  onAnimationEnd={() => {
-                    if (exitingBindIndex === index) {
-                      confirmRemoveBind(index);
-                    }
-                    if (newBindIndex === index) {
-                      setNewBindIndex(null);
-                    }
-                  }}
-                >
-                  <button
-                    className="action-cell"
-                    type="button"
-                    onClick={() => openBindCommandModal(index, bind.command)}
-                  >
-                    {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                    <ChevronIcon />
-                  </button>
+        {filteredBinds.map((bind, index) => {
+          const hasConflict =
+            bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+          return (
+            <div
+              className={`bind-row ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
+              key={`${bind.key}-${bind.command}-${index}`}
+              onAnimationEnd={() => {
+                if (exitingBindIndex === index) {
+                  confirmRemoveBind(index);
+                }
+                if (newBindIndex === index) {
+                  setNewBindIndex(null);
+                }
+              }}
+            >
+              <button
+                className="action-cell"
+                type="button"
+                onClick={() => openBindCommandModal(index, bind.command)}
+              >
+                {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                <ChevronIcon />
+              </button>
 
-                  <div
-                    className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
-                  >
-                    {bind.key ? keyDisplayName(bind.key) : "—"}
-                  </div>
+              <div
+                className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+              >
+                {bind.key ? keyDisplayName(bind.key) : "—"}
+              </div>
 
-                  <div className="delete-btn" onClick={() => removeBind(index)}>
-                    <TrashIcon />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </AnimatedHeight>
+              <div className="delete-btn" onClick={() => removeBind(index)}>
+                <TrashIcon />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {commandModal !== null &&
