@@ -6,6 +6,6 @@ export function parseCombo(key: string): string[] {
 }
 
 export function formatCombo(parts: string[]): string {
-  if (parts.length === 1) return parts[0];
+  if (parts.length === 1) return parts[0]!;
   return `[${parts.join("+")}]`;
 }

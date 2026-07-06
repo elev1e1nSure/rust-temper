@@ -217,7 +217,7 @@ export function keyDisplayName(rustKey: string): string {
   // Combination bind, stored by Rust as "[a+b]" — display each part.
   const parts = parseCombo(rustKey);
   if (parts.length > 1) return parts.map(keyDisplayName).join(" + ");
-  const combo = parts[0];
+  const combo = parts[0]!;
   if (DISPLAY_NAMES[combo]) return DISPLAY_NAMES[combo];
   const kp = combo.match(/^kp(\d)$/);
   if (kp) return `Num ${kp[1]}`;

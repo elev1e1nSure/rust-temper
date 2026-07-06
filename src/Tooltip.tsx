@@ -117,6 +117,7 @@ export function Tooltip({ content, children }: TooltipProps) {
 
   if (!isValidElement(children)) return children;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- forwarding arbitrary event handlers
   const childProps = children.props as Record<string, any>;
   const childRef = (children as React.RefAttributes<HTMLElement>).ref;
 

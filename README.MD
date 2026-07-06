@@ -1,7 +1,12 @@
-# Tauri + React + Typescript
+# RustPatch
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+GUI-утилита для управления конфигурационными файлами игры Rust —
+бинды (`keys.cfg`) и твики (`client.cfg`). Поддерживает автопоиск
+файлов через реестр Steam, интерактивную раскладку клавиатуры,
+предустановленный словарь команд и управление графическими настройками.
 
-## Recommended IDE Setup
+## Quick start
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+```bash
+pnpm install && pnpm tauri dev
+```

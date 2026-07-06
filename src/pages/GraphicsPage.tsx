@@ -152,7 +152,7 @@ interface GraphicsPageProps {
 export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
   const [presetLabel, setPresetLabel] = useState("Пользовательский");
-  const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0].key);
+  const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0]!.key);
   const [applyStatus, setApplyStatus] = useState<
     { type: "success" | "error"; message: string } | undefined
   >();
@@ -174,7 +174,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
   }, [clientCfgPath]);
 
   const previewRow =
-    QUALITY_ROWS.find((r) => r.key === previewKey) ?? QUALITY_ROWS[0];
+    QUALITY_ROWS.find((r) => r.key === previewKey) ?? QUALITY_ROWS[0]!;
 
   const setRowValue = useCallback((key: string, value: number) => {
     setValues((prev) => ({ ...prev, [key]: value }));

@@ -284,7 +284,7 @@ export function BindsPage({
         const reordered = [...others];
         reordered.splice(targetIndex, 0, dragged);
         const unchanged = reordered.every(
-          (action, index) => action.id === actions[index].id,
+          (action, index) => action.id === actions[index]!.id,
         );
         return unchanged ? actions : reordered;
       });
