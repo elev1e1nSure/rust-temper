@@ -1,4 +1,11 @@
-import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useTweaks } from "../hooks/useTweaks";
 import { ChevronIcon } from "../icons";
@@ -30,6 +37,7 @@ function TweakRow({
   sliderValue,
   onToggle,
   onSliderChange,
+  onPreview,
 }: {
   tweak: TweakDef;
   checked: boolean;
@@ -38,11 +46,14 @@ function TweakRow({
   sliderValue: number;
   onToggle: () => void;
   onSliderChange: (value: number) => void;
+  onPreview: () => void;
 }) {
   return (
     <div
       className={`setting-row setting-row-clickable tweak-row${disabled ? " disabled" : ""}`}
       onClick={disabled ? undefined : onToggle}
+      onMouseEnter={onPreview}
+      onFocus={onPreview}
     >
       <div>
         <div className="setting-name tweak-name">
@@ -50,9 +61,6 @@ function TweakRow({
           {tweak.badge === "recommended" && (
             <span className="tweak-badge">рекомендовано</span>
           )}
-        </div>
-        <div className="tweak-desc-wrap">
-          <div className="setting-desc tweak-desc">{tweak.description}</div>
         </div>
         {tweak.advancedSlider && checked && (
           <div
@@ -224,6 +232,12 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
   const [openSections, setOpenSections] = useState<Set<TweakSection>>(
     () => new Set<TweakSection>(["qol"]),
   );
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
+
+  const previewTweak = useMemo(
+    () => tweaks.find((t) => t.key === previewKey) ?? tweaks[0] ?? null,
+    [tweaks, previewKey],
+  );
 
   const toggleSection = (key: TweakSection) => {
     setOpenSections((prev) => {
@@ -250,36 +264,49 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
 
   return (
     <div className="tweaks-container page-container">
-      {SECTIONS.map((section) => {
-        const sectionTweaks = tweaks.filter((t) => t.section === section.key);
-        if (sectionTweaks.length === 0) return null;
-        const isExpanded = openSections.has(section.key);
+      <div className="tweaks-main">
+        {SECTIONS.map((section) => {
+          const sectionTweaks = tweaks.filter((t) => t.section === section.key);
+          if (sectionTweaks.length === 0) return null;
+          const isExpanded = openSections.has(section.key);
 
-        return (
-          <AccordionSection
-            key={section.key}
-            title={section.title}
-            isExpanded={isExpanded}
-            onToggle={() => toggleSection(section.key)}
-          >
-            <div className="settings-card settings-card-compact">
-              {sectionTweaks.map((tweak) => (
-                <TweakRow
-                  key={tweak.key}
-                  tweak={tweak}
-                  checked={isOn(tweak)}
-                  managed={isManaged(tweak)}
-                  disabled={isPending(tweak)}
-                  sliderValue={sliderValue(tweak)}
-                  onToggle={() => requestToggle(tweak)}
-                  onSliderChange={(value) => setSliderValue(tweak, value)}
-                />
-              ))}
-            </div>
-          </AccordionSection>
-        );
-      })}
-      {error && <div className="status-message">{error}</div>}
+          return (
+            <AccordionSection
+              key={section.key}
+              title={section.title}
+              isExpanded={isExpanded}
+              onToggle={() => toggleSection(section.key)}
+            >
+              <div className="settings-card settings-card-compact">
+                {sectionTweaks.map((tweak) => (
+                  <TweakRow
+                    key={tweak.key}
+                    tweak={tweak}
+                    checked={isOn(tweak)}
+                    managed={isManaged(tweak)}
+                    disabled={isPending(tweak)}
+                    sliderValue={sliderValue(tweak)}
+                    onToggle={() => requestToggle(tweak)}
+                    onSliderChange={(value) => setSliderValue(tweak, value)}
+                    onPreview={() => setPreviewKey(tweak.key)}
+                  />
+                ))}
+              </div>
+            </AccordionSection>
+          );
+        })}
+        {error && <div className="status-message">{error}</div>}
+      </div>
+
+      <div className="settings-card graphics-preview tweaks-preview">
+        {previewTweak && (
+          <div key={previewTweak.key} className="tweaks-preview-fade">
+            <div className="graphics-preview-title">{previewTweak.title}</div>
+            <p className="graphics-preview-desc">{previewTweak.description}</p>
+          </div>
+        )}
+      </div>
+
       {unmanagedTweak && (
         <UnmanagedTweakModal
           tweak={unmanagedTweak}

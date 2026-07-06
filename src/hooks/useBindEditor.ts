@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Bind, CommandPreset } from "../types";
-import { FALLBACK_DESCRIPTION } from "../constants";
 import { keyNameFromEvent } from "../keyMap";
 
 export function useBindEditor(commandPresets: CommandPreset[]) {
@@ -17,9 +16,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
 
   const nameFor = (command: string) =>
     presetByCommand.get(command)?.name ?? command;
-
-  const descriptionFor = (command: string) =>
-    presetByCommand.get(command)?.description ?? FALLBACK_DESCRIPTION;
 
   const keyConflicts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -106,7 +102,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     exitingBindIndex,
     setExitingBindIndex,
     nameFor,
-    descriptionFor,
     keyConflicts,
     filteredBinds,
     addBind,

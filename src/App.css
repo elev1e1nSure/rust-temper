@@ -770,31 +770,48 @@ body {
   margin-bottom: 0;
 }
 
-.tweak-desc-wrap {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.22s ease;
+.tweaks-container {
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
 }
 
-.tweak-row:hover .tweak-desc-wrap {
-  grid-template-rows: 1fr;
+.tweaks-container::after {
+  content: none;
 }
 
-.tweak-desc {
-  max-width: 480px;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.15s ease;
+.tweaks-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.tweak-desc::before {
-  content: "";
-  display: block;
-  height: 4px;
+.tweaks-preview {
+  width: 300px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
 }
 
-.tweak-row:hover .tweak-desc {
-  opacity: 1;
+.tweaks-preview-fade {
+  animation: tweaksPreviewFade 0.2s ease;
+}
+
+@keyframes tweaksPreviewFade {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .toggle-switch {

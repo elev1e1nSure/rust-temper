@@ -150,7 +150,6 @@ function App() {
                 exitingBindIndex={bindEditor.exitingBindIndex}
                 keyConflicts={bindEditor.keyConflicts}
                 nameFor={bindEditor.nameFor}
-                descriptionFor={bindEditor.descriptionFor}
                 updateBindCommand={bindEditor.updateBindCommand}
                 openDropdownIndex={dropdown.openDropdownIndex}
                 closingDropdownIndex={dropdown.closingDropdownIndex}

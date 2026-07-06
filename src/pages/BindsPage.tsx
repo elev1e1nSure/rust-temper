@@ -1,5 +1,4 @@
 import type { Bind, CommandPreset } from "../types";
-import { Tooltip } from "../Tooltip";
 import { ChevronIcon, TrashIcon, SearchIcon, PlusIcon } from "../icons";
 
 interface BindsPageProps {
@@ -17,7 +16,6 @@ interface BindsPageProps {
   exitingBindIndex: number | null;
   keyConflicts: Map<string, number>;
   nameFor: (command: string) => string;
-  descriptionFor: (command: string) => string;
   updateBindCommand: (idx: number, cmd: string) => void;
   openDropdownIndex: number | null;
   closingDropdownIndex: number | null;
@@ -45,7 +43,6 @@ export function BindsPage({
   exitingBindIndex,
   keyConflicts,
   nameFor,
-  descriptionFor,
   updateBindCommand,
   openDropdownIndex,
   closingDropdownIndex,
@@ -105,47 +102,32 @@ export function BindsPage({
                 }}
               >
                 <div className="key-cell">
-                  <Tooltip
-                    content={
-                      hasConflict
-                        ? "Эта клавиша уже используется другим биндом"
-                        : null
-                    }
+                  <div
+                    className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
+                    onClick={() => setEditingKeyIndex(index)}
                   >
-                    <div
-                      className={`key-badge ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
-                      onClick={() => setEditingKeyIndex(index)}
-                    >
-                      {editingKeyIndex === index
-                        ? "Нажмите клавишу..."
-                        : bind.key || "—"}
-                    </div>
-                  </Tooltip>
+                    {editingKeyIndex === index
+                      ? "Нажмите клавишу..."
+                      : bind.key || "—"}
+                  </div>
                 </div>
                 <div className="action-cell-container">
-                  <Tooltip content={descriptionFor(bind.command)}>
-                    <button
-                      className="action-cell"
-                      type="button"
-                      onClick={(e) => {
-                        const rect =
-                          e.currentTarget.getBoundingClientRect();
-                        setDropdownDir(
-                          window.innerHeight - rect.bottom < 230
-                            ? "up"
-                            : "down",
-                        );
-                        changeOpenDropdown(
-                          openDropdownIndex === index ? null : index,
-                        );
-                      }}
-                    >
-                      {bind.command
-                        ? nameFor(bind.command)
-                        : "Выберите действие"}
-                      <ChevronIcon />
-                    </button>
-                  </Tooltip>
+                  <button
+                    className="action-cell"
+                    type="button"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setDropdownDir(
+                        window.innerHeight - rect.bottom < 230 ? "up" : "down",
+                      );
+                      changeOpenDropdown(
+                        openDropdownIndex === index ? null : index,
+                      );
+                    }}
+                  >
+                    {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                    <ChevronIcon />
+                  </button>
                   <div
                     className={`dropdown-base dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
                   >
@@ -155,14 +137,20 @@ export function BindsPage({
                           <button
                             className={`kind-btn${filterKind === "single" ? " active" : ""}`}
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setFilterKind("single"); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFilterKind("single");
+                            }}
                           >
                             Обычные
                           </button>
                           <button
                             className={`kind-btn${filterKind === "combination" ? " active" : ""}`}
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setFilterKind("combination"); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFilterKind("combination");
+                            }}
                           >
                             Комбинации
                           </button>
@@ -173,9 +161,7 @@ export function BindsPage({
                             type="text"
                             placeholder="Поиск действия..."
                             value={commandSearch}
-                            onChange={(e) =>
-                              setCommandSearch(e.target.value)
-                            }
+                            onChange={(e) => setCommandSearch(e.target.value)}
                             onClick={(e) => e.stopPropagation()}
                             autoFocus
                           />
@@ -184,27 +170,20 @@ export function BindsPage({
                     )}
                     {(isDropdownOpen || isDropdownClosing) &&
                       filteredCommandPresets.map((preset) => (
-                        <Tooltip
+                        <button
                           key={preset.command}
-                          content={preset.description}
+                          className="dropdown-item"
+                          type="button"
+                          onClick={() =>
+                            updateBindCommand(index, preset.command)
+                          }
                         >
-                          <button
-                            className="dropdown-item"
-                            type="button"
-                            onClick={() =>
-                              updateBindCommand(index, preset.command)
-                            }
-                          >
-                            {preset.name}
-                          </button>
-                        </Tooltip>
+                          {preset.name}
+                        </button>
                       ))}
                   </div>
                 </div>
-                <div
-                  className="delete-btn"
-                  onClick={() => removeBind(index)}
-                >
+                <div className="delete-btn" onClick={() => removeBind(index)}>
                   <TrashIcon />
                 </div>
               </div>
