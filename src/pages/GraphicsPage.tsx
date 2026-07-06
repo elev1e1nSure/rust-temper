@@ -98,7 +98,7 @@ const QUICK_PRESETS: {
     label: "Производительность",
     values: {
       shadows: 0,
-      textures: 0,
+      textures: 4,
       lighting: 0,
       water: 0,
       grass: 0,
@@ -110,10 +110,10 @@ const QUICK_PRESETS: {
     label: "Комбат",
     values: {
       shadows: 1,
-      textures: 0,
+      textures: 2,
       lighting: 0,
       water: 0,
-      grass: 1,
+      grass: 0,
       clouds: 0,
       smoothing: 0,
     },
@@ -122,10 +122,10 @@ const QUICK_PRESETS: {
     label: "Баланс",
     values: {
       shadows: 2,
-      textures: 2,
+      textures: 1,
       lighting: 1,
-      water: 1,
-      grass: 1,
+      water: 2,
+      grass: 2,
       clouds: 1,
       smoothing: 1,
     },
@@ -133,17 +133,16 @@ const QUICK_PRESETS: {
   {
     label: "Графика",
     values: {
-      shadows: 3,
-      textures: 0,
+      shadows: 2,
+      textures: 4,
       lighting: 2,
       water: 2,
       grass: 2,
-      clouds: 2,
-      smoothing: 2,
+      clouds: 3,
+      smoothing: 3,
     },
   },
 ];
-
 
 interface GraphicsPageProps {
   configPath: string;
