@@ -101,22 +101,13 @@ const SHADOWS: Quality = Quality {
         ],
         &[
             ("graphics.shadowlights", "1"),
-            ("graphicssettings.shadowqualitypreset", "0"),
-        ],
-        &[
-            ("graphics.shadowlights", "1"),
-            ("graphicssettings.shadowqualitypreset", "2"),
-        ],
-        &[
-            ("graphics.shadowlights", "1"),
             ("graphicssettings.shadowqualitypreset", "2"),
         ],
     ],
-    // Tiers 0/1 and 2/3 collapse to the same preset on disk, so reads round to 1 or 2.
     read: ReadSpec::Lookup {
         key: "graphicssettings.shadowqualitypreset",
-        map: &[("2", 2), ("0", 1)],
-        default: 1,
+        map: &[("0", 0), ("2", 1)],
+        default: 0,
     },
 };
 
@@ -160,15 +151,6 @@ const TEXTURES: Quality = Quality {
             ("mesh.quality", "0"),
             ("terrain.quality", "100"),
         ],
-        &[
-            ("graphicssettings.globaltexturemipmaplimit", "3"),
-            ("graphics.af", "1"),
-            ("graphics.lodbias", "0.5"),
-            ("graphics.shaderlod", "1"),
-            ("graphicssettings.anisotropicfiltering", "0"),
-            ("mesh.quality", "0"),
-            ("terrain.quality", "100"),
-        ],
     ],
     read: ReadSpec::Lookup {
         key: "graphicssettings.globaltexturemipmaplimit",
@@ -181,9 +163,9 @@ const WATER: Quality = Quality {
     label: "качества воды",
     log_name: "Water quality",
     tiers: &[
-        &[("water.quality", "0"), ("water.reflections", "0")],
-        &[("water.quality", "0"), ("water.reflections", "1")],
-        &[("water.quality", "0"), ("water.reflections", "2")],
+        &[("water.reflections", "0")],
+        &[("water.reflections", "1")],
+        &[("water.reflections", "2")],
     ],
     read: ReadSpec::Lookup {
         key: "water.reflections",
@@ -254,12 +236,12 @@ const CLOUDS: Quality = Quality {
     tiers: &[
         &[("graphics.volumetric_clouds", "0")],
         &[("graphics.volumetric_clouds", "1")],
-        &[("graphics.volumetric_clouds", "4")],
+        &[("graphics.volumetric_clouds", "2")],
         &[("graphics.volumetric_clouds", "4")],
     ],
     read: ReadSpec::Lookup {
         key: "graphics.volumetric_clouds",
-        map: &[("0", 0), ("1", 1), ("4", 2)],
+        map: &[("0", 0), ("1", 1), ("2", 2), ("4", 3)],
         default: 0,
     },
 };
@@ -268,14 +250,14 @@ const SMOOTHING: Quality = Quality {
     label: "сглаживания",
     log_name: "Smoothing quality",
     tiers: &[
+        &[("effects.sharpen", "True"), ("effects.antialiasing", "0")],
         &[("effects.sharpen", "True"), ("effects.antialiasing", "1")],
         &[("effects.sharpen", "True"), ("effects.antialiasing", "2")],
-        &[("effects.sharpen", "True"), ("effects.antialiasing", "3")],
         &[("effects.sharpen", "True"), ("effects.antialiasing", "3")],
     ],
     read: ReadSpec::Lookup {
         key: "effects.antialiasing",
-        map: &[("1", 0), ("2", 1), ("3", 2)],
+        map: &[("0", 0), ("1", 1), ("2", 2), ("3", 3)],
         default: 0,
     },
 };

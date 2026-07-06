@@ -20,7 +20,7 @@ const QUALITY_ROWS: QualityRow[] = [
     label: "Качество теней",
     description:
       "Влияет на резкость и дальность прорисовки теней. Сильнее всего сказывается на FPS в помещениях и лесах.",
-    tiers: ["Отключены", "Производительность", "Баланс", "Качество"],
+    tiers: ["Производительность", "Качество"],
     readCmd: "read_shadow_quality",
     applyCmd: "apply_shadow_quality",
   },
@@ -29,7 +29,7 @@ const QUALITY_ROWS: QualityRow[] = [
     label: "Качество текстур",
     description:
       "Разрешение текстур построек, предметов и ландшафта. Требует больше видеопамяти на высоких значениях.",
-    tiers: ["Картошка", "Низкое", "Среднее", "Высокое", "Ультра"],
+    tiers: ["Картошка", "Низкое", "Среднее", "Высокое"],
     readCmd: "read_texture_quality",
     applyCmd: "apply_texture_quality",
   },
@@ -81,7 +81,7 @@ const QUALITY_ROWS: QualityRow[] = [
 ];
 
 const DEFAULT_VALUES: Record<string, number> = {
-  shadows: 1,
+  shadows: 0,
   textures: 0,
   lighting: 0,
   water: 0,
@@ -98,7 +98,7 @@ const QUICK_PRESETS: {
     label: "Производительность",
     values: {
       shadows: 0,
-      textures: 4,
+      textures: 3,
       lighting: 0,
       water: 0,
       grass: 0,
@@ -109,7 +109,7 @@ const QUICK_PRESETS: {
   {
     label: "Комбат",
     values: {
-      shadows: 1,
+      shadows: 0,
       textures: 2,
       lighting: 0,
       water: 0,
@@ -121,7 +121,7 @@ const QUICK_PRESETS: {
   {
     label: "Баланс",
     values: {
-      shadows: 2,
+      shadows: 1,
       textures: 1,
       lighting: 1,
       water: 2,
@@ -133,8 +133,8 @@ const QUICK_PRESETS: {
   {
     label: "Графика",
     values: {
-      shadows: 2,
-      textures: 4,
+      shadows: 1,
+      textures: 3,
       lighting: 2,
       water: 2,
       grass: 2,
