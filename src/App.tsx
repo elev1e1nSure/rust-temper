@@ -92,13 +92,14 @@ function App() {
   // Autosave on bind change
   useEffect(() => {
     if (configFile.isReloadingRef.current) return;
-    if (bindEditor.binds.length === 0) return;
     invoke("write_keys_cfg", {
       path: configFile.configPath,
       binds: bindEditor.binds,
-    }).catch((err) =>
-      setStatusMessage({ type: "error", text: `Не удалось сохранить keys.cfg: ${err}` }),
-    );
+    })
+      .then(() => setStatusMessage(null))
+      .catch((err) =>
+        setStatusMessage({ type: "error", text: `Не удалось сохранить keys.cfg: ${err}` }),
+      );
   }, [bindEditor.binds, configFile.configPath]);
 
   return (
