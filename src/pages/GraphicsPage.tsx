@@ -84,63 +84,63 @@ const QUICK_PRESETS: {
   values: Record<string, number>;
   mirrorsOff: boolean;
 }[] = [
-  {
-    label: "Производительность",
-    values: {
-      shadows: 0,
-      textures: 0,
-      lighting: 0,
-      trees: 0,
-      water: 0,
-      grass: 0,
-      clouds: 0,
-      smoothing: 0,
+    {
+      label: "Производительность",
+      values: {
+        shadows: 0,
+        textures: 0,
+        lighting: 0,
+        trees: 0,
+        water: 0,
+        grass: 0,
+        clouds: 0,
+        smoothing: 0,
+      },
+      mirrorsOff: true,
     },
-    mirrorsOff: true,
-  },
-  {
-    label: "Комбат",
-    values: {
-      shadows: 1,
-      textures: 0,
-      lighting: 0,
-      trees: 0,
-      water: 0,
-      grass: 2,
-      clouds: 0,
-      smoothing: 0,
+    {
+      label: "Комбат",
+      values: {
+        shadows: 1,
+        textures: 0,
+        lighting: 0,
+        trees: 0,
+        water: 0,
+        grass: 2,
+        clouds: 0,
+        smoothing: 0,
+      },
+      mirrorsOff: true,
     },
-    mirrorsOff: true,
-  },
-  {
-    label: "Баланс",
-    values: {
-      shadows: 2,
-      textures: 2,
-      lighting: 1,
-      trees: 1,
-      water: 1,
-      grass: 3,
-      clouds: 1,
-      smoothing: 1,
+    {
+      label: "Баланс",
+      values: {
+        shadows: 2,
+        textures: 2,
+        lighting: 1,
+        trees: 1,
+        water: 1,
+        grass: 3,
+        clouds: 1,
+        smoothing: 1,
+      },
+      mirrorsOff: false,
     },
-    mirrorsOff: false,
-  },
-  {
-    label: "Графика",
-    values: {
-      shadows: 3,
-      textures: 4,
-      lighting: 2,
-      trees: 2,
-      water: 2,
-      grass: 4,
-      clouds: 2,
-      smoothing: 2,
+    {
+      label: "Графика",
+      values: {
+        shadows: 3,
+        textures: 4,
+        lighting: 2,
+        trees: 2,
+        water: 2,
+        grass: 4,
+        clouds: 2,
+        smoothing: 2,
+      },
+      mirrorsOff: false,
     },
-    mirrorsOff: false,
-  },
-];
+  ];
 
 const MIRRORS_DESCRIPTION =
   "Отключает отражения в зеркалах и стёклах. Может заметно повысить FPS в застроенных базах.";

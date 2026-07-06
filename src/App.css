@@ -478,6 +478,7 @@ body {
 }
 
 @keyframes float-glass {
+
   0%,
   100% {
     transform: translate(-6%, -4%) scale(1) rotate(0deg);
@@ -514,7 +515,7 @@ body {
   gap: 24px;
 }
 
-.settings-card + .settings-card {
+.settings-card+.settings-card {
   margin-top: 12px;
 }
 
@@ -691,7 +692,7 @@ body {
   border-radius: 12px;
 }
 
-.accordion-section + .accordion-section {
+.accordion-section+.accordion-section {
   margin-top: 12px;
 }
 
@@ -1004,15 +1005,18 @@ body {
 .graphics-preset-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  background: var(--row);
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
 }
 
 .graphics-preset-tab {
-  background: var(--row);
+  background: transparent;
   color: var(--text-dim);
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 9px 4px;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 4px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1022,17 +1026,23 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .graphics-preset-tab:hover {
   color: var(--text);
-  background: #222228;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .graphics-preset-tab.active {
   color: var(--text);
-  background: #3b82f6;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.graphics-preset-tab.active:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text);
 }
 
 .graphics-settings-card {
@@ -1121,14 +1131,12 @@ body {
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,
-.graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
-  .graphics-slider-track {
+.graphics-slider-wrap:has(.graphics-slider-input:focus-visible) .graphics-slider-track {
   background: #323239;
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-thumb,
-.graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
-  .graphics-slider-thumb {
+.graphics-slider-wrap:has(.graphics-slider-input:focus-visible) .graphics-slider-thumb {
   background: #f0f0f2;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42);
 }
@@ -1180,16 +1188,12 @@ body {
   justify-content: center;
   gap: 14px;
   background:
-    radial-gradient(
-      circle at 30% 20%,
+    radial-gradient(circle at 30% 20%,
       rgba(203, 213, 225, 0.1),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 75% 80%,
+      transparent 55%),
+    radial-gradient(circle at 75% 80%,
       rgba(59, 130, 246, 0.12),
-      transparent 60%
-    ),
+      transparent 60%),
     var(--row);
   border: 1px solid var(--row-border);
 }
