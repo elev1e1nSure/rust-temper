@@ -1072,7 +1072,7 @@ body {
    can't reliably be suppressed via ::-webkit-slider-thumb overrides. */
 .graphics-slider-wrap {
   position: relative;
-  height: 26px;
+  height: 32px;
   display: flex;
   align-items: center;
 }
@@ -1080,9 +1080,10 @@ body {
 .graphics-slider-track {
   position: relative;
   width: 100%;
-  height: 8px;
+  height: 10px;
   border-radius: 999px;
-  background: var(--row-border);
+  background: #29292f;
+  transition: background 0.15s ease;
 }
 
 .graphics-slider-fill {
@@ -1092,17 +1093,44 @@ body {
   border-radius: 999px;
   background: #3b82f6;
   pointer-events: none;
+  transition: width 0.12s ease-out;
 }
 
 .graphics-slider-thumb {
   position: absolute;
   top: 50%;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #d7d7dc;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.34);
   transform: translate(-50%, -50%);
   pointer-events: none;
+  transition:
+    left 0.12s ease-out,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.graphics-slider-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: #3b82f6;
+}
+
+.graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,
+.graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
+  .graphics-slider-track {
+  background: #323239;
+}
+
+.graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-thumb,
+.graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
+  .graphics-slider-thumb {
+  background: #f0f0f2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42);
 }
 
 .graphics-slider-input {
