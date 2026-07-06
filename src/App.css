@@ -17,6 +17,10 @@
   scrollbar-width: none;
 }
 
+html, body {
+  user-select: auto;
+}
+
 input,
 textarea {
   user-select: text;

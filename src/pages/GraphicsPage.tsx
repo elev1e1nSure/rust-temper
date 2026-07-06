@@ -239,27 +239,20 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     (key: string, value: number) => {
       setValues((prev) => ({ ...prev, [key]: value }));
       setPresetLabel("Пользовательский");
-      if (key === "trees") {
-        void applyTreeQuality(value);
-      }
     },
-    [applyTreeQuality],
+    [],
   );
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
     setMirrorsOff(preset.mirrorsOff);
     setPresetLabel(preset.label);
-    if (preset.values.trees !== undefined) {
-      void applyTreeQuality(preset.values.trees);
-    }
   };
 
   const resetToDefaults = () => {
     setValues(DEFAULT_VALUES);
     setMirrorsOff(false);
     setPresetLabel("Пользовательский");
-    void applyTreeQuality(DEFAULT_VALUES.trees);
   };
 
   const handleApply = useCallback(async () => {
@@ -295,6 +288,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         path: clientCfgPath,
         tier: values.grass,
       });
+      await applyTreeQuality(values.trees);
       setApplyStatus({
         type: "success",
         message: "Настройки графики применены",
@@ -307,7 +301,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass]);
+  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.trees, applyTreeQuality]);
 
   return (
     <div className="graphics-container page-container">
