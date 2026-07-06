@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -60,6 +61,14 @@ function commandWithoutMode(command: string): string {
   return command.replace(/^[+~]/, "");
 }
 
+// `html { zoom }` (App.css) scales layout, so getBoundingClientRect()/clientX/Y
+// report real viewport pixels while inline style px values are pre-zoom and
+// get re-multiplied by this factor on render — divide by it before applying.
+function getCssZoomFactor(): number {
+  const zoom = parseFloat(getComputedStyle(document.documentElement).zoom);
+  return Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+}
+
 export function BindsPage({
   filteredBinds,
   commandPresets,
@@ -91,9 +100,17 @@ export function BindsPage({
   );
 
   const [draggedActionId, setDraggedActionId] = useState<number | null>(null);
+  const [dragOverlay, setDragOverlay] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const nextDraftActionId = useRef(0);
   const draggedActionIdRef = useRef<number | null>(null);
   const actionRowRefs = useRef(new Map<number, HTMLDivElement>());
+  const dragPointerOffsetRef = useRef({ x: 0, y: 0 });
+  const prevActionRectsRef = useRef<Map<number, DOMRect> | null>(null);
   const draftKeyRemovalTimers = useRef(new Map<string, number>());
 
   const manualPresets = useMemo(() => {
@@ -167,6 +184,25 @@ export function BindsPage({
     setManualCustomCommand("");
   };
 
+  const parseCommandToActions = (
+    command: string,
+    kind: CommandModalKind,
+  ): DraftAction[] => {
+    return command.split(";").map((part) => {
+      let mode: ActionMode = "hold";
+      let cmd = part;
+      if (kind === "single") {
+        if (part.startsWith("~")) {
+          mode = "toggle";
+          cmd = part.slice(1);
+        } else if (part.startsWith("+")) {
+          cmd = part.slice(1);
+        }
+      }
+      return { id: ++nextDraftActionId.current, command: cmd, mode };
+    });
+  };
+
   const openCommandModal = (
     kind: CommandModalKind,
     target: CommandModalState["target"],
@@ -176,14 +212,17 @@ export function BindsPage({
       const existingBind = filteredBinds.find(
         (fb) => fb.sourceIndex === target,
       )?.bind;
-      const keys = existingBind?.key
-        ? parseCombo(existingBind.key)
-        : [];
+      const keys = existingBind?.key ? parseCombo(existingBind.key) : [];
       setDraftKeys(keys);
+      setDraftActions(
+        existingBind?.command
+          ? parseCommandToActions(existingBind.command, kind)
+          : [],
+      );
     } else {
       setDraftKeys(selectedKeys);
+      setDraftActions([]);
     }
-    setDraftActions([]);
   };
 
   const openBindCommandModal = (index: number, command: string) => {
@@ -260,14 +299,34 @@ export function BindsPage({
   // dropEffect/preventDefault, so dragging is implemented by hand instead.
   const startActionDrag = (event: React.MouseEvent, id: number) => {
     event.preventDefault();
+    const startEl = actionRowRefs.current.get(id);
+    if (!startEl) return;
+    const startRect = startEl.getBoundingClientRect();
+    dragPointerOffsetRef.current = {
+      x: event.clientX - startRect.left,
+      y: event.clientY - startRect.top,
+    };
     draggedActionIdRef.current = id;
     setDraggedActionId(id);
+    setDragOverlay({
+      x: startRect.left,
+      y: startRect.top,
+      width: startRect.width,
+      height: startRect.height,
+    });
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const draggedId = draggedActionIdRef.current;
       if (draggedId === null) return;
-      const mouseY = moveEvent.clientY;
+      const { x: offsetX, y: offsetY } = dragPointerOffsetRef.current;
+      setDragOverlay({
+        x: moveEvent.clientX - offsetX,
+        y: moveEvent.clientY - offsetY,
+        width: startRect.width,
+        height: startRect.height,
+      });
 
+      const mouseY = moveEvent.clientY;
       setDraftActions((actions) => {
         const dragged = actions.find((action) => action.id === draggedId);
         if (!dragged) return actions;
@@ -286,13 +345,25 @@ export function BindsPage({
         const unchanged = reordered.every(
           (action, index) => action.id === actions[index]!.id,
         );
-        return unchanged ? actions : reordered;
+        if (unchanged) return actions;
+
+        // Snapshot pre-reorder row positions so the FLIP effect below can
+        // animate the shift instead of letting the flex layout snap instantly.
+        const rects = new Map<number, DOMRect>();
+        for (const [rowId, rowEl] of actionRowRefs.current) {
+          if (rowId !== draggedId) {
+            rects.set(rowId, rowEl.getBoundingClientRect());
+          }
+        }
+        prevActionRectsRef.current = rects;
+        return reordered;
       });
     };
 
     const handleMouseUp = () => {
       draggedActionIdRef.current = null;
       setDraggedActionId(null);
+      setDragOverlay(null);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -300,6 +371,30 @@ export function BindsPage({
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
   };
+
+  // FLIP: rows displaced by a reorder are nudged back to their previous
+  // screen position with no transition, then released into an animated
+  // transition to their new resting spot, instead of snapping instantly.
+  useLayoutEffect(() => {
+    const prevRects = prevActionRectsRef.current;
+    if (!prevRects) return;
+    prevActionRectsRef.current = null;
+
+    for (const [rowId, rowEl] of actionRowRefs.current) {
+      const prevRect = prevRects.get(rowId);
+      if (!prevRect) continue;
+      const newRect = rowEl.getBoundingClientRect();
+      const deltaY = prevRect.top - newRect.top;
+      if (!deltaY) continue;
+      rowEl.style.transition = "none";
+      rowEl.style.transform = `translateY(${deltaY}px)`;
+      requestAnimationFrame(() => {
+        rowEl.style.transition =
+          "transform 0.22s cubic-bezier(0.2, 0.85, 0.25, 1)";
+        rowEl.style.transform = "";
+      });
+    }
+  }, [draftActions]);
 
   const configureAnotherAction = () => {
     setManualSearch("");
@@ -323,6 +418,11 @@ export function BindsPage({
     }
     closeManualModal();
   };
+
+  const draggedAction =
+    draggedActionId !== null
+      ? draftActions.find((action) => action.id === draggedActionId)
+      : undefined;
 
   return (
     <div className="page-container binds-page">
@@ -673,6 +773,31 @@ export function BindsPage({
                 </div>
               )}
             </div>
+            {dragOverlay && draggedAction && (
+              <div
+                className="bind-config-action-overlay"
+                style={{
+                  left: dragOverlay.x / getCssZoomFactor(),
+                  top: dragOverlay.y / getCssZoomFactor(),
+                  width: dragOverlay.width / getCssZoomFactor(),
+                  height: dragOverlay.height / getCssZoomFactor(),
+                }}
+              >
+                <div className="bind-config-drag-handle">
+                  <DragIcon />
+                </div>
+                <div className="bind-config-action-copy">
+                  <div className="manual-modal-row-name">
+                    {nameFor(draggedAction.command)}
+                  </div>
+                  <div className="manual-modal-row-id">
+                    {commandModal?.kind === "single"
+                      ? `${draggedAction.mode === "toggle" ? "~" : "+"}${commandWithoutMode(draggedAction.command)}`
+                      : draggedAction.command}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>,
           document.body,
         )}
