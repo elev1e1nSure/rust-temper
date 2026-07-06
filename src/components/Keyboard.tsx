@@ -14,7 +14,7 @@ function keyWidth(units = 1): number {
 }
 
 interface KeyboardProps {
-  /** rustKeys forming the current filter combination */
+  /** rustKeys forming the current key combination */
   selectedKeys: string[];
   onKeyClick: (rustKey: string) => void;
 }

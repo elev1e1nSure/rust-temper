@@ -343,6 +343,132 @@
   font-size: 13px;
 }
 
+/* Bind setup ------------------------------------------------------------- */
+.bind-config-modal {
+  width: min(1050px, 100%);
+}
+
+.bind-config-content {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.bind-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bind-config-label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.bind-config-value {
+  min-height: 20px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.bind-config-keyboard {
+  overflow-x: auto;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--row);
+}
+
+.bind-config-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bind-config-action {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--row);
+}
+
+.bind-config-action > div {
+  min-width: 0;
+}
+
+.bind-config-remove,
+.bind-config-add-action,
+.bind-config-cancel,
+.bind-config-submit {
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bind-config-remove {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.bind-config-remove:hover {
+  color: #ff6b6b;
+}
+
+.bind-config-add-action {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--row);
+}
+
+.bind-config-add-action:hover,
+.bind-config-cancel:hover {
+  background: #222228;
+}
+
+.bind-config-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.bind-config-cancel,
+.bind-config-submit {
+  padding: 10px 18px;
+  font-size: 14px;
+}
+
+.bind-config-cancel {
+  background: var(--row);
+}
+
+.bind-config-submit {
+  background: rgba(59, 130, 246, 0.34);
+}
+
+.bind-config-submit:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.48);
+}
+
+.bind-config-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* On-screen keyboard ----------------------------------------------------- */
 .keyboard-panel {
   background: var(--panel);

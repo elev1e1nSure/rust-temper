@@ -54,12 +54,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     });
   }, [binds, search, selectedKeys, presetByCommand]);
 
-  // Rust bind key: bare token for one key, bracketed "[a+b]" for a combination.
-  const selectedKeyCombo =
-    selectedKeys.length <= 1
-      ? (selectedKeys[0] ?? "")
-      : `[${selectedKeys.join("+")}]`;
-
   const scrollListToTop = () => {
     requestAnimationFrame(() => {
       document
@@ -68,11 +62,8 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     });
   };
 
-  // "Создать вручную" / "Выбрать из списка" — row seeded with an action (from
-  // a preset or typed manually), keyed to the currently selected keyboard
-  // combination (if any).
-  const addFromPreset = (command: string) => {
-    setBinds((prev) => [{ key: selectedKeyCombo, command }, ...prev]);
+  const addBind = (key: string, command: string) => {
+    setBinds((prev) => [{ key, command }, ...prev]);
     setNewBindIndex(0);
     scrollListToTop();
   };
@@ -117,7 +108,7 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     setNewBindIndex,
     exitingBindIndex,
     setExitingBindIndex,
-    addFromPreset,
+    addBind,
     removeBind,
     confirmRemoveBind,
     updateBindCommand,

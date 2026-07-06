@@ -136,7 +136,7 @@ function App() {
                 commandPresets={commandPresets}
                 search={bindEditor.search}
                 setSearch={bindEditor.setSearch}
-                addFromPreset={bindEditor.addFromPreset}
+                addBind={bindEditor.addBind}
                 removeBind={bindEditor.removeBind}
                 confirmRemoveBind={bindEditor.confirmRemoveBind}
                 newBindIndex={bindEditor.newBindIndex}

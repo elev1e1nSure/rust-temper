@@ -17,7 +17,7 @@ interface BindsPageProps {
   commandPresets: CommandPreset[];
   search: string;
   setSearch: (v: string) => void;
-  addFromPreset: (command: string) => void;
+  addBind: (key: string, command: string) => void;
   removeBind: (idx: number) => void;
   confirmRemoveBind: (idx: number) => void;
   newBindIndex: number | null;
@@ -36,6 +36,7 @@ type CommandModalKind = CommandPreset["kind"];
 interface CommandModalState {
   kind: CommandModalKind;
   target: number | "new";
+  step: "select" | "configure";
 }
 
 export function BindsPage({
@@ -43,7 +44,7 @@ export function BindsPage({
   commandPresets,
   search,
   setSearch,
-  addFromPreset,
+  addBind,
   removeBind,
   confirmRemoveBind,
   newBindIndex,
@@ -63,6 +64,8 @@ export function BindsPage({
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
+  const [draftActions, setDraftActions] = useState<string[]>([]);
+  const [draftKeys, setDraftKeys] = useState<string[]>([]);
 
   const manualPresets = useMemo(() => {
     if (!commandModal) return [];
@@ -93,6 +96,8 @@ export function BindsPage({
     setManualSearch("");
     setManualCustomMode(false);
     setManualCustomCommand("");
+    setDraftActions([]);
+    setDraftKeys([]);
   };
 
   // Lock background scroll and allow Escape to close while the modal is open.
@@ -113,7 +118,14 @@ export function BindsPage({
 
   const selectCommand = (command: string) => {
     if (commandModal?.target === "new") {
-      addFromPreset(command);
+      setDraftActions((actions) => [...actions, command]);
+      setCommandModal((modal) =>
+        modal ? { ...modal, step: "configure" } : null,
+      );
+      setManualSearch("");
+      setManualCustomMode(false);
+      setManualCustomCommand("");
+      return;
     } else if (typeof commandModal?.target === "number") {
       updateBindCommand(commandModal.target, command);
     }
@@ -124,7 +136,8 @@ export function BindsPage({
     kind: CommandModalKind,
     target: CommandModalState["target"],
   ) => {
-    setCommandModal({ kind, target });
+    setCommandModal({ kind, target, step: "select" });
+    setDraftKeys(selectedKeys);
   };
 
   const openBindCommandModal = (index: number, command: string) => {
@@ -138,6 +151,33 @@ export function BindsPage({
     const command = manualCustomCommand.trim();
     if (!command) return;
     selectCommand(command);
+  };
+
+  const toggleDraftKey = (rustKey: string) => {
+    setDraftKeys((keys) =>
+      keys.includes(rustKey)
+        ? keys.filter((key) => key !== rustKey)
+        : [...keys, rustKey],
+    );
+  };
+
+  const removeDraftAction = (index: number) => {
+    setDraftActions((actions) =>
+      actions.filter((_, actionIndex) => actionIndex !== index),
+    );
+  };
+
+  const configureAnotherAction = () => {
+    setManualSearch("");
+    setCommandModal((modal) => (modal ? { ...modal, step: "select" } : null));
+  };
+
+  const submitBind = () => {
+    if (draftKeys.length === 0 || draftActions.length === 0) return;
+    const key =
+      draftKeys.length === 1 ? draftKeys[0] : `[${draftKeys.join("+")}]`;
+    addBind(key, draftActions.join(";"));
+    closeManualModal();
   };
 
   return (
@@ -237,12 +277,17 @@ export function BindsPage({
             onClick={closeManualModal}
             onAnimationEnd={handleManualModalAnimationEnd}
           >
-            <div className="manual-modal" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="manual-modal-header">
                 <h2>
-                  {commandModal.kind === "single"
-                    ? "Простые команды"
-                    : "Составные команды"}
+                  {commandModal.step === "configure"
+                    ? "Настройка бинда"
+                    : commandModal.kind === "single"
+                      ? "Простые команды"
+                      : "Составные команды"}
                 </h2>
                 <button
                   className="manual-modal-close"
@@ -253,77 +298,163 @@ export function BindsPage({
                 </button>
               </div>
 
-              <div className="manual-modal-toolbar">
-                <div className="dropdown-search manual-modal-search">
-                  <SearchIcon />
-                  <input
-                    type="text"
-                    placeholder="Поиск по названию"
-                    value={manualSearch}
-                    onChange={(e) => setManualSearch(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                {commandModal.kind === "single" && (
-                  <button
-                    className={`manual-modal-plus ${manualCustomMode ? "active" : ""}`}
-                    type="button"
-                    title="Ввести команду вручную"
-                    onClick={() => setManualCustomMode((v) => !v)}
-                  >
-                    <PlusIcon />
-                  </button>
-                )}
-              </div>
-
-              {commandModal.kind === "single" && manualCustomMode && (
-                <div className="manual-modal-custom-row">
-                  <input
-                    type="text"
-                    placeholder="Название команды, например audio.master"
-                    value={manualCustomCommand}
-                    onChange={(e) => setManualCustomCommand(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") submitManualCustomCommand();
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    className="manual-modal-add-btn"
-                    type="button"
-                    disabled={!manualCustomCommand.trim()}
-                    onClick={submitManualCustomCommand}
-                  >
-                    Добавить
-                  </button>
-                </div>
-              )}
-
-              <div className="manual-modal-list">
-                {manualPresets.map((preset) => (
-                  <div className="manual-modal-row" key={preset.command}>
-                    <div className="manual-modal-row-icon">
-                      <CommandIcon />
+              {commandModal.step === "select" ? (
+                <>
+                  <div className="manual-modal-toolbar">
+                    <div className="dropdown-search manual-modal-search">
+                      <SearchIcon />
+                      <input
+                        type="text"
+                        placeholder="Поиск по названию"
+                        value={manualSearch}
+                        onChange={(e) => setManualSearch(e.target.value)}
+                        autoFocus
+                      />
                     </div>
-                    <div className="manual-modal-row-text">
-                      <div className="manual-modal-row-name">{preset.name}</div>
-                      <div className="manual-modal-row-id">
-                        {preset.command}
+                    {commandModal.kind === "single" && (
+                      <button
+                        className={`manual-modal-plus ${manualCustomMode ? "active" : ""}`}
+                        type="button"
+                        title="Ввести команду вручную"
+                        onClick={() => setManualCustomMode((v) => !v)}
+                      >
+                        <PlusIcon />
+                      </button>
+                    )}
+                  </div>
+
+                  {commandModal.kind === "single" && manualCustomMode && (
+                    <div className="manual-modal-custom-row">
+                      <input
+                        type="text"
+                        placeholder="Название команды, например audio.master"
+                        value={manualCustomCommand}
+                        onChange={(e) => setManualCustomCommand(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") submitManualCustomCommand();
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        className="manual-modal-add-btn"
+                        type="button"
+                        disabled={!manualCustomCommand.trim()}
+                        onClick={submitManualCustomCommand}
+                      >
+                        Добавить
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="manual-modal-list">
+                    {manualPresets.map((preset) => (
+                      <div className="manual-modal-row" key={preset.command}>
+                        <div className="manual-modal-row-icon">
+                          <CommandIcon />
+                        </div>
+                        <div className="manual-modal-row-text">
+                          <div className="manual-modal-row-name">
+                            {preset.name}
+                          </div>
+                          <div className="manual-modal-row-id">
+                            {preset.command}
+                          </div>
+                        </div>
+                        <button
+                          className="manual-modal-add-btn"
+                          type="button"
+                          onClick={() => selectCommand(preset.command)}
+                        >
+                          Добавить
+                        </button>
                       </div>
+                    ))}
+                    {manualPresets.length === 0 && (
+                      <div className="manual-modal-empty">
+                        Ничего не найдено
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="bind-config-content">
+                  <div className="bind-config-section">
+                    <div className="bind-config-label">
+                      Клавиша или сочетание
                     </div>
+                    <div className="bind-config-value">
+                      {draftKeys.length > 0
+                        ? draftKeys.map(keyDisplayName).join(" + ")
+                        : "Выберите клавишу на клавиатуре"}
+                    </div>
+                    <div className="bind-config-keyboard">
+                      <Keyboard
+                        selectedKeys={draftKeys}
+                        onKeyClick={toggleDraftKey}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bind-config-section">
+                    <div className="bind-config-label">Действия</div>
+                    <div className="bind-config-actions">
+                      {draftActions.map((action, index) => (
+                        <div
+                          className="bind-config-action"
+                          key={`${action}-${index}`}
+                        >
+                          <div>
+                            <div className="manual-modal-row-name">
+                              {nameFor(action)}
+                            </div>
+                            <div className="manual-modal-row-id">{action}</div>
+                          </div>
+                          {commandModal.kind === "single" &&
+                            draftActions.length > 1 && (
+                              <button
+                                className="bind-config-remove"
+                                type="button"
+                                onClick={() => removeDraftAction(index)}
+                              >
+                                Убрать
+                              </button>
+                            )}
+                        </div>
+                      ))}
+                    </div>
+                    {commandModal.kind === "single" && (
+                      <button
+                        className="bind-config-add-action"
+                        type="button"
+                        onClick={configureAnotherAction}
+                      >
+                        <PlusIcon />
+                        Добавить ещё действие
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bind-config-footer">
                     <button
-                      className="manual-modal-add-btn"
+                      className="bind-config-cancel"
                       type="button"
-                      onClick={() => selectCommand(preset.command)}
+                      onClick={closeManualModal}
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      className="bind-config-submit"
+                      type="button"
+                      disabled={
+                        draftKeys.length === 0 || draftActions.length === 0
+                      }
+                      onClick={submitBind}
                     >
                       Добавить
                     </button>
                   </div>
-                ))}
-                {manualPresets.length === 0 && (
-                  <div className="manual-modal-empty">Ничего не найдено</div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>,
           document.body,
