@@ -32,13 +32,6 @@ const QUALITY_ROWS: QualityRow[] = [
     tiers: ["Низкое", "Среднее", "Высокое"],
   },
   {
-    key: "trees",
-    label: "Качество деревьев",
-    description:
-      "Детализация моделей деревьев и дальность их прорисовки. Заметно влияет на FPS в лесистой местности.",
-    tiers: ["Очень низкое", "Низкое", "Среднее", "Высокое"],
-  },
-  {
     key: "water",
     label: "Отражения на воде",
     description:
@@ -72,7 +65,6 @@ const DEFAULT_VALUES: Record<string, number> = {
   shadows: 1,
   textures: 0,
   lighting: 0,
-  trees: 0,
         water: 0,
         grass: 1,
         clouds: 0,
@@ -89,7 +81,6 @@ const QUICK_PRESETS: {
         shadows: 0,
         textures: 0,
         lighting: 0,
-        trees: 0,
         water: 0,
         grass: 0,
         clouds: 0,
@@ -102,7 +93,6 @@ const QUICK_PRESETS: {
         shadows: 1,
         textures: 0,
         lighting: 0,
-        trees: 0,
         water: 0,
         grass: 1,
         clouds: 0,
@@ -115,7 +105,6 @@ const QUICK_PRESETS: {
         shadows: 2,
         textures: 2,
         lighting: 1,
-        trees: 2,
         water: 1,
         grass: 1,
         clouds: 1,
@@ -128,7 +117,6 @@ const QUICK_PRESETS: {
         shadows: 3,
         textures: 0,
         lighting: 2,
-        trees: 3,
         water: 2,
         grass: 2,
         clouds: 2,
@@ -136,8 +124,6 @@ const QUICK_PRESETS: {
       },
     },
   ];
-
-const TREE_TWEAK_KEY = "graphics.tree_quality";
 
 function clientCfgPathFor(keysCfgPath: string) {
   return keysCfgPath.replace(/keys\.cfg$/i, "client.cfg");
@@ -214,32 +200,6 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const previewRow =
     QUALITY_ROWS.find((r) => r.key === previewKey) ?? QUALITY_ROWS[0];
 
-  const applyTreeQuality = useCallback(
-    async (tier: number) => {
-      try {
-        await invoke("toggle_tweak", {
-          path: clientCfgPath,
-          key: TREE_TWEAK_KEY,
-          enabled: true,
-          forceUnmanaged: false,
-          keysCfgPath: configPath,
-        });
-      } catch {
-        // Already enabled, ignore errors
-      }
-      try {
-        await invoke("set_tweak_slider", {
-          path: clientCfgPath,
-          key: TREE_TWEAK_KEY,
-          value: tier,
-        });
-      } catch (err) {
-        console.error("Не удалось применить качество деревьев:", err);
-      }
-    },
-    [clientCfgPath, configPath],
-  );
-
   const setRowValue = useCallback((key: string, value: number) => {
     setValues((prev) => ({ ...prev, [key]: value }));
     setPresetLabel("Пользовательский");
@@ -296,7 +256,6 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         path: clientCfgPath,
         tier: values.smoothing,
       });
-      await applyTreeQuality(values.trees);
       setApplyStatus({
         type: "success",
         message: "Настройки графики применены",
@@ -309,7 +268,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.clouds, values.smoothing, values.trees, applyTreeQuality]);
+  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.clouds, values.smoothing]);
 
   return (
     <div className="graphics-container page-container">
