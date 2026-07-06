@@ -6,23 +6,13 @@ import {
   type KeyDef,
 } from "../keyboardLayout";
 
-const KEY_UNIT = 30;
-const KEY_GAP = 5;
-
-function keyWidth(units = 1): number {
-  return units * KEY_UNIT + (units - 1) * KEY_GAP;
-}
-
 interface KeyboardProps {
   /** rustKeys forming the current key combination */
   selectedKeys: string[];
   onKeyClick: (rustKey: string) => void;
 }
 
-export function Keyboard({
-  selectedKeys,
-  onKeyClick,
-}: KeyboardProps) {
+export function Keyboard({ selectedKeys, onKeyClick }: KeyboardProps) {
   const renderKey = (key: KeyDef, fill = false) => {
     const bindable = Boolean(key.rustKey);
     const selected = bindable && selectedKeys.includes(key.rustKey!);
@@ -30,7 +20,6 @@ export function Keyboard({
       <button
         type="button"
         className={`kb-key${selected ? " selected" : ""}${bindable ? "" : " kb-key-static"}${fill ? " kb-key-fill" : ""}`}
-        style={fill ? undefined : { width: keyWidth(key.w) }}
         disabled={!bindable}
         onClick={() => key.rustKey && onKeyClick(key.rustKey)}
       >
@@ -43,9 +32,15 @@ export function Keyboard({
     <div className="kb">
       <div className="kb-fn-row">
         {FN_GROUPS.map((group, gi) => (
-          <div className="kb-fn-group" key={gi}>
+          <div
+            className="kb-fn-group"
+            key={gi}
+            style={{ flex: `${group.length} ${group.length} 0` }}
+          >
             {group.map((key, ki) => (
-              <span key={ki}>{renderKey(key)}</span>
+              <span key={ki} style={{ flex: `${key.w ?? 1} ${key.w ?? 1} 0` }}>
+                {renderKey(key)}
+              </span>
             ))}
           </div>
         ))}
@@ -56,7 +51,12 @@ export function Keyboard({
           {MAIN_ROWS.map((row, ri) => (
             <div className="kb-row" key={ri}>
               {row.map((key, ki) => (
-                <span key={ki}>{renderKey(key)}</span>
+                <span
+                  key={ki}
+                  style={{ flex: `${key.w ?? 1} ${key.w ?? 1} 0` }}
+                >
+                  {renderKey(key)}
+                </span>
               ))}
             </div>
           ))}
@@ -67,13 +67,11 @@ export function Keyboard({
             <div className="kb-row" key={ri}>
               {row.map((key, ki) =>
                 key ? (
-                  <span key={ki}>{renderKey(key)}</span>
+                  <span key={ki} style={{ flex: "1 1 0" }}>
+                    {renderKey(key)}
+                  </span>
                 ) : (
-                  <span
-                    key={ki}
-                    className="kb-spacer"
-                    style={{ width: keyWidth(1), height: KEY_UNIT }}
-                  />
+                  <span key={ki} className="kb-spacer" />
                 ),
               )}
             </div>

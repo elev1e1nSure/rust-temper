@@ -175,42 +175,16 @@ function AccordionSection({
   children: ReactNode;
 }) {
   const innerRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState(0);
-  const initialOpen = useRef(isExpanded);
-
-  const setContentRef = (el: HTMLDivElement | null) => {
-    contentRef.current = el;
-    if (el && initialOpen.current) {
-      const inner = el.firstElementChild as HTMLElement;
-      if (inner) {
-        el.style.transition = "none";
-        el.style.height = `${inner.scrollHeight}px`;
-      }
-    }
-  };
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useLayoutEffect(() => {
     const el = innerRef.current;
     if (!el) return;
-    if (!isExpanded) {
-      setHeight(0);
-      return;
-    }
-    const content = contentRef.current;
-    if (content) {
-      content.style.transition = "";
-      content.style.height = "";
-    }
-    if (!initialOpen.current) {
-      setHeight(el.scrollHeight);
-    } else {
-      initialOpen.current = false;
-    }
+    setHeight(isExpanded ? el.scrollHeight : 0);
+    if (!isExpanded) return;
     const observer = new ResizeObserver(() => {
-      if (contentRef.current && contentRef.current.style.height === "") {
-        setHeight(el.scrollHeight);
-      }
+      setHeight(el.scrollHeight);
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -221,7 +195,10 @@ function AccordionSection({
       <button
         type="button"
         className="accordion-header"
-        onClick={onToggle}
+        onClick={() => {
+          setShouldAnimate(true);
+          onToggle();
+        }}
         aria-expanded={isExpanded}
       >
         <span className="accordion-title">{title}</span>
@@ -229,7 +206,10 @@ function AccordionSection({
           <ChevronIcon />
         </span>
       </button>
-      <div className="accordion-content" ref={setContentRef} style={{ height }}>
+      <div
+        className="accordion-content"
+        style={{ height, transition: shouldAnimate ? undefined : "none" }}
+      >
         <div className="accordion-content-inner" ref={innerRef}>
           {children}
         </div>
@@ -323,9 +303,7 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
         {previewTweak && (
           <div className="tweaks-preview-body">
             <div className="graphics-preview-title">{previewTweak.title}</div>
-            <p className="graphics-preview-desc">
-              {previewTweak.description}
-            </p>
+            <p className="graphics-preview-desc">{previewTweak.description}</p>
           </div>
         )}
       </div>

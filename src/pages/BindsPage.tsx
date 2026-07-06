@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import type { Bind, CommandPreset } from "../types";
 import {
@@ -8,6 +15,7 @@ import {
   PlusIcon,
   CloseIcon,
   CommandIcon,
+  DragIcon,
 } from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
@@ -39,6 +47,48 @@ interface CommandModalState {
   step: "select" | "configure";
 }
 
+type ActionMode = "toggle" | "hold";
+
+interface DraftAction {
+  id: number;
+  command: string;
+  mode: ActionMode;
+}
+
+function commandWithoutMode(command: string): string {
+  return command.replace(/^[+~]/, "");
+}
+
+function AnimatedHeight({
+  className,
+  children,
+}: {
+  className: string;
+  children: ReactNode;
+}) {
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [height, setHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const updateHeight = () => setHeight(content.scrollHeight);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      className={`bind-config-animated-height ${className}`}
+      style={height === undefined ? undefined : { height }}
+    >
+      <div ref={contentRef}>{children}</div>
+    </div>
+  );
+}
+
 export function BindsPage({
   filteredBinds,
   commandPresets,
@@ -64,8 +114,12 @@ export function BindsPage({
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
-  const [draftActions, setDraftActions] = useState<string[]>([]);
+  const [draftActions, setDraftActions] = useState<DraftAction[]>([]);
   const [draftKeys, setDraftKeys] = useState<string[]>([]);
+  const [draggedActionId, setDraggedActionId] = useState<number | null>(null);
+  const [dragOverActionId, setDragOverActionId] = useState<number | null>(null);
+  const nextDraftActionId = useRef(0);
+  const draggedActionIdRef = useRef<number | null>(null);
 
   const manualPresets = useMemo(() => {
     if (!commandModal) return [];
@@ -98,6 +152,9 @@ export function BindsPage({
     setManualCustomCommand("");
     setDraftActions([]);
     setDraftKeys([]);
+    setDraggedActionId(null);
+    setDragOverActionId(null);
+    draggedActionIdRef.current = null;
   };
 
   // Lock background scroll and allow Escape to close while the modal is open.
@@ -118,7 +175,14 @@ export function BindsPage({
 
   const selectCommand = (command: string) => {
     if (commandModal?.target === "new") {
-      setDraftActions((actions) => [...actions, command]);
+      setDraftActions((actions) => [
+        ...actions,
+        {
+          id: ++nextDraftActionId.current,
+          command,
+          mode: command.startsWith("~") ? "toggle" : "hold",
+        },
+      ]);
       setCommandModal((modal) =>
         modal ? { ...modal, step: "configure" } : null,
       );
@@ -161,10 +225,30 @@ export function BindsPage({
     );
   };
 
-  const removeDraftAction = (index: number) => {
+  const removeDraftAction = (id: number) => {
+    setDraftActions((actions) => actions.filter((action) => action.id !== id));
+  };
+
+  const setDraftActionMode = (id: number, mode: ActionMode) => {
     setDraftActions((actions) =>
-      actions.filter((_, actionIndex) => actionIndex !== index),
+      actions.map((action) =>
+        action.id === id ? { ...action, mode } : action,
+      ),
     );
+  };
+
+  const moveDraftAction = (targetId: number) => {
+    const draggedId = draggedActionIdRef.current;
+    if (draggedId === null || draggedId === targetId) return;
+    setDraftActions((actions) => {
+      const fromIndex = actions.findIndex((action) => action.id === draggedId);
+      const targetIndex = actions.findIndex((action) => action.id === targetId);
+      if (fromIndex === -1 || targetIndex === -1) return actions;
+      const reordered = [...actions];
+      const [draggedAction] = reordered.splice(fromIndex, 1);
+      reordered.splice(targetIndex, 0, draggedAction);
+      return reordered;
+    });
   };
 
   const configureAnotherAction = () => {
@@ -176,7 +260,14 @@ export function BindsPage({
     if (draftKeys.length === 0 || draftActions.length === 0) return;
     const key =
       draftKeys.length === 1 ? draftKeys[0] : `[${draftKeys.join("+")}]`;
-    addBind(key, draftActions.join(";"));
+    const command = draftActions
+      .map((action) => {
+        if (commandModal?.kind !== "single") return action.command;
+        const prefix = action.mode === "toggle" ? "~" : "+";
+        return `${prefix}${commandWithoutMode(action.command)}`;
+      })
+      .join(";");
+    addBind(key, command);
     closeManualModal();
   };
 
@@ -382,30 +473,32 @@ export function BindsPage({
                     <div className="bind-config-label">
                       Клавиша или сочетание
                     </div>
-                    <div
-                      className={`bind-config-value ${draftKeys.length > 0 ? "has-keys" : ""}`}
-                    >
-                      {draftKeys.length > 0 ? (
-                        draftKeys.map((key, index) => (
-                          <span
-                            className="bind-config-key-group"
-                            key={key}
-                            style={{ animationDelay: `${index * 35}ms` }}
-                          >
-                            <span className="bind-config-key-card">
-                              {keyDisplayName(key)}
+                    <AnimatedHeight className="bind-config-key-height">
+                      <div
+                        className={`bind-config-value ${draftKeys.length > 0 ? "has-keys" : ""}`}
+                      >
+                        {draftKeys.length > 0 ? (
+                          draftKeys.map((key, index) => (
+                            <span
+                              className="bind-config-key-group"
+                              key={key}
+                              style={{ animationDelay: `${index * 35}ms` }}
+                            >
+                              <span className="bind-config-key-card">
+                                {keyDisplayName(key)}
+                              </span>
+                              {index < draftKeys.length - 1 && (
+                                <span className="bind-config-key-plus">+</span>
+                              )}
                             </span>
-                            {index < draftKeys.length - 1 && (
-                              <span className="bind-config-key-plus">+</span>
-                            )}
+                          ))
+                        ) : (
+                          <span className="bind-config-key-placeholder">
+                            Выберите клавишу на клавиатуре
                           </span>
-                        ))
-                      ) : (
-                        <span className="bind-config-key-placeholder">
-                          Выберите клавишу на клавиатуре
-                        </span>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    </AnimatedHeight>
                     <div className="bind-config-keyboard">
                       <Keyboard
                         selectedKeys={draftKeys}
@@ -416,32 +509,95 @@ export function BindsPage({
 
                   <div className="bind-config-section">
                     <div className="bind-config-label">Действия</div>
-                    <div className="bind-config-actions">
-                      {draftActions.map((action, index) => (
-                        <div
-                          className="bind-config-action"
-                          key={`${action}-${index}`}
-                          style={{ animationDelay: `${index * 40}ms` }}
-                        >
-                          <div>
-                            <div className="manual-modal-row-name">
-                              {nameFor(action)}
+                    <AnimatedHeight className="bind-config-actions-height">
+                      <div className="bind-config-actions">
+                        {draftActions.map((action, index) => (
+                          <div
+                            className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""} ${dragOverActionId === action.id && draggedActionId !== action.id ? "drag-over" : ""}`}
+                            key={action.id}
+                            style={{ animationDelay: `${index * 40}ms` }}
+                            draggable={
+                              commandModal.kind === "single" &&
+                              draftActions.length > 1
+                            }
+                            onDragStart={(event) => {
+                              draggedActionIdRef.current = action.id;
+                              setDraggedActionId(action.id);
+                              event.dataTransfer.effectAllowed = "move";
+                              event.dataTransfer.setData(
+                                "text/plain",
+                                String(action.id),
+                              );
+                            }}
+                            onDragEnter={() => setDragOverActionId(action.id)}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              moveDraftAction(action.id);
+                              setDragOverActionId(null);
+                            }}
+                            onDragEnd={() => {
+                              draggedActionIdRef.current = null;
+                              setDraggedActionId(null);
+                              setDragOverActionId(null);
+                            }}
+                          >
+                            {commandModal.kind === "single" &&
+                              draftActions.length > 1 && (
+                                <div className="bind-config-drag-handle">
+                                  <DragIcon />
+                                </div>
+                              )}
+                            <div className="bind-config-action-copy">
+                              <div className="manual-modal-row-name">
+                                {nameFor(action.command)}
+                              </div>
+                              <div className="manual-modal-row-id">
+                                {commandModal.kind === "single"
+                                  ? `${action.mode === "toggle" ? "~" : "+"}${commandWithoutMode(action.command)}`
+                                  : action.command}
+                              </div>
                             </div>
-                            <div className="manual-modal-row-id">{action}</div>
-                          </div>
-                          {commandModal.kind === "single" &&
-                            draftActions.length > 1 && (
-                              <button
-                                className="bind-config-remove"
-                                type="button"
-                                onClick={() => removeDraftAction(index)}
-                              >
-                                Убрать
-                              </button>
+                            {commandModal.kind === "single" && (
+                              <div className="bind-config-mode-switch">
+                                <button
+                                  className={
+                                    action.mode === "toggle" ? "active" : ""
+                                  }
+                                  type="button"
+                                  onClick={() =>
+                                    setDraftActionMode(action.id, "toggle")
+                                  }
+                                >
+                                  Переключатель
+                                </button>
+                                <button
+                                  className={
+                                    action.mode === "hold" ? "active" : ""
+                                  }
+                                  type="button"
+                                  onClick={() =>
+                                    setDraftActionMode(action.id, "hold")
+                                  }
+                                >
+                                  Удержание
+                                </button>
+                              </div>
                             )}
-                        </div>
-                      ))}
-                    </div>
+                            {commandModal.kind === "single" &&
+                              draftActions.length > 1 && (
+                                <button
+                                  className="bind-config-remove"
+                                  type="button"
+                                  onClick={() => removeDraftAction(action.id)}
+                                >
+                                  Убрать
+                                </button>
+                              )}
+                          </div>
+                        ))}
+                      </div>
+                    </AnimatedHeight>
                     {commandModal.kind === "single" && (
                       <button
                         className="bind-config-add-action"
