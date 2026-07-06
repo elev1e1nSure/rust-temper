@@ -58,6 +58,8 @@ export function BindsPage({
   filterKind,
   setFilterKind,
 }: BindsPageProps) {
+  const isAnyDropdownOpen = openDropdownIndex !== null;
+
   return (
     <div className="page-container binds-page">
       <div className="header-row">
@@ -78,7 +80,7 @@ export function BindsPage({
         </div>
       </div>
 
-      <div className="table-wrap">
+      <div className={`table-wrap ${isAnyDropdownOpen ? "dropdown-open" : ""}`}>
         <div className="col-headers">
           <div className="col-key">Клавиша</div>
           <div className="col-action">Действие</div>
