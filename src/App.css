@@ -413,6 +413,7 @@ body {
     transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
     visibility 0s linear 0.12s;
   padding: 0 4px;
+  will-change: transform, opacity;
 }
 
 .dropdown-base.open {
