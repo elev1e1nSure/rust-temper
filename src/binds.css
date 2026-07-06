@@ -64,6 +64,24 @@
   color: var(--text);
 }
 
+/* "Выбрать из списка" picker --------------------------------------------- */
+.picker-container {
+  position: relative;
+}
+
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+}
+
+.picker-menu {
+  left: auto;
+  right: 0;
+  width: 360px;
+  z-index: 200;
+}
+
 /* Command-list modal ("Создать вручную" / click a bind's action) --------- */
 .manual-modal-backdrop {
   position: fixed;
@@ -101,12 +119,12 @@
 }
 
 .manual-modal {
-  width: min(520px, 100%);
-  max-height: min(640px, calc(100vh - 48px));
+  width: min(640px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  border: 1px solid #29292e;
+  padding: 28px;
+  border: none;
   border-radius: 14px;
   background: var(--panel);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
@@ -256,15 +274,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
+  padding: 14px 16px;
   border-radius: 10px;
   background: var(--row);
 }
 
 .manual-modal-row-icon {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -280,7 +298,7 @@
 
 .manual-modal-row-name {
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -289,7 +307,7 @@
 
 .manual-modal-row-id {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -297,7 +315,7 @@
 
 .manual-modal-add-btn {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border: 1px solid transparent;
   border-radius: 8px;
   background: var(--key-bg);
