@@ -477,8 +477,8 @@
   gap: 6px;
 }
 
-.bind-config-action,
-.bind-config-action * {
+.bind-config-action-copy,
+.bind-config-action-copy * {
   user-select: auto;
 }
 

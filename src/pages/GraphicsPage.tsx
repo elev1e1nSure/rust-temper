@@ -84,63 +84,63 @@ const QUICK_PRESETS: {
   values: Record<string, number>;
   mirrorsOff: boolean;
 }[] = [
-    {
-      label: "Производительность",
-      values: {
-        shadows: 0,
-        textures: 0,
-        lighting: 0,
-        trees: 0,
-        water: 0,
-        grass: 0,
-        clouds: 0,
-        smoothing: 0,
-      },
-      mirrorsOff: true,
+  {
+    label: "Производительность",
+    values: {
+      shadows: 0,
+      textures: 0,
+      lighting: 0,
+      trees: 0,
+      water: 0,
+      grass: 0,
+      clouds: 0,
+      smoothing: 0,
     },
-    {
-      label: "Комбат",
-      values: {
-        shadows: 1,
-        textures: 0,
-        lighting: 0,
-        trees: 0,
-        water: 0,
-  grass: 1,
-        clouds: 0,
-        smoothing: 0,
-      },
-      mirrorsOff: true,
+    mirrorsOff: true,
+  },
+  {
+    label: "Комбат",
+    values: {
+      shadows: 1,
+      textures: 0,
+      lighting: 0,
+      trees: 0,
+      water: 0,
+      grass: 2,
+      clouds: 0,
+      smoothing: 0,
     },
-    {
-      label: "Баланс",
-      values: {
-        shadows: 2,
-        textures: 2,
-        lighting: 1,
-        trees: 2,
-        water: 1,
-        grass: 1,
-        clouds: 1,
-        smoothing: 1,
-      },
-      mirrorsOff: false,
+    mirrorsOff: true,
+  },
+  {
+    label: "Баланс",
+    values: {
+      shadows: 2,
+      textures: 2,
+      lighting: 1,
+      trees: 2,
+      water: 1,
+      grass: 3,
+      clouds: 1,
+      smoothing: 1,
     },
-    {
-      label: "Графика",
-      values: {
-        shadows: 3,
-        textures: 4,
-        lighting: 2,
-        trees: 3,
-        water: 2,
-        grass: 2,
-        clouds: 2,
-        smoothing: 2,
-      },
-      mirrorsOff: false,
+    mirrorsOff: false,
+  },
+  {
+    label: "Графика",
+    values: {
+      shadows: 3,
+      textures: 4,
+      lighting: 2,
+      trees: 3,
+      water: 2,
+      grass: 4,
+      clouds: 2,
+      smoothing: 2,
     },
-  ];
+    mirrorsOff: false,
+  },
+];
 
 const MIRRORS_DESCRIPTION =
   "Отключает отражения в зеркалах и стёклах. Может заметно повысить FPS в застроенных базах.";
@@ -235,13 +235,10 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     [clientCfgPath, configPath],
   );
 
-  const setRowValue = useCallback(
-    (key: string, value: number) => {
-      setValues((prev) => ({ ...prev, [key]: value }));
-      setPresetLabel("Пользовательский");
-    },
-    [],
-  );
+  const setRowValue = useCallback((key: string, value: number) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+    setPresetLabel("Пользовательский");
+  }, []);
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
@@ -301,7 +298,16 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting, values.grass, values.trees, applyTreeQuality]);
+  }, [
+    clientCfgPath,
+    values.shadows,
+    values.textures,
+    values.water,
+    values.lighting,
+    values.grass,
+    values.trees,
+    applyTreeQuality,
+  ]);
 
   return (
     <div className="graphics-container page-container">
@@ -347,6 +353,15 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                       className="graphics-slider-fill"
                       style={{ width: `${pct}%` }}
                     />
+                    {row.tiers.map((_, i) => (
+                      <div
+                        key={i}
+                        className="graphics-slider-tick"
+                        style={{
+                          left: `${(i / (row.tiers.length - 1)) * 100}%`,
+                        }}
+                      />
+                    ))}
                     <div
                       className="graphics-slider-thumb"
                       style={{ left: `${pct}%` }}
