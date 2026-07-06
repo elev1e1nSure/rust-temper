@@ -798,14 +798,6 @@ body {
   top: 0;
 }
 
-.tweaks-preview-body {
-  transition: opacity 0.12s ease;
-}
-
-.tweaks-preview-body.fading {
-  opacity: 0;
-}
-
 .toggle-switch {
   position: relative;
   width: 42px;
