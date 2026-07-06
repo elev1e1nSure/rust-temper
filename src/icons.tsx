@@ -1,4 +1,10 @@
-import { DownLine, Delete2Line, SearchLine } from "@mingcute/react";
+import {
+  DownLine,
+  Delete2Line,
+  SearchLine,
+  CloseLine,
+  CommandLine,
+} from "@mingcute/react";
 
 export function ChevronIcon() {
   return <DownLine size={15} />;
@@ -10,6 +16,14 @@ export function TrashIcon() {
 
 export function SearchIcon() {
   return <SearchLine size={15} />;
+}
+
+export function CloseIcon({ size = 16 }: { size?: number }) {
+  return <CloseLine size={size} />;
+}
+
+export function CommandIcon({ size = 16 }: { size?: number }) {
+  return <CommandLine size={size} />;
 }
 
 export function PlusIcon() {

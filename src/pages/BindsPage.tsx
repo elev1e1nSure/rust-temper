@@ -1,6 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Bind, CommandPreset } from "../types";
-import { ChevronIcon, TrashIcon, SearchIcon, PlusIcon } from "../icons";
+import {
+  ChevronIcon,
+  TrashIcon,
+  SearchIcon,
+  PlusIcon,
+  CloseIcon,
+  CommandIcon,
+} from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
 
@@ -9,12 +17,9 @@ interface BindsPageProps {
   commandPresets: CommandPreset[];
   search: string;
   setSearch: (v: string) => void;
-  addBind: () => void;
   addFromPreset: (command: string) => void;
   removeBind: (idx: number) => void;
   confirmRemoveBind: (idx: number) => void;
-  editingKeyIndex: number | null;
-  setEditingKeyIndex: (v: number | null) => void;
   newBindIndex: number | null;
   setNewBindIndex: (v: number | null) => void;
   exitingBindIndex: number | null;
@@ -24,29 +29,20 @@ interface BindsPageProps {
   nameFor: (command: string) => string;
   updateBindCommand: (idx: number, cmd: string) => void;
   handleKeyboardKey: (rustKey: string) => void;
-  openDropdownIndex: number | null;
-  closingDropdownIndex: number | null;
-  changeOpenDropdown: (next: number | null) => void;
-  commandSearch: string;
-  setCommandSearch: (v: string) => void;
-  filteredCommandPresets: CommandPreset[];
-  dropdownDir: "down" | "up";
-  setDropdownDir: (v: "down" | "up") => void;
-  filterKind: "single" | "combination";
-  setFilterKind: (v: "single" | "combination") => void;
 }
+
+// Target of the command-list modal: "new" adds a bind, a number edits the
+// action of the bind row at that index. null means the modal is closed.
+type ManualModalTarget = number | "new" | null;
 
 export function BindsPage({
   filteredBinds,
   commandPresets,
   search,
   setSearch,
-  addBind,
   addFromPreset,
   removeBind,
   confirmRemoveBind,
-  editingKeyIndex,
-  setEditingKeyIndex,
   newBindIndex,
   setNewBindIndex,
   exitingBindIndex,
@@ -56,41 +52,72 @@ export function BindsPage({
   nameFor,
   updateBindCommand,
   handleKeyboardKey,
-  openDropdownIndex,
-  closingDropdownIndex,
-  changeOpenDropdown,
-  commandSearch,
-  setCommandSearch,
-  filteredCommandPresets,
-  dropdownDir,
-  setDropdownDir,
-  filterKind,
-  setFilterKind,
 }: BindsPageProps) {
-  const isAnyDropdownOpen = openDropdownIndex !== null;
+  const [manualModalTarget, setManualModalTarget] =
+    useState<ManualModalTarget>(null);
+  const [manualModalClosing, setManualModalClosing] = useState(false);
+  const [manualSearch, setManualSearch] = useState("");
+  const [manualCustomMode, setManualCustomMode] = useState(false);
+  const [manualCustomCommand, setManualCustomCommand] = useState("");
 
-  // "Выбрать из списка" picker — independent from the per-row action dropdown.
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerSearch, setPickerSearch] = useState("");
-  const [pickerKind, setPickerKind] = useState<"single" | "combination">(
-    "single",
-  );
-
-  const pickerPresets = useMemo(() => {
-    const list = commandPresets.filter((p) => p.kind === pickerKind);
-    const q = pickerSearch.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter(
+  const manualPresets = useMemo(() => {
+    const q = manualSearch.trim().toLowerCase();
+    if (!q) return commandPresets;
+    return commandPresets.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.command.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q),
     );
-  }, [commandPresets, pickerKind, pickerSearch]);
+  }, [commandPresets, manualSearch]);
 
-  const closePicker = () => {
-    setPickerOpen(false);
-    setPickerSearch("");
+  // Defers unmounting until the close animation finishes (see
+  // handleManualModalAnimationEnd), instead of clearing the target instantly.
+  const closeManualModal = () => {
+    if (manualModalTarget === null || manualModalClosing) return;
+    setManualModalClosing(true);
+  };
+
+  const handleManualModalAnimationEnd = (
+    e: React.AnimationEvent<HTMLDivElement>,
+  ) => {
+    if (e.target !== e.currentTarget || !manualModalClosing) return;
+    setManualModalTarget(null);
+    setManualModalClosing(false);
+    setManualSearch("");
+    setManualCustomMode(false);
+    setManualCustomCommand("");
+  };
+
+  // Lock background scroll and allow Escape to close while the modal is open.
+  useEffect(() => {
+    if (manualModalTarget === null) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeManualModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualModalTarget]);
+
+  const selectCommand = (command: string) => {
+    if (manualModalTarget === "new") {
+      addFromPreset(command);
+    } else if (typeof manualModalTarget === "number") {
+      updateBindCommand(manualModalTarget, command);
+    }
+    closeManualModal();
+  };
+
+  const submitManualCustomCommand = () => {
+    const command = manualCustomCommand.trim();
+    if (!command) return;
+    selectCommand(command);
   };
 
   return (
@@ -120,91 +147,32 @@ export function BindsPage({
           />
         </div>
         <div className="header-actions">
-          <button className="btn-add" type="button" onClick={addBind}>
+          <button
+            className="btn-add"
+            type="button"
+            onClick={() => setManualModalTarget("new")}
+          >
             <PlusIcon />
             Создать вручную
           </button>
-          <div className="picker-container">
-            <button
-              className="btn-add"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPickerOpen((v) => !v);
-              }}
-            >
-              Выбрать из списка
-              <ChevronIcon />
-            </button>
-            {pickerOpen && (
-              <>
-                <div className="picker-backdrop" onClick={closePicker} />
-                <div className="dropdown-base dropdown-menu open down picker-menu">
-                  <div className="dropdown-kind-toggle">
-                    <button
-                      className={`kind-btn${pickerKind === "single" ? " active" : ""}`}
-                      type="button"
-                      onClick={() => setPickerKind("single")}
-                    >
-                      Обычные
-                    </button>
-                    <button
-                      className={`kind-btn${pickerKind === "combination" ? " active" : ""}`}
-                      type="button"
-                      onClick={() => setPickerKind("combination")}
-                    >
-                      Комбинации
-                    </button>
-                  </div>
-                  <div className="dropdown-search">
-                    <SearchIcon />
-                    <input
-                      type="text"
-                      placeholder="Поиск действия..."
-                      value={pickerSearch}
-                      onChange={(e) => setPickerSearch(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  {pickerPresets.map((preset) => (
-                    <button
-                      key={preset.command}
-                      className="dropdown-item"
-                      type="button"
-                      onClick={() => {
-                        addFromPreset(preset.command);
-                        closePicker();
-                      }}
-                    >
-                      {preset.name}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          <button className="btn-add" type="button" disabled>
+            Выбрать из списка
+            <ChevronIcon />
+          </button>
         </div>
       </div>
 
       <div className="keyboard-panel">
-        <Keyboard
-          selectedKeys={selectedKeys}
-          listening={editingKeyIndex !== null}
-          onKeyClick={handleKeyboardKey}
-        />
+        <Keyboard selectedKeys={selectedKeys} onKeyClick={handleKeyboardKey} />
       </div>
 
-      <div
-        className={`binds-list-wrap ${isAnyDropdownOpen ? "dropdown-open" : ""}`}
-      >
+      <div className="binds-list-wrap">
         {filteredBinds.map((bind, index) => {
           const hasConflict =
             bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-          const isDropdownOpen = openDropdownIndex === index;
-          const isDropdownClosing = closingDropdownIndex === index;
           return (
             <div
-              className={`bind-row ${isDropdownOpen ? "has-open-dropdown" : ""} ${isDropdownClosing ? "dropdown-closing" : ""} ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
+              className={`bind-row ${newBindIndex === index ? "bind-row-new" : ""} ${exitingBindIndex === index ? "exiting" : ""}`}
               key={`${bind.key}-${bind.command}-${index}`}
               onAnimationEnd={() => {
                 if (exitingBindIndex === index) {
@@ -215,88 +183,19 @@ export function BindsPage({
                 }
               }}
             >
-              <div className="action-cell-container">
-                <button
-                  className="action-cell"
-                  type="button"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setDropdownDir(
-                      window.innerHeight - rect.bottom < 230 ? "up" : "down",
-                    );
-                    changeOpenDropdown(
-                      openDropdownIndex === index ? null : index,
-                    );
-                  }}
-                >
-                  {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                  <ChevronIcon />
-                </button>
-                <div
-                  className={`dropdown-base dropdown-menu ${openDropdownIndex === index ? "open" : ""} ${dropdownDir}`}
-                >
-                  {(isDropdownOpen || isDropdownClosing) && (
-                    <>
-                      <div className="dropdown-kind-toggle">
-                        <button
-                          className={`kind-btn${filterKind === "single" ? " active" : ""}`}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFilterKind("single");
-                          }}
-                        >
-                          Обычные
-                        </button>
-                        <button
-                          className={`kind-btn${filterKind === "combination" ? " active" : ""}`}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFilterKind("combination");
-                          }}
-                        >
-                          Комбинации
-                        </button>
-                      </div>
-                      <div className="dropdown-search">
-                        <SearchIcon />
-                        <input
-                          type="text"
-                          placeholder="Поиск действия..."
-                          value={commandSearch}
-                          onChange={(e) => setCommandSearch(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          autoFocus
-                        />
-                      </div>
-                    </>
-                  )}
-                  {(isDropdownOpen || isDropdownClosing) &&
-                    filteredCommandPresets.map((preset) => (
-                      <button
-                        key={preset.command}
-                        className="dropdown-item"
-                        type="button"
-                        onClick={() => updateBindCommand(index, preset.command)}
-                      >
-                        {preset.name}
-                      </button>
-                    ))}
-                </div>
-              </div>
+              <button
+                className="action-cell"
+                type="button"
+                onClick={() => setManualModalTarget(index)}
+              >
+                {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                <ChevronIcon />
+              </button>
 
               <div
-                className={`key-badge bind-key-slot ${editingKeyIndex === index ? "editing" : ""} ${hasConflict ? "conflict" : ""}`}
-                onClick={() =>
-                  setEditingKeyIndex(editingKeyIndex === index ? null : index)
-                }
+                className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
               >
-                {editingKeyIndex === index
-                  ? "Выберите клавишу..."
-                  : bind.key
-                    ? keyDisplayName(bind.key)
-                    : "—"}
+                {bind.key ? keyDisplayName(bind.key) : "—"}
               </div>
 
               <div className="delete-btn" onClick={() => removeBind(index)}>
@@ -306,6 +205,99 @@ export function BindsPage({
           );
         })}
       </div>
+
+      {manualModalTarget !== null &&
+        createPortal(
+          <div
+            className={`manual-modal-backdrop ${manualModalClosing ? "closing" : ""}`}
+            onClick={closeManualModal}
+            onAnimationEnd={handleManualModalAnimationEnd}
+          >
+            <div className="manual-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="manual-modal-header">
+                <h2>Список команд</h2>
+                <button
+                  className="manual-modal-close"
+                  type="button"
+                  onClick={closeManualModal}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+
+              <div className="manual-modal-toolbar">
+                <div className="dropdown-search manual-modal-search">
+                  <SearchIcon />
+                  <input
+                    type="text"
+                    placeholder="Поиск по названию"
+                    value={manualSearch}
+                    onChange={(e) => setManualSearch(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  className={`manual-modal-plus ${manualCustomMode ? "active" : ""}`}
+                  type="button"
+                  title="Ввести команду вручную"
+                  onClick={() => setManualCustomMode((v) => !v)}
+                >
+                  <PlusIcon />
+                </button>
+              </div>
+
+              {manualCustomMode && (
+                <div className="manual-modal-custom-row">
+                  <input
+                    type="text"
+                    placeholder="Название команды, например audio.master"
+                    value={manualCustomCommand}
+                    onChange={(e) => setManualCustomCommand(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitManualCustomCommand();
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    className="manual-modal-add-btn"
+                    type="button"
+                    disabled={!manualCustomCommand.trim()}
+                    onClick={submitManualCustomCommand}
+                  >
+                    Добавить
+                  </button>
+                </div>
+              )}
+
+              <div className="manual-modal-list">
+                {manualPresets.map((preset) => (
+                  <div className="manual-modal-row" key={preset.command}>
+                    <div className="manual-modal-row-icon">
+                      <CommandIcon />
+                    </div>
+                    <div className="manual-modal-row-text">
+                      <div className="manual-modal-row-name">{preset.name}</div>
+                      <div className="manual-modal-row-id">
+                        {preset.command}
+                      </div>
+                    </div>
+                    <button
+                      className="manual-modal-add-btn"
+                      type="button"
+                      onClick={() => selectCommand(preset.command)}
+                    >
+                      Добавить
+                    </button>
+                  </div>
+                ))}
+                {manualPresets.length === 0 && (
+                  <div className="manual-modal-empty">Ничего не найдено</div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

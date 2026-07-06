@@ -251,19 +251,6 @@ fn known_tweaks() -> Vec<TweakDef> {
             advanced_slider: None,
             bind: None,
         },
-        TweakDef {
-            key: "autoAttack".to_string(),
-            title: "Автоатака".to_string(),
-            description: "Добавляет клавишу для автоатаки. При нажатии оружие атакует автоматически до повторного нажатия.".to_string(),
-            section: "scripts".to_string(),
-            badge: Some("recommended".to_string()),
-            backend_keys: vec![],
-            advanced_slider: None,
-            bind: Some(BindTweak {
-                default_key: "f5".to_string(),
-                command: "~attack".to_string(),
-            }),
-        },
     ]
 }
 

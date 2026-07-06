@@ -30,7 +30,7 @@ export interface BindTweak {
   command: string;
 }
 
-export type TweakSection = "qol" | "graphics" | "interface" | "scripts";
+export type TweakSection = "qol" | "graphics" | "interface";
 export type TweakBadge = "recommended";
 
 export interface TweakDef {

@@ -16,14 +16,11 @@ function keyWidth(units = 1): number {
 interface KeyboardProps {
   /** rustKeys forming the current filter combination */
   selectedKeys: string[];
-  /** a bind row is waiting for a key to be clicked (re-assign mode) */
-  listening: boolean;
   onKeyClick: (rustKey: string) => void;
 }
 
 export function Keyboard({
   selectedKeys,
-  listening,
   onKeyClick,
 }: KeyboardProps) {
   const renderKey = (key: KeyDef, fill = false) => {
@@ -36,7 +33,6 @@ export function Keyboard({
         style={fill ? undefined : { width: keyWidth(key.w) }}
         disabled={!bindable}
         onClick={() => key.rustKey && onKeyClick(key.rustKey)}
-        title={key.label}
       >
         {key.label}
       </button>
@@ -44,7 +40,7 @@ export function Keyboard({
   };
 
   return (
-    <div className={`kb ${listening ? "kb-listening" : ""}`}>
+    <div className="kb">
       <div className="kb-fn-row">
         {FN_GROUPS.map((group, gi) => (
           <div className="kb-fn-group" key={gi}>

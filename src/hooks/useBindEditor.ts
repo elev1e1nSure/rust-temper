@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Bind, CommandPreset } from "../types";
 
 export function useBindEditor(commandPresets: CommandPreset[]) {
@@ -7,8 +7,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   // Keys picked on the on-screen keyboard, in press order. Together they form a
   // combination that filters the list below and seeds the key of new binds.
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  // Row whose key is being re-assigned via the next on-screen keyboard click.
-  const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
   const [newBindIndex, setNewBindIndex] = useState<number | null>(null);
   const [exitingBindIndex, setExitingBindIndex] = useState<number | null>(null);
 
@@ -70,15 +68,9 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     });
   };
 
-  // "Создать вручную" — empty row, action picked via dropdown; key comes from
-  // the currently selected keyboard combination (if any).
-  const addBind = () => {
-    setBinds((prev) => [{ key: selectedKeyCombo, command: "" }, ...prev]);
-    setNewBindIndex(0);
-    scrollListToTop();
-  };
-
-  // "Выбрать из списка" — row seeded with a known action, keyed like addBind.
+  // "Создать вручную" / "Выбрать из списка" — row seeded with an action (from
+  // a preset or typed manually), keyed to the currently selected keyboard
+  // combination (if any).
   const addFromPreset = (command: string) => {
     setBinds((prev) => [{ key: selectedKeyCombo, command }, ...prev]);
     setNewBindIndex(0);
@@ -86,7 +78,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   };
 
   const removeBind = (index: number) => {
-    if (editingKeyIndex === index) setEditingKeyIndex(null);
     setExitingBindIndex(index);
   };
 
@@ -103,38 +94,14 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     });
   };
 
-  const assignKey = (index: number, rustKey: string) => {
-    setBinds((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], key: rustKey };
-      return next;
-    });
-    setEditingKeyIndex(null);
-  };
-
-  // On-screen keyboard click: assign to a row being edited, otherwise toggle the
-  // key in the filter combination.
+  // On-screen keyboard click: toggle the key in the filter combination.
   const handleKeyboardKey = (rustKey: string) => {
-    if (editingKeyIndex !== null) {
-      assignKey(editingKeyIndex, rustKey);
-      return;
-    }
     setSelectedKeys((prev) =>
       prev.includes(rustKey)
         ? prev.filter((k) => k !== rustKey)
         : [...prev, rustKey],
     );
   };
-
-  // Escape cancels an in-progress key edit.
-  useEffect(() => {
-    if (editingKeyIndex === null) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setEditingKeyIndex(null);
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [editingKeyIndex]);
 
   return {
     binds,
@@ -143,21 +110,17 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     setSearch,
     selectedKeys,
     setSelectedKeys,
-    editingKeyIndex,
-    setEditingKeyIndex,
+    keyConflicts,
+    filteredBinds,
+    nameFor,
     newBindIndex,
     setNewBindIndex,
     exitingBindIndex,
     setExitingBindIndex,
-    nameFor,
-    keyConflicts,
-    filteredBinds,
-    addBind,
     addFromPreset,
     removeBind,
     confirmRemoveBind,
     updateBindCommand,
-    assignKey,
     handleKeyboardKey,
   };
 }

@@ -3,7 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 import type { CommandPreset } from "./types";
 import { useConfigFile } from "./hooks/useConfigFile";
 import { useBindEditor } from "./hooks/useBindEditor";
-import { useDropdownBehavior } from "./hooks/useDropdownBehavior";
 import { useSidebarResize } from "./hooks/useSidebarResize";
 import { Sidebar } from "./components/Sidebar";
 import { BindsPage } from "./pages/BindsPage";
@@ -25,7 +24,6 @@ function App() {
 
   const configFile = useConfigFile();
   const bindEditor = useBindEditor(commandPresets);
-  const dropdown = useDropdownBehavior(commandPresets);
   const { sidebarWidth, startResizing } = useSidebarResize();
 
   // Load command dictionary
@@ -66,9 +64,9 @@ function App() {
     configFile
       .loadFromPath(path)
       .then((loaded) => {
-            if (loaded) {
-              bindEditor.setBinds(loaded);
-            }
+        if (loaded) {
+          bindEditor.setBinds(loaded);
+        }
       })
       .catch((err) => {
         setStatusMessage(`Не удалось прочитать keys.cfg: ${err}`);
@@ -138,12 +136,9 @@ function App() {
                 commandPresets={commandPresets}
                 search={bindEditor.search}
                 setSearch={bindEditor.setSearch}
-                addBind={bindEditor.addBind}
                 addFromPreset={bindEditor.addFromPreset}
                 removeBind={bindEditor.removeBind}
                 confirmRemoveBind={bindEditor.confirmRemoveBind}
-                editingKeyIndex={bindEditor.editingKeyIndex}
-                setEditingKeyIndex={bindEditor.setEditingKeyIndex}
                 newBindIndex={bindEditor.newBindIndex}
                 setNewBindIndex={bindEditor.setNewBindIndex}
                 exitingBindIndex={bindEditor.exitingBindIndex}
@@ -153,16 +148,6 @@ function App() {
                 nameFor={bindEditor.nameFor}
                 updateBindCommand={bindEditor.updateBindCommand}
                 handleKeyboardKey={bindEditor.handleKeyboardKey}
-                openDropdownIndex={dropdown.openDropdownIndex}
-                closingDropdownIndex={dropdown.closingDropdownIndex}
-                changeOpenDropdown={dropdown.changeOpenDropdown}
-                commandSearch={dropdown.commandSearch}
-                setCommandSearch={dropdown.setCommandSearch}
-                filteredCommandPresets={dropdown.filteredCommandPresets}
-                dropdownDir={dropdown.dropdownDir}
-                setDropdownDir={dropdown.setDropdownDir}
-                filterKind={dropdown.filterKind}
-                setFilterKind={dropdown.setFilterKind}
               />
               {statusMessage && (
                 <div className="status-message">{statusMessage}</div>

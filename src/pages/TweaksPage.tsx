@@ -19,7 +19,6 @@ const SECTIONS: { key: TweakSection; title: string }[] = [
   { key: "qol", title: "Качество жизни" },
   { key: "graphics", title: "Графика" },
   { key: "interface", title: "Интерфейс" },
-  { key: "scripts", title: "Скрипты" },
 ];
 
 function formatSliderValue(slider: AdvancedSlider, value: number) {
@@ -176,12 +175,21 @@ function AccordionSection({
   children: ReactNode;
 }) {
   const innerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState(0);
+  const initialOpen = useRef(isExpanded);
 
-  // Measuring scrollHeight directly (instead of animating grid-template-rows
-  // fr units) avoids a Chromium/WebView2 quirk where the first grid-based
-  // expand of a section doesn't animate because the target height isn't
-  // resolved yet, making the accordion appear to open every other click.
+  const setContentRef = (el: HTMLDivElement | null) => {
+    contentRef.current = el;
+    if (el && initialOpen.current) {
+      const inner = el.firstElementChild as HTMLElement;
+      if (inner) {
+        el.style.transition = "none";
+        el.style.height = `${inner.scrollHeight}px`;
+      }
+    }
+  };
+
   useLayoutEffect(() => {
     const el = innerRef.current;
     if (!el) return;
@@ -189,8 +197,21 @@ function AccordionSection({
       setHeight(0);
       return;
     }
-    setHeight(el.scrollHeight);
-    const observer = new ResizeObserver(() => setHeight(el.scrollHeight));
+    const content = contentRef.current;
+    if (content) {
+      content.style.transition = "";
+      content.style.height = "";
+    }
+    if (!initialOpen.current) {
+      setHeight(el.scrollHeight);
+    } else {
+      initialOpen.current = false;
+    }
+    const observer = new ResizeObserver(() => {
+      if (contentRef.current && contentRef.current.style.height === "") {
+        setHeight(el.scrollHeight);
+      }
+    });
     observer.observe(el);
     return () => observer.disconnect();
   }, [isExpanded]);
@@ -208,7 +229,7 @@ function AccordionSection({
           <ChevronIcon />
         </span>
       </button>
-      <div className="accordion-content" style={{ height }}>
+      <div className="accordion-content" ref={setContentRef} style={{ height }}>
         <div className="accordion-content-inner" ref={innerRef}>
           {children}
         </div>
