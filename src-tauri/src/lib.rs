@@ -24,6 +24,10 @@ pub fn run() {
             graphics::read_shadow_quality,
             graphics::apply_texture_quality,
             graphics::read_texture_quality,
+            graphics::apply_water_quality,
+            graphics::read_water_quality,
+            graphics::apply_lighting_quality,
+            graphics::read_lighting_quality,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

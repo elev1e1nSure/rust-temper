@@ -181,6 +181,20 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
       .catch((err) => {
         console.error("Не удалось прочитать качество текстур:", err);
       });
+    invoke<number>("read_water_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, water: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать качество воды:", err);
+      });
+    invoke<number>("read_lighting_quality", { path: clientCfgPath })
+      .then((tier) => {
+        setValues((prev) => ({ ...prev, lighting: tier }));
+      })
+      .catch((err) => {
+        console.error("Не удалось прочитать качество освещения:", err);
+      });
   }, [clientCfgPath]);
 
   const previewRow =
@@ -224,6 +238,14 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         path: clientCfgPath,
         tier: values.textures,
       });
+      await invoke("apply_water_quality", {
+        path: clientCfgPath,
+        tier: values.water,
+      });
+      await invoke("apply_lighting_quality", {
+        path: clientCfgPath,
+        tier: values.lighting,
+      });
       setApplyStatus({
         type: "success",
         message: "Настройки графики применены",
@@ -236,7 +258,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     } finally {
       setApplying(false);
     }
-  }, [clientCfgPath, values.shadows]);
+  }, [clientCfgPath, values.shadows, values.textures, values.water, values.lighting]);
 
   return (
     <div className="graphics-container page-container">

@@ -165,3 +165,125 @@ pub fn read_texture_quality(path: String) -> Result<u32, String> {
         }
     }
 }
+
+const WATER_TIERS: &[TierConfig] = &[
+    &[
+        ("water.quality", "0"),
+        ("water.reflections", "0"),
+    ],
+    &[
+        ("water.quality", "0"),
+        ("water.reflections", "1"),
+    ],
+    &[
+        ("water.quality", "0"),
+        ("water.reflections", "2"),
+    ],
+];
+
+#[tauri::command]
+pub fn apply_water_quality(path: String, tier: u32) -> Result<(), String> {
+    let tier = tier as usize;
+
+    let config = WATER_TIERS
+        .get(tier)
+        .ok_or_else(|| {
+            format!(
+                "Недопустимый уровень качества воды: {tier}. Допустимый диапазон: 0..{}",
+                WATER_TIERS.len().saturating_sub(1)
+            )
+        })?;
+
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+
+    let changes: BTreeMap<String, Option<String>> = config
+        .iter()
+        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
+        .collect();
+
+    let updated = client_cfg::apply_values(&content, &changes);
+    client_cfg::write_atomic(cfg_path, &updated)?;
+
+    log::info!("Water quality applied: path={path}, tier={tier}");
+    Ok(())
+}
+
+#[tauri::command]
+pub fn read_water_quality(path: String) -> Result<u32, String> {
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+    let parsed = client_cfg::parse(&content);
+
+    match parsed.get("water.reflections").map(String::as_str) {
+        Some("0") => Ok(0),
+        Some("1") => Ok(1),
+        Some("2") => Ok(2),
+        None => Ok(0),
+        Some(other) => {
+            log::warn!(
+                "Unexpected water.reflections value: {other:?}, falling back to tier 0"
+            );
+            Ok(0)
+        }
+    }
+}
+
+const LIGHTING_TIERS: &[TierConfig] = &[
+    &[
+        ("graphics.contactshadows", "False"),
+        ("effects.ao", "False"),
+    ],
+    &[
+        ("graphics.contactshadows", "False"),
+        ("effects.ao", "True"),
+    ],
+    &[
+        ("graphics.contactshadows", "True"),
+        ("effects.ao", "True"),
+    ],
+];
+
+#[tauri::command]
+pub fn apply_lighting_quality(path: String, tier: u32) -> Result<(), String> {
+    let tier = tier as usize;
+
+    let config = LIGHTING_TIERS
+        .get(tier)
+        .ok_or_else(|| {
+            format!(
+                "Недопустимый уровень качества освещения: {tier}. Допустимый диапазон: 0..{}",
+                LIGHTING_TIERS.len().saturating_sub(1)
+            )
+        })?;
+
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+
+    let changes: BTreeMap<String, Option<String>> = config
+        .iter()
+        .map(|(key, value)| (key.to_string(), Some(value.to_string())))
+        .collect();
+
+    let updated = client_cfg::apply_values(&content, &changes);
+    client_cfg::write_atomic(cfg_path, &updated)?;
+
+    log::info!("Lighting quality applied: path={path}, tier={tier}");
+    Ok(())
+}
+
+#[tauri::command]
+pub fn read_lighting_quality(path: String) -> Result<u32, String> {
+    let cfg_path = Path::new(&path);
+    let content = client_cfg::read(cfg_path)?;
+    let parsed = client_cfg::parse(&content);
+
+    let ao = parsed.get("effects.ao").map(String::as_str).unwrap_or("");
+    let contact = parsed.get("graphics.contactshadows").map(String::as_str).unwrap_or("");
+
+    match (ao, contact) {
+        ("True", "True") => Ok(2),
+        ("True", _) => Ok(1),
+        _ => Ok(0),
+    }
+}
