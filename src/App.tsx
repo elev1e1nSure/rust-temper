@@ -13,6 +13,7 @@ import { TweaksPage } from "./pages/TweaksPage";
 import { Titlebar } from "./Titlebar";
 import type { PageId } from "./navigation";
 import "./App.css";
+import "./binds.css";
 
 function App() {
   const [activePage, setActivePage] = useState<PageId>("binds");
@@ -136,11 +137,12 @@ function App() {
           {activePage === "binds" && (
             <>
               <BindsPage
-                binds={bindEditor.binds}
                 filteredBinds={bindEditor.filteredBinds}
+                commandPresets={commandPresets}
                 search={bindEditor.search}
                 setSearch={bindEditor.setSearch}
                 addBind={bindEditor.addBind}
+                addFromPreset={bindEditor.addFromPreset}
                 removeBind={bindEditor.removeBind}
                 confirmRemoveBind={bindEditor.confirmRemoveBind}
                 editingKeyIndex={bindEditor.editingKeyIndex}
@@ -148,9 +150,12 @@ function App() {
                 newBindIndex={bindEditor.newBindIndex}
                 setNewBindIndex={bindEditor.setNewBindIndex}
                 exitingBindIndex={bindEditor.exitingBindIndex}
+                flashIndex={bindEditor.flashIndex}
                 keyConflicts={bindEditor.keyConflicts}
+                usedKeys={bindEditor.usedKeys}
                 nameFor={bindEditor.nameFor}
                 updateBindCommand={bindEditor.updateBindCommand}
+                handleKeyboardKey={bindEditor.handleKeyboardKey}
                 openDropdownIndex={dropdown.openDropdownIndex}
                 closingDropdownIndex={dropdown.closingDropdownIndex}
                 changeOpenDropdown={dropdown.changeOpenDropdown}

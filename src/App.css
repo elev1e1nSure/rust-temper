@@ -231,31 +231,7 @@ body {
   background: #222228;
 }
 
-/* Table */
-.table-wrap {
-  border-radius: 12px;
-  background: var(--panel);
-  position: relative;
-  isolation: isolate;
-}
-
-.col-headers {
-  display: flex;
-  padding: 14px 20px;
-  font-size: 13px;
-  color: var(--text-dim);
-  border-radius: 12px 12px 0 0;
-}
-
-.col-key {
-  width: 180px;
-  flex-shrink: 0;
-}
-
-.col-action {
-  flex: 1;
-}
-
+/* Bind rows (list styling lives in binds.css) */
 .bind-row {
   display: flex;
   align-items: center;
@@ -330,11 +306,6 @@ body {
   border-radius: 0 0 12px 12px;
 }
 
-.key-cell {
-  width: 180px;
-  flex-shrink: 0;
-}
-
 .key-badge {
   background: var(--key-bg);
   border-radius: 8px;
@@ -398,21 +369,6 @@ body {
 .action-cell-container {
   position: relative;
   flex: 1;
-}
-
-.table-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0);
-  z-index: 5;
-  border-radius: 12px;
-  pointer-events: none;
-  transition: background 0.15s ease;
-}
-
-.table-wrap.dropdown-open::before {
-  background: rgba(0, 0, 0, 0.25);
 }
 
 .dropdown-base {

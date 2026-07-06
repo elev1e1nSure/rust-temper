@@ -1,0 +1,189 @@
+/* Binds page: on-screen keyboard, action list and the "pick from list" picker.
+   Kept in its own file so it composes with App.css without fighting the
+   formatter that owns App.css while it is open in the editor. */
+
+/* Bind list -------------------------------------------------------------- */
+.binds-list-wrap {
+  border-radius: 12px;
+  background: var(--panel);
+  position: relative;
+  isolation: isolate;
+  padding: 6px 0;
+  margin-top: 16px;
+}
+
+.binds-list-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 5;
+  border-radius: 12px;
+  pointer-events: none;
+  transition: background 0.15s ease;
+}
+
+.binds-list-wrap.dropdown-open::before {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Selected row: its key gets assigned by the next on-screen keyboard click. */
+.bind-row.selected {
+  background: rgba(59, 130, 246, 0.07);
+  border-radius: 8px;
+}
+
+.bind-row.flash {
+  animation: bindFlash 0.9s ease;
+}
+
+@keyframes bindFlash {
+  0%,
+  100% {
+    background: transparent;
+  }
+
+  30% {
+    background: rgba(59, 130, 246, 0.12);
+  }
+}
+
+/* Key badge sits on the right (action -> key), fixed width. */
+.bind-key-slot {
+  width: 190px;
+  flex-shrink: 0;
+  padding: 11px 0;
+}
+
+/* "Выбрать из списка" picker --------------------------------------------- */
+.picker-container {
+  position: relative;
+}
+
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+}
+
+.picker-menu {
+  left: auto;
+  right: 0;
+  width: 260px;
+  z-index: 200;
+}
+
+/* On-screen keyboard ----------------------------------------------------- */
+.keyboard-panel {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 20px 18px;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.kb {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kb-fn-row {
+  display: flex;
+  gap: 14px;
+}
+
+.kb-fn-group {
+  display: flex;
+  gap: 5px;
+}
+
+.kb-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.kb-main,
+.kb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kb-row {
+  display: flex;
+  gap: 5px;
+}
+
+.kb-spacer {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.kb-numpad {
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+  grid-auto-rows: 34px;
+  gap: 5px;
+}
+
+.kb-numpad-cell {
+  display: flex;
+}
+
+.kb-key {
+  height: 34px;
+  min-width: 30px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--key-bg);
+  color: var(--text-dim);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.kb-key-fill {
+  width: 100%;
+  height: 100%;
+}
+
+.kb-key:hover:not(:disabled) {
+  color: var(--text);
+  filter: brightness(1.35);
+}
+
+/* Key already bound to some action. */
+.kb-key.used {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--text);
+}
+
+/* Non-bindable caps (FN and decorative labels). */
+.kb-key-static,
+.kb-key:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* While a row is listening, hovering a key hints it will be assigned. */
+.kb-listening .kb-key:not(:disabled):hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.55);
+  filter: none;
+}
