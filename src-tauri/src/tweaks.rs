@@ -267,32 +267,6 @@ fn known_tweaks() -> Vec<TweakDef> {
             bind: None,
             tier_values: None,
         },
-        TweakDef {
-            key: "graphics.tree_quality".to_string(),
-            title: "Качество деревьев".to_string(),
-            description: "Детализация моделей деревьев и дальность их прорисовки. Заметно влияет на FPS в лесистой местности.".to_string(),
-            section: "graphics".to_string(),
-            badge: None,
-            backend_keys: group(&[
-                ("tree.meshes", "100", "100"),
-                ("tree.quality", "200", "100"),
-            ]),
-            advanced_slider: Some(AdvancedSlider {
-                min: 0.0,
-                max: 3.0,
-                step: 1.0,
-                default_value: 0.0,
-                label: "Уровень качества".to_string(),
-                value_format: None,
-            }),
-            bind: None,
-            tier_values: Some(vec![
-                vec!["10".to_string(), "30".to_string()],
-                vec!["50".to_string(), "100".to_string()],
-                vec!["100".to_string(), "150".to_string()],
-                vec!["100".to_string(), "200".to_string()],
-            ]),
-        },
     ]
 }
 
