@@ -38,6 +38,7 @@ export function useTweaks(configPath: string) {
     if (!clientCfgPath) return;
     const data = await invoke<ClientCfgState>("read_client_cfg", {
       path: clientCfgPath,
+      keysCfgPath: configPath,
     });
     setStates(data.states);
     setManagedStates(data.managedStates);
@@ -83,6 +84,7 @@ export function useTweaks(configPath: string) {
           key: tweak.key,
           enabled: next,
           forceUnmanaged,
+          keysCfgPath: configPath,
         });
         await reload();
         return true;

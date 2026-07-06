@@ -1,4 +1,5 @@
 use crate::client_cfg;
+use crate::keys_cfg;
 use crate::tweak_state::{self, ActiveTweak, StoredValue};
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
@@ -27,6 +28,13 @@ pub struct AdvancedSlider {
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct BindTweak {
+    pub default_key: String,
+    pub command: String,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TweakDef {
     pub key: String,
     pub title: String,
@@ -35,6 +43,7 @@ pub struct TweakDef {
     pub badge: Option<String>,
     pub backend_keys: Vec<BackendKeyRule>,
     pub advanced_slider: Option<AdvancedSlider>,
+    pub bind: Option<BindTweak>,
 }
 
 #[derive(Serialize)]
@@ -98,6 +107,7 @@ fn known_tweaks() -> Vec<TweakDef> {
                 ("client.hascompletedtutorial", "True", "False"),
             ]),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "reduceCameraShake".to_string(),
@@ -112,6 +122,7 @@ fn known_tweaks() -> Vec<TweakDef> {
                 ("client.hurtpunch", "False", "True"),
             ]),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "accessibility.treemarkercolor".to_string(),
@@ -121,6 +132,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: Some("recommended".to_string()),
             backend_keys: rule("accessibility.treemarkercolor", "2", "0"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "strobelight.forceoff".to_string(),
@@ -130,6 +142,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: Some("recommended".to_string()),
             backend_keys: rule("strobelight.forceoff", "1", "False"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "inventory.quickcraftdelay".to_string(),
@@ -139,6 +152,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: Some("recommended".to_string()),
             backend_keys: rule("inventory.quickcraftdelay", "0", "0.75"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "player.footik".to_string(),
@@ -148,6 +162,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("player.footik", "False", "True"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "hitnotify.notification_level".to_string(),
@@ -157,6 +172,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("hitnotify.notification_level", "2", "1"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "legs.enablelegs".to_string(),
@@ -166,6 +182,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("legs.enablelegs", "0", "1"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "client.bag_unclaim_duration".to_string(),
@@ -175,6 +192,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("client.bag_unclaim_duration", "0", "2"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "effects.maxgibdist".to_string(),
@@ -184,6 +202,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("effects.maxgibdist", "0", "150"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "sss.enabled".to_string(),
@@ -193,6 +212,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("sss.enabled", "0", "1"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "gametip.server_event_tips".to_string(),
@@ -202,6 +222,7 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("gametip.server_event_tips", "True", "False"),
             advanced_slider: None,
+            bind: None,
         },
         TweakDef {
             key: "input.holdtime".to_string(),
@@ -218,6 +239,7 @@ fn known_tweaks() -> Vec<TweakDef> {
                 label: "Задержка (0.2 - стандартное значение, 0.1 - ускоренное)".to_string(),
                 value_format: Some("{value}s".to_string()),
             }),
+            bind: None,
         },
         TweakDef {
             key: "console.erroroverlay".to_string(),
@@ -227,6 +249,20 @@ fn known_tweaks() -> Vec<TweakDef> {
             badge: None,
             backend_keys: rule("console.erroroverlay", "0", "1"),
             advanced_slider: None,
+            bind: None,
+        },
+        TweakDef {
+            key: "autoAttack".to_string(),
+            title: "Автоатака".to_string(),
+            description: "Добавляет клавишу для автоатаки. При нажатии оружие атакует автоматически до повторного нажатия.".to_string(),
+            section: "scripts".to_string(),
+            badge: Some("recommended".to_string()),
+            backend_keys: vec![],
+            advanced_slider: None,
+            bind: Some(BindTweak {
+                default_key: "f5".to_string(),
+                command: "~attack".to_string(),
+            }),
         },
     ]
 }
@@ -237,7 +273,7 @@ pub fn get_known_tweaks() -> Vec<TweakDef> {
 }
 
 #[tauri::command]
-pub fn read_client_cfg(app: tauri::AppHandle, path: String) -> Result<ClientCfgState, String> {
+pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Option<String>) -> Result<ClientCfgState, String> {
     let _guard = operation_lock()?;
     let cfg_path = Path::new(&path);
     let content = client_cfg::read(cfg_path)?;
@@ -249,26 +285,48 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String) -> Result<ClientCfgS
         .get(&config_key)
         .map(|config| &config.active_tweaks);
 
+    let mut bind_map = BTreeMap::new();
+    if let Some(ref keys_path) = keys_cfg_path {
+        let keys_cfg_path = Path::new(keys_path);
+        if keys_cfg_path.exists() {
+            if let Ok(binds) = keys_cfg::load_binds(keys_cfg_path) {
+                for bind in binds {
+                    bind_map.insert(bind.key, bind.command);
+                }
+            }
+        }
+    }
+
     let mut states = HashMap::new();
     let mut managed_states = HashMap::new();
     let mut raw_values = HashMap::new();
 
     for tweak in known_tweaks() {
-        let managed_tweak = active_tweaks.and_then(|active| active.get(&tweak.key));
-        let expected_values = managed_tweak
-            .map(|active| active.desired_values.clone())
-            .unwrap_or_else(|| desired_values(&tweak));
-        let is_on = !expected_values.is_empty()
-            && expected_values
-                .iter()
-                .all(|(key, value)| parsed.get(key) == Some(value));
-        states.insert(tweak.key.clone(), is_on);
-        managed_states.insert(tweak.key.clone(), managed_tweak.is_some());
+        if tweak.bind.is_some() {
+            let bind_tweak = tweak.bind.as_ref().unwrap();
+            let is_on = bind_map
+                .get(&bind_tweak.default_key)
+                .map(|cmd| cmd == &bind_tweak.command)
+                .unwrap_or(false);
+            states.insert(tweak.key.clone(), is_on);
+            managed_states.insert(tweak.key.clone(), is_on);
+        } else {
+            let managed_tweak = active_tweaks.and_then(|active| active.get(&tweak.key));
+            let expected_values = managed_tweak
+                .map(|active| active.desired_values.clone())
+                .unwrap_or_else(|| desired_values(&tweak));
+            let is_on = !expected_values.is_empty()
+                && expected_values
+                    .iter()
+                    .all(|(key, value)| parsed.get(key) == Some(value));
+            states.insert(tweak.key.clone(), is_on);
+            managed_states.insert(tweak.key.clone(), managed_tweak.is_some());
 
-        if tweak.advanced_slider.is_some() {
-            if let Some(first) = tweak.backend_keys.first() {
-                if let Some(value) = parsed.get(&first.key) {
-                    raw_values.insert(tweak.key.clone(), value.clone());
+            if tweak.advanced_slider.is_some() {
+                if let Some(first) = tweak.backend_keys.first() {
+                    if let Some(value) = parsed.get(&first.key) {
+                        raw_values.insert(tweak.key.clone(), value.clone());
+                    }
                 }
             }
         }
@@ -288,12 +346,18 @@ pub fn toggle_tweak(
     key: String,
     enabled: bool,
     force_unmanaged: bool,
+    keys_cfg_path: Option<String>,
 ) -> Result<(), String> {
     let _guard = operation_lock()?;
     let tweak = known_tweaks()
         .into_iter()
         .find(|t| t.key == key)
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
+
+    if let Some(bind_tweak) = &tweak.bind {
+        return toggle_bind_tweak(app, &tweak, bind_tweak, enabled, keys_cfg_path);
+    }
+
     let cfg_path = Path::new(&path);
     let config_key = tweak_state::config_key(cfg_path)?;
     let content = client_cfg::read(cfg_path)?;
@@ -334,6 +398,49 @@ pub fn toggle_tweak(
             &tweak.key,
         )
     }
+}
+
+fn toggle_bind_tweak(
+    _app: tauri::AppHandle,
+    tweak: &TweakDef,
+    bind_tweak: &BindTweak,
+    enabled: bool,
+    keys_cfg_path: Option<String>,
+) -> Result<(), String> {
+    let keys_path = keys_cfg_path
+        .as_ref()
+        .ok_or_else(|| "Не указан путь к keys.cfg".to_string())?;
+    let keys_cfg_path = Path::new(keys_path);
+
+    let mut binds = if keys_cfg_path.exists() {
+        keys_cfg::load_binds(keys_cfg_path)?
+    } else {
+        Vec::new()
+    };
+
+    if enabled {
+        binds.retain(|b| b.key != bind_tweak.default_key);
+        binds.push(keys_cfg::KeyBind {
+            key: bind_tweak.default_key.clone(),
+            command: bind_tweak.command.clone(),
+        });
+        let mut content = String::new();
+        for bind in &binds {
+            content.push_str(&format!("bind {} {}\n", bind.key, bind.command));
+        }
+        client_cfg::write_atomic(keys_cfg_path, &content)?;
+        log::info!("Bind tweak enabled: tweak={}, key={}", tweak.key, bind_tweak.default_key);
+    } else {
+        binds.retain(|b| b.key != bind_tweak.default_key);
+        let mut content = String::new();
+        for bind in &binds {
+            content.push_str(&format!("bind {} {}\n", bind.key, bind.command));
+        }
+        client_cfg::write_atomic(keys_cfg_path, &content)?;
+        log::info!("Bind tweak disabled: tweak={}, key={}", tweak.key, bind_tweak.default_key);
+    }
+
+    Ok(())
 }
 
 #[tauri::command]

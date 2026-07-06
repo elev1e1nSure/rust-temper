@@ -25,7 +25,12 @@ export interface AdvancedSlider {
   valueFormat?: string;
 }
 
-export type TweakSection = "qol" | "graphics" | "interface";
+export interface BindTweak {
+  defaultKey: string;
+  command: string;
+}
+
+export type TweakSection = "qol" | "graphics" | "interface" | "scripts";
 export type TweakBadge = "recommended";
 
 export interface TweakDef {
@@ -36,4 +41,5 @@ export interface TweakDef {
   badge?: TweakBadge;
   backendKeys: BackendKeyRule[];
   advancedSlider?: AdvancedSlider;
+  bind?: BindTweak;
 }

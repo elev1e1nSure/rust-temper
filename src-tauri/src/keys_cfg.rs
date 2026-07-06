@@ -3,6 +3,11 @@ use std::path::Path;
 
 use crate::client_cfg;
 
+pub fn load_binds(path: &Path) -> Result<Vec<KeyBind>, String> {
+    let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+    Ok(content.lines().filter_map(parse_bind_line).collect())
+}
+
 /// keys.cfg only ever contains bind lines in this game, so the file is
 /// fully regenerated from the in-memory bind list on every save.
 /// Rust does not quote the key token; the command is the raw remainder of

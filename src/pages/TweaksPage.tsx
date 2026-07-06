@@ -13,6 +13,7 @@ const SECTIONS: { key: TweakSection; title: string }[] = [
   { key: "qol", title: "Качество жизни" },
   { key: "graphics", title: "Графика" },
   { key: "interface", title: "Интерфейс" },
+  { key: "scripts", title: "Скрипты" },
 ];
 
 function formatSliderValue(slider: AdvancedSlider, value: number) {
