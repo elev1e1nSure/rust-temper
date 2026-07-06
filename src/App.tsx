@@ -33,6 +33,7 @@ function App() {
 
   // Auto-detect config path once on first launch (guarded against React strict mode double-mount)
   const autoDetectRan = useRef(false);
+  const bindsLoaded = useRef(false);
   useEffect(() => {
     if (autoDetectRan.current) return;
     autoDetectRan.current = true;
@@ -44,12 +45,15 @@ function App() {
             if (loaded) {
               bindEditor.setBinds(loaded);
             }
+            bindsLoaded.current = true;
           })
           .catch((err) => {
             setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
+            bindsLoaded.current = true;
           });
       } else {
         setStatusMessage({ type: "info", text: "Не удалось найти keys.cfg автоматически." });
+        bindsLoaded.current = true;
       }
     });
   }, []);
@@ -91,6 +95,7 @@ function App() {
 
   // Autosave on bind change
   useEffect(() => {
+    if (!bindsLoaded.current) return;
     if (configFile.isReloadingRef.current) return;
     invoke("write_keys_cfg", {
       path: configFile.configPath,
