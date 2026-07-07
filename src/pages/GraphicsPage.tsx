@@ -156,20 +156,39 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     { type: "success" | "error"; message: string } | undefined
   >();
   const [applying, setApplying] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const clientCfgPath = configPath ? clientCfgPathFor(configPath) : "";
 
   useEffect(() => {
+    setLoaded(false);
     if (!clientCfgPath) return;
-    for (const row of QUALITY_ROWS) {
-      invoke<number>(row.readCmd, { path: clientCfgPath })
-        .then((tier) => {
-          setValues((prev) => ({ ...prev, [row.key]: tier }));
-        })
-        .catch((err) => {
-          console.error(`Не удалось прочитать «${row.label}»:`, err);
-        });
-    }
+    let cancelled = false;
+
+    Promise.all(
+      QUALITY_ROWS.map((row) =>
+        invoke<number>(row.readCmd, { path: clientCfgPath })
+          .then((tier) => [row.key, tier] as const)
+          .catch((err) => {
+            console.error(`Не удалось прочитать «${row.label}»:`, err);
+            return null;
+          }),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setValues((prev) => {
+        const next = { ...prev };
+        for (const result of results) {
+          if (result) next[result[0]] = result[1];
+        }
+        return next;
+      });
+      setLoaded(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [clientCfgPath]);
 
   const previewRow =
@@ -262,9 +281,11 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                   <span className="graphics-row-value">{row.tiers[value]}</span>
                 </div>
                 <div className="graphics-slider-wrap">
-                  <div className="graphics-slider-track">
+                  <div
+                    className={`graphics-slider-track${loaded ? "" : " no-transition"}`}
+                  >
                     <div
-                      className="graphics-slider-fill"
+                      className={`graphics-slider-fill${loaded ? "" : " no-transition"}`}
                       style={{ width: `${pct}%` }}
                     />
                     {row.tiers.map((_, i) => (
@@ -277,7 +298,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                       />
                     ))}
                     <div
-                      className="graphics-slider-thumb"
+                      className={`graphics-slider-thumb${loaded ? "" : " no-transition"}`}
                       style={{ left: `${pct}%` }}
                     />
                   </div>

@@ -856,7 +856,6 @@ body {
   opacity: 0.55;
 }
 
-
 /* Page transitions */
 .page-container {
   animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -1074,6 +1073,12 @@ body {
   inset: 7px;
   border-radius: 50%;
   background: #3b82f6;
+}
+
+.graphics-slider-track.no-transition,
+.graphics-slider-fill.no-transition,
+.graphics-slider-thumb.no-transition {
+  transition: none;
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,

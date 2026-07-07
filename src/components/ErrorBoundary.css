@@ -1,0 +1,31 @@
+.error-boundary {
+  padding: 32px;
+  color: var(--text);
+}
+
+.error-boundary h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.error-boundary-pre {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0;
+}
+
+.error-boundary-btn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: var(--key-bg);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.error-boundary-btn:hover {
+  filter: brightness(1.2);
+}
