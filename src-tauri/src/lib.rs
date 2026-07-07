@@ -3,6 +3,7 @@ mod graphics;
 mod keys_cfg;
 mod known_commands;
 mod rust_locator;
+mod tweak_defs;
 mod tweak_state;
 mod tweaks;
 
