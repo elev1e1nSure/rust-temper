@@ -28,39 +28,31 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     return counts;
   }, [binds]);
 
-  // All binds tagged with whether the current filter matches them. Rows stay
-  // mounted so filtering can animate (collapse) rather than snap; the list
-  // renders from this and hides non-matches.
-  const displayBinds = useMemo(() => {
+  const filteredBinds = useMemo(() => {
     const query = search.trim().toLowerCase();
     const selectedSet = new Set(selectedKeys);
-    return binds.map((bind, sourceIndex) => {
-      let matched = true;
-      if (selectedKeys.length > 0) {
-        // Match the whole combination regardless of the order keys were pressed.
-        // Rust stores combos as "[a+b]"; a single key has no brackets.
-        const tokens = parseCombo(bind.key);
-        matched =
-          tokens.length === selectedSet.size &&
-          tokens.every((t) => selectedSet.has(t));
-      }
-      if (matched && query) {
-        matched =
+    return binds
+      .map((bind, sourceIndex) => ({ bind, sourceIndex }))
+      .filter(({ bind }) => {
+        if (selectedKeys.length > 0) {
+          // Match the whole combination regardless of the order keys were pressed.
+          // Rust stores combos as "[a+b]"; a single key has no brackets.
+          const tokens = parseCombo(bind.key);
+          if (
+            tokens.length !== selectedSet.size ||
+            !tokens.every((t) => selectedSet.has(t))
+          ) {
+            return false;
+          }
+        }
+        if (!query) return true;
+        return (
           bind.key.toLowerCase().includes(query) ||
           nameFor(bind.command).toLowerCase().includes(query) ||
-          bind.command.toLowerCase().includes(query);
-      }
-      return { bind, sourceIndex, matched };
-    });
+          bind.command.toLowerCase().includes(query)
+        );
+      });
   }, [binds, search, selectedKeys, presetByCommand]);
-
-  const filteredBinds = useMemo(
-    () =>
-      displayBinds
-        .filter((d) => d.matched)
-        .map(({ bind, sourceIndex }) => ({ bind, sourceIndex })),
-    [displayBinds],
-  );
 
   const scrollListToTop = () => {
     requestAnimationFrame(() => {
@@ -110,7 +102,6 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     selectedKeys,
     keyConflicts,
     filteredBinds,
-    displayBinds,
     nameFor,
     newBindIndex,
     setNewBindIndex,

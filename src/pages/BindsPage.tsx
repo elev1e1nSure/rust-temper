@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CommandPreset, DisplayBind, FilteredBind } from "../types";
+import type { CommandPreset, FilteredBind } from "../types";
 import { ChevronIcon, KeyboardIcon, PlusIcon, TrashIcon } from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
@@ -11,7 +11,6 @@ import {
 
 interface BindsPageProps {
   filteredBinds: FilteredBind[];
-  displayBinds: DisplayBind[];
   commandPresets: CommandPreset[];
   search: string;
   setSearch: (v: string) => void;
@@ -35,7 +34,6 @@ interface CommandModalTarget {
 
 export function BindsPage({
   filteredBinds,
-  displayBinds,
   commandPresets,
   search,
   setSearch,
@@ -100,51 +98,44 @@ export function BindsPage({
         </div>
       ) : (
         <div className="binds-list-wrap">
-          {displayBinds.map(({ bind, sourceIndex, matched }) => {
+          {filteredBinds.map(({ bind, sourceIndex }) => {
             const hasConflict =
               bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
             return (
-              // Grid 1fr->0fr collapses the row to its exact height with no
-              // measurement, so the panel (sum of rows) resizes in sync with
-              // the rows themselves instead of lagging behind them.
               <div
-                className={`bind-row-collapse ${matched ? "" : "filtered-out"}`}
+                className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
                 key={`${bind.key}-${bind.command}-${sourceIndex}`}
+                onAnimationEnd={() => {
+                  if (exitingBindIndex === sourceIndex) {
+                    confirmRemoveBind(sourceIndex);
+                  }
+                  if (newBindIndex === sourceIndex) {
+                    setNewBindIndex(null);
+                  }
+                }}
               >
-                <div
-                  className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
-                  onAnimationEnd={() => {
-                    if (exitingBindIndex === sourceIndex) {
-                      confirmRemoveBind(sourceIndex);
-                    }
-                    if (newBindIndex === sourceIndex) {
-                      setNewBindIndex(null);
-                    }
-                  }}
+                <button
+                  className="action-cell"
+                  type="button"
+                  onClick={() =>
+                    openBindCommandModal(sourceIndex, bind.command)
+                  }
                 >
-                  <button
-                    className="action-cell"
-                    type="button"
-                    onClick={() =>
-                      openBindCommandModal(sourceIndex, bind.command)
-                    }
-                  >
-                    {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                    <ChevronIcon />
-                  </button>
+                  {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                  <ChevronIcon />
+                </button>
 
-                  <div
-                    className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
-                  >
-                    {bind.key ? keyDisplayName(bind.key) : "—"}
-                  </div>
+                <div
+                  className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                >
+                  {bind.key ? keyDisplayName(bind.key) : "—"}
+                </div>
 
-                  <div
-                    className="delete-btn"
-                    onClick={() => removeBind(sourceIndex)}
-                  >
-                    <TrashIcon />
-                  </div>
+                <div
+                  className="delete-btn"
+                  onClick={() => removeBind(sourceIndex)}
+                >
+                  <TrashIcon />
                 </div>
               </div>
             );
