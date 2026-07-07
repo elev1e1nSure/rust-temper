@@ -184,7 +184,15 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         }
         return next;
       });
-      setLoaded(true);
+      // Wait two frames so the browser paints the final values with
+      // transitions disabled before we re-enable them, otherwise the
+      // class removal and the value change land in the same commit and
+      // the slider still animates from its default position.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!cancelled) setLoaded(true);
+        });
+      });
     });
 
     return () => {
@@ -286,21 +294,27 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                     className={`graphics-slider-track${loaded ? "" : " no-transition"}`}
                   >
                     <div
-                      className={`graphics-slider-fill${loaded ? "" : " no-transition"}`}
-                      style={{ width: `${pct}%` }}
+                      className="graphics-slider-fill"
+                      style={
+                        { "--slider-pct": `${pct}%` } as React.CSSProperties
+                      }
                     />
                     {row.tiers.map((_, i) => (
                       <div
                         key={i}
                         className="graphics-slider-tick"
-                        style={{
-                          left: `${(i / (row.tiers.length - 1)) * 100}%`,
-                        }}
+                        style={
+                          {
+                            "--tick-left": `${(i / (row.tiers.length - 1)) * 100}%`,
+                          } as React.CSSProperties
+                        }
                       />
                     ))}
                     <div
-                      className={`graphics-slider-thumb${loaded ? "" : " no-transition"}`}
-                      style={{ left: `${pct}%` }}
+                      className="graphics-slider-thumb"
+                      style={
+                        { "--slider-pct": `${pct}%` } as React.CSSProperties
+                      }
                     />
                   </div>
                   <input
