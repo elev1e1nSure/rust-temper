@@ -12,7 +12,7 @@ pub fn run() {
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            rust_locator::find_keys_cfg,
+            rust_locator::find_rust_install,
             known_commands::get_known_commands,
             keys_cfg::read_keys_cfg,
             keys_cfg::write_keys_cfg,

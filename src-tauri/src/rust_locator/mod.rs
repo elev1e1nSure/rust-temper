@@ -1,21 +1,23 @@
 use std::path::PathBuf;
 
-const RUST_CFG_RELATIVE: &str = "steamapps/common/Rust/cfg/keys.cfg";
+const RUST_INSTALL_RELATIVE: &str = "steamapps/common/Rust";
+/// Sentinel file used to confirm a candidate directory is actually a Rust install.
+const RUST_CFG_MARKER: &str = "cfg/keys.cfg";
 
 #[cfg(target_os = "windows")]
 mod rust_locator_windows;
 
 #[tauri::command]
-pub fn find_keys_cfg() -> Option<String> {
+pub fn find_rust_install() -> Option<String> {
     for library in steam_library_folders() {
-        let candidate = library.join(RUST_CFG_RELATIVE);
-        if candidate.is_file() {
+        let candidate = library.join(RUST_INSTALL_RELATIVE);
+        if candidate.join(RUST_CFG_MARKER).is_file() {
             return Some(normalize(&candidate));
         }
     }
 
     for candidate in drive_fallback_candidates() {
-        if candidate.is_file() {
+        if candidate.join(RUST_CFG_MARKER).is_file() {
             return Some(normalize(&candidate));
         }
     }

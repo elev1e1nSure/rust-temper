@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { TweakDef } from "../types";
-import { clientCfgPathFor } from "../utils/paths";
+import { clientCfgPathFor, keysCfgPathFor } from "../utils/paths";
 
 // ---------------------------------------------------------------------------
 // Runtime-валидация ответа бэкенда
@@ -34,13 +34,21 @@ function parseClientCfgState(raw: unknown): ClientCfgState {
   const r = raw as Record<string, unknown>;
 
   if (!isRecordOf(r.states, (v): v is boolean => typeof v === "boolean")) {
-    throw new Error("read_client_cfg: поле 'states' отсутствует или имеет неверный тип");
+    throw new Error(
+      "read_client_cfg: поле 'states' отсутствует или имеет неверный тип",
+    );
   }
-  if (!isRecordOf(r.managedStates, (v): v is boolean => typeof v === "boolean")) {
-    throw new Error("read_client_cfg: поле 'managedStates' отсутствует или имеет неверный тип");
+  if (
+    !isRecordOf(r.managedStates, (v): v is boolean => typeof v === "boolean")
+  ) {
+    throw new Error(
+      "read_client_cfg: поле 'managedStates' отсутствует или имеет неверный тип",
+    );
   }
   if (!isRecordOf(r.rawValues, (v): v is string => typeof v === "string")) {
-    throw new Error("read_client_cfg: поле 'rawValues' отсутствует или имеет неверный тип");
+    throw new Error(
+      "read_client_cfg: поле 'rawValues' отсутствует или имеет неверный тип",
+    );
   }
 
   return {
@@ -50,7 +58,7 @@ function parseClientCfgState(raw: unknown): ClientCfgState {
   };
 }
 
-export function useTweaks(configPath: string) {
+export function useTweaks(gamePath: string) {
   const [tweaks, setTweaks] = useState<TweakDef[]>([]);
   const [states, setStates] = useState<Record<string, boolean>>({});
   const [managedStates, setManagedStates] = useState<Record<string, boolean>>(
@@ -70,19 +78,20 @@ export function useTweaks(configPath: string) {
       );
   }, []);
 
-  const clientCfgPath = clientCfgPathFor(configPath);
+  const clientCfgPath = clientCfgPathFor(gamePath);
+  const keysCfgPath = keysCfgPathFor(gamePath);
 
   const reload = useCallback(async () => {
     if (!clientCfgPath) return;
     const raw = await invoke<unknown>("read_client_cfg", {
       path: clientCfgPath,
-      keysCfgPath: configPath,
+      keysCfgPath,
     });
     const data = parseClientCfgState(raw);
     setStates(data.states);
     setManagedStates(data.managedStates);
     setRawValues(data.rawValues);
-  }, [clientCfgPath]);
+  }, [clientCfgPath, keysCfgPath]);
 
   useEffect(() => {
     reload().catch((err) =>
@@ -123,7 +132,7 @@ export function useTweaks(configPath: string) {
           key: tweak.key,
           enabled: next,
           forceUnmanaged,
-          keysCfgPath: configPath,
+          keysCfgPath,
         });
         await reload();
         return true;
@@ -139,7 +148,7 @@ export function useTweaks(configPath: string) {
         });
       }
     },
-    [clientCfgPath, isOn, pendingTweaks, reload],
+    [clientCfgPath, keysCfgPath, isOn, pendingTweaks, reload],
   );
 
   const setSliderValue = useCallback(

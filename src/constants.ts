@@ -1,2 +1,2 @@
-export const DEFAULT_CONFIG_PATH =
-  "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust\\cfg\\keys.cfg";
+export const DEFAULT_GAME_PATH =
+  "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rust";

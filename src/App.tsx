@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { CommandPreset } from "./types";
 import { useConfigFile } from "./hooks/useConfigFile";
+import { keysCfgPathFor } from "./utils/paths";
 import { useBindEditor } from "./hooks/useBindEditor";
 import { useSidebarResize } from "./hooks/useSidebarResize";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -17,7 +18,10 @@ import "./binds.css";
 
 function App() {
   const [activePage, setActivePage] = useState<PageId>("binds");
-  const [statusMessage, setStatusMessage] = useState<{ type: "error" | "info"; text: string } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: "error" | "info";
+    text: string;
+  } | null>(null);
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
   const configFile = useConfigFile();
   const bindEditor = useBindEditor(commandPresets);
@@ -49,19 +53,25 @@ function App() {
             bindsLoaded.current = true;
           })
           .catch((err) => {
-            setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
+            setStatusMessage({
+              type: "error",
+              text: `Не удалось прочитать keys.cfg: ${err}`,
+            });
             bindsLoaded.current = true;
           });
       } else {
-        setStatusMessage({ type: "info", text: "Не удалось найти keys.cfg автоматически." });
+        setStatusMessage({
+          type: "info",
+          text: "Не удалось найти keys.cfg автоматически.",
+        });
         bindsLoaded.current = true;
       }
     });
   }, []);
 
-  // Load binds when configPath changes (from user input or auto-detection)
-  const handleConfigPathChange = useCallback((path: string) => {
-    configFile.setConfigPath(path);
+  // Load binds when gamePath changes (from user input or auto-detection)
+  const handleGamePathChange = useCallback((path: string) => {
+    configFile.setGamePath(path);
     configFile
       .loadFromPath(path)
       .then((loaded) => {
@@ -70,7 +80,10 @@ function App() {
         }
       })
       .catch((err) => {
-        setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
+        setStatusMessage({
+          type: "error",
+          text: `Не удалось прочитать keys.cfg: ${err}`,
+        });
       });
   }, []);
 
@@ -86,10 +99,16 @@ function App() {
             }
           })
           .catch((err) => {
-            setStatusMessage({ type: "error", text: `Не удалось прочитать keys.cfg: ${err}` });
+            setStatusMessage({
+              type: "error",
+              text: `Не удалось прочитать keys.cfg: ${err}`,
+            });
           });
       } else {
-        setStatusMessage({ type: "info", text: "Не удалось найти keys.cfg автоматически." });
+        setStatusMessage({
+          type: "info",
+          text: "Не удалось найти keys.cfg автоматически.",
+        });
       }
     });
   }, []);
@@ -99,14 +118,17 @@ function App() {
     if (!bindsLoaded.current) return;
     if (configFile._isReloadingRef.current) return;
     invoke("write_keys_cfg", {
-      path: configFile.configPath,
+      path: keysCfgPathFor(configFile.gamePath),
       binds: bindEditor.binds,
     })
       .then(() => setStatusMessage(null))
       .catch((err) =>
-        setStatusMessage({ type: "error", text: `Не удалось сохранить keys.cfg: ${err}` }),
+        setStatusMessage({
+          type: "error",
+          text: `Не удалось сохранить keys.cfg: ${err}`,
+        }),
       );
-  }, [bindEditor.binds, configFile.configPath]);
+  }, [bindEditor.binds, configFile.gamePath]);
 
   return (
     <>
@@ -141,7 +163,9 @@ function App() {
                   handleKeyboardKey={bindEditor.handleKeyboardKey}
                 />
                 {statusMessage && (
-                  <div className={`status-message${statusMessage.type === "error" ? " status-error" : ""}`}>
+                  <div
+                    className={`status-message${statusMessage.type === "error" ? " status-error" : ""}`}
+                  >
                     {statusMessage.text}
                   </div>
                 )}
@@ -151,21 +175,21 @@ function App() {
 
           {activePage === "tweaks" && (
             <ErrorBoundary>
-              <TweaksPage configPath={configFile.configPath} />
+              <TweaksPage gamePath={configFile.gamePath} />
             </ErrorBoundary>
           )}
 
           {activePage === "graphics" && (
             <ErrorBoundary>
-              <GraphicsPage configPath={configFile.configPath} />
+              <GraphicsPage gamePath={configFile.gamePath} />
             </ErrorBoundary>
           )}
 
           {activePage === "settings" && (
             <ErrorBoundary>
               <SettingsPage
-                configPath={configFile.configPath}
-                setConfigPath={handleConfigPathChange}
+                gamePath={configFile.gamePath}
+                setGamePath={handleGamePathChange}
                 detecting={configFile.detecting}
                 handleAutoDetect={handleAutoDetect}
                 handleSelectFile={configFile.handleSelectFile}

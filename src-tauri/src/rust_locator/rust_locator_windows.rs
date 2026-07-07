@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-const RUST_CFG_RELATIVE: &str = "steamapps/common/Rust/cfg/keys.cfg";
+const RUST_INSTALL_RELATIVE: &str = "steamapps/common/Rust";
 
 const FALLBACK_STEAM_DIRS: &[&str] = &[
     "SteamLibrary",
@@ -50,7 +50,7 @@ pub fn drive_fallback_candidates() -> Vec<PathBuf> {
             continue;
         }
         for dir_name in FALLBACK_STEAM_DIRS {
-            candidates.push(drive_root.join(dir_name).join(RUST_CFG_RELATIVE));
+            candidates.push(drive_root.join(dir_name).join(RUST_INSTALL_RELATIVE));
         }
     }
 

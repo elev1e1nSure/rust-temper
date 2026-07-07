@@ -147,7 +147,7 @@ const QUICK_PRESETS: {
 ];
 
 interface GraphicsPageProps {
-  configPath: string;
+  gamePath: string;
 }
 
 const PRESET_UNSET = "Пользовательский";
@@ -159,7 +159,7 @@ function matchPreset(values: Record<string, number>): string {
   return match?.label ?? PRESET_UNSET;
 }
 
-export function GraphicsPage({ configPath }: GraphicsPageProps) {
+export function GraphicsPage({ gamePath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
   const presetLabel = matchPreset(values);
   const [presetMenuOpen, setPresetMenuOpen] = useState(false);
@@ -175,7 +175,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
   // first paint) from ever having a transition to animate through.
   const [interacted, setInteracted] = useState(false);
 
-  const clientCfgPath = configPath ? clientCfgPathFor(configPath) : "";
+  const clientCfgPath = gamePath ? clientCfgPathFor(gamePath) : "";
 
   useEffect(() => {
     if (!clientCfgPath) return;
@@ -319,34 +319,34 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                   <span className="graphics-row-value">{row.tiers[value]}</span>
                 </div>
                 <div className="graphics-slider-wrap">
-                    <div className="graphics-slider-track">
+                  <div className="graphics-slider-track">
+                    <div
+                      className="graphics-slider-fill"
+                      style={
+                        {
+                          "--slider-pct": `${pct}%`,
+                          transition: interacted
+                            ? "width 0.12s ease-out"
+                            : "none",
+                        } as React.CSSProperties
+                      }
+                    />
+                    {row.tiers.map((_, i) => (
                       <div
-                        className="graphics-slider-fill"
+                        key={i}
+                        className="graphics-slider-tick"
                         style={
                           {
-                            "--slider-pct": `${pct}%`,
-                            transition: interacted
-                              ? "width 0.12s ease-out"
-                              : "none",
+                            "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 98 + 1 : 50}%`,
                           } as React.CSSProperties
                         }
                       />
-                      {row.tiers.map((_, i) => (
-                        <div
-                          key={i}
-                          className="graphics-slider-tick"
-                          style={
-                            {
-                              "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 98 + 1 : 50}%`,
-                            } as React.CSSProperties
-                          }
-                        />
-                      ))}
-                      <div
-                        className="graphics-slider-thumb"
-                        style={
-                          {
-                            "--slider-pct": `${pct}%`,
+                    ))}
+                    <div
+                      className="graphics-slider-thumb"
+                      style={
+                        {
+                          "--slider-pct": `${pct}%`,
                           transition: interacted
                             ? "left 0.12s ease-out, background 0.15s ease, box-shadow 0.15s ease"
                             : "background 0.15s ease, box-shadow 0.15s ease",
@@ -400,7 +400,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
             type="button"
             className="graphics-apply-btn"
             onClick={handleApply}
-            disabled={applying || !configPath}
+            disabled={applying || !gamePath}
           >
             {applying ? "Применение..." : "Применить"}
           </button>

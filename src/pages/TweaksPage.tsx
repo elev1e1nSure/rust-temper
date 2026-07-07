@@ -13,7 +13,7 @@ import type { AdvancedSlider, TweakDef, TweakSection } from "../types";
 import "./TweaksPage.css";
 
 interface TweaksPageProps {
-  configPath: string;
+  gamePath: string;
 }
 
 const SECTIONS: { key: TweakSection; title: string }[] = [
@@ -219,7 +219,7 @@ function AccordionSection({
   );
 }
 
-export function TweaksPage({ configPath }: TweaksPageProps) {
+export function TweaksPage({ gamePath }: TweaksPageProps) {
   const {
     tweaks,
     isOn,
@@ -229,7 +229,7 @@ export function TweaksPage({ configPath }: TweaksPageProps) {
     toggleTweak,
     setSliderValue,
     error,
-  } = useTweaks(configPath);
+  } = useTweaks(gamePath);
   const [unmanagedTweak, setUnmanagedTweak] = useState<TweakDef | null>(null);
   const [openSections, setOpenSections] = useState<Set<TweakSection>>(
     () => new Set<TweakSection>(["qol"]),

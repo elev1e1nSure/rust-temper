@@ -2,10 +2,11 @@ import { useCallback, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { Bind } from "../types";
-import { DEFAULT_CONFIG_PATH } from "../constants";
+import { DEFAULT_GAME_PATH } from "../constants";
+import { keysCfgPathFor } from "../utils/paths";
 
 export function useConfigFile() {
-  const [configPath, setConfigPath] = useState(DEFAULT_CONFIG_PATH);
+  const [gamePath, setGamePath] = useState(DEFAULT_GAME_PATH);
   const [detecting, setDetecting] = useState(false);
   // Флаг реентерабельности: хранится в ref, чтобы не вызывать лишних рендеров,
   // но НЕ экспортируется как ref — потребитель получает только read-only boolean через state.
@@ -16,7 +17,9 @@ export function useConfigFile() {
     isReloadingRef.current = true;
     setIsReloading(true);
     try {
-      const loaded = await invoke<Bind[]>("read_keys_cfg", { path });
+      const loaded = await invoke<Bind[]>("read_keys_cfg", {
+        path: keysCfgPathFor(path),
+      });
       return loaded;
     } finally {
       isReloadingRef.current = false;
@@ -26,11 +29,11 @@ export function useConfigFile() {
 
   const handleSelectFile = async () => {
     const selected = await open({
-      filters: [{ name: "cfg", extensions: ["cfg"] }],
+      directory: true,
       multiple: false,
     });
     if (selected) {
-      setConfigPath(selected);
+      setGamePath(selected);
     }
   };
 
@@ -38,14 +41,14 @@ export function useConfigFile() {
     const minDelay = new Promise((r) => setTimeout(r, 900));
     setDetecting(true);
     try {
-      const found = await invoke<string | null>("find_keys_cfg");
+      const found = await invoke<string | null>("find_rust_install");
       if (found) {
-        setConfigPath(found);
+        setGamePath(found);
         return found;
       }
       return null;
     } catch (err) {
-      console.error("Автопоиск keys.cfg не удался:", err);
+      console.error("Автопоиск установки Rust не удался:", err);
       return null;
     } finally {
       await minDelay;
@@ -54,8 +57,8 @@ export function useConfigFile() {
   };
 
   return {
-    configPath,
-    setConfigPath,
+    gamePath,
+    setGamePath,
     detecting,
     /** true пока идёт чтение файла — безопасно читать в эффектах */
     isReloading,

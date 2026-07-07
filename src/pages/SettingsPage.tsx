@@ -2,16 +2,16 @@ import { LoadingLine } from "@mingcute/react";
 import "./SettingsPage.css";
 
 interface SettingsPageProps {
-  configPath: string;
-  setConfigPath: (path: string) => void;
+  gamePath: string;
+  setGamePath: (path: string) => void;
   detecting: boolean;
   handleAutoDetect: () => void;
   handleSelectFile: () => void;
 }
 
 export function SettingsPage({
-  configPath,
-  setConfigPath,
+  gamePath,
+  setGamePath,
   detecting,
   handleAutoDetect,
   handleSelectFile,
@@ -24,8 +24,8 @@ export function SettingsPage({
           <input
             type="text"
             className="setting-input"
-            value={configPath}
-            onChange={(e) => setConfigPath(e.target.value)}
+            value={gamePath}
+            onChange={(e) => setGamePath(e.target.value)}
           />
           <div className="path-actions">
             <button
@@ -42,7 +42,7 @@ export function SettingsPage({
               className="btn-path"
               onClick={handleSelectFile}
             >
-              Выбрать файл
+              Выбрать папку
             </button>
           </div>
         </div>
