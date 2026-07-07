@@ -70,6 +70,7 @@ pub fn presets() -> Vec<CommandPreset> {
             "Увеличить зум прицела",
             "+zoomincrease",
         ),
+        preset("Зум прицела (тоггл)", "zoomtoggle"),
         preset("Убить себя", "kill"),
         // Взаимодействие и предметы
         preset(
@@ -95,6 +96,7 @@ pub fn presets() -> Vec<CommandPreset> {
         preset("Выйти из игры", "quit"),
         // Инвентарь и крафт
         preset("Инвентарь", "inventory.toggle"),
+        preset("Рюкзак", "backpack"),
         preset(
             "Выбросить один предмет",
             "+dropitemsingle",
@@ -120,6 +122,7 @@ pub fn presets() -> Vec<CommandPreset> {
             "+nextskin",
         ),
         preset("Меню крафта", "inventory.togglecrafting"),
+        preset("Пипетка — взять предмет (креатив)", "inventory.pipette"),
         // Слоты пояса
         preset("Слот 1", "+slot1"),
         preset("Слот 2", "+slot2"),
@@ -130,6 +133,7 @@ pub fn presets() -> Vec<CommandPreset> {
         // UI и чат
         preset("Открыть чат", "chat.open"),
         preset("Написать в чат", "chat.say"),
+        preset("Написать в командный чат", "chat.teamsay"),
         preset(
             "Голосовой чат",
             "+voice",
@@ -147,6 +151,11 @@ pub fn presets() -> Vec<CommandPreset> {
             "+focusmap",
         ),
         preset("Компас", "+compass"),
+        preset("Метка на позиции", "markcurrentpos"),
+        preset("Очистить метки", "clearmarkers"),
+        preset("Меню клана", "clan.toggleclan"),
+        preset("Контакты", "uicontacts.togglecontacts"),
+        preset("Отключиться от сервера", "client.disconnect"),
         preset("Консоль", "consoletoggle"),
         preset(
             "Меню жестов",
@@ -196,6 +205,37 @@ pub fn presets() -> Vec<CommandPreset> {
             "Быстрое переодевание",
             "inventory.toggle;inventory.container1 0;inventory.container1 1;inventory.container1 2;inventory.container1 3;inventory.toggle",
         ),
+        // Составные бинды (QoL)
+        preset("Карта с центрированием", "+map;+focusmap"),
+        preset(
+            "Авто-плавание (вперёд+бег+прыжок)",
+            "forward;sprint;jump",
+        ),
+        preset("Скрыть/показать HUD", "~graphics.hud 0;graphics.hud 1"),
+        preset(
+            "Оверлей производительности (цикл)",
+            "~perf 0;perf 2;perf 5",
+        ),
+        preset(
+            "Автоспринт вкл/выкл",
+            "~input.alwayssprint true;input.alwayssprint false",
+        ),
+        preset("Звук выкл/вкл", "~audio.master 0;audio.master 1"),
+        preset(
+            "Сетевой график вкл/выкл",
+            "~netgraph.enabled true;netgraph.enabled false",
+        ),
+        preset("Присед + атака", "+duck;+attack"),
+        // Демо и запись
+        preset("Начать запись демо", "demo.record"),
+        preset("Остановить демо", "demo.stop"),
+        preset("Панель записи демо", "demo.recorder"),
+        // Админ (нужны права на сервере)
+        preset(
+            "Бог + полдень / выкл (админ)",
+            "~meta.exec \"global.god true\" \"admintime 12\";meta.exec \"global.god false\" \"admintime -1\"",
+        ),
+        preset("День/ночь (админ)", "~admintime 12;admintime -1"),
 
         // Транспорт: пересадка по местам
         preset(
