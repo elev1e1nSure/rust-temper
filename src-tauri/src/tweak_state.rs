@@ -57,17 +57,35 @@ pub fn save(app: &tauri::AppHandle, state: &TweakState) -> Result<(), String> {
 }
 
 pub fn config_key(path: &Path) -> Result<String, String> {
-    let absolute = if path.exists() {
-        std::fs::canonicalize(path).map_err(|error| error.to_string())?
-    } else if path.is_absolute() {
-        path.to_path_buf()
+    // The key must be stable whether or not the target file already exists:
+    // toggling a tweak on a still-absent client.cfg used to canonicalize the
+    // path differently than the next run after the file was created, orphaning
+    // the baselines and breaking the disable path ("Нет сохранённого значения").
+    // Canonicalize the parent directory (which normally exists regardless) and
+    // only fall back to lexical resolution when even the parent is missing.
+    let parent = path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(path);
+    let file_name = path
+        .file_name()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("client.cfg"));
+
+    let canonical_parent = if parent.exists() {
+        std::fs::canonicalize(parent).map_err(|error| error.to_string())?
+    } else if parent.is_absolute() {
+        parent.to_path_buf()
     } else {
         std::env::current_dir()
             .map_err(|error| error.to_string())?
-            .join(path)
+            .join(parent)
     };
 
-    let normalized = absolute.to_string_lossy().replace('/', "\\");
+    let absolute = canonical_parent.join(file_name);
+    let raw = absolute.to_string_lossy();
+    // Strip the verbatim `\\?\` prefix Windows canonicalize() emits so the key
+    // matches a path the user (or frontend) might supply without that prefix.
+    let stripped = raw.strip_prefix(r"\\?\").unwrap_or(&raw);
+    let normalized = stripped.replace('/', "\\");
+
     #[cfg(windows)]
     return Ok(normalized.to_lowercase());
 

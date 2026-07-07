@@ -40,6 +40,9 @@ struct Quality {
 impl Quality {
     /// Write the config bundle for `tier` into the file at `path`.
     fn apply(&self, path: &str, tier: u32) -> Result<(), String> {
+        // Graphics tiers share the same client.cfg that tweaks mutate, so they
+        // must take the same process-wide lock to avoid lost-update races.
+        let _guard = client_cfg::operation_lock()?;
         let config = self.tiers.get(tier as usize).ok_or_else(|| {
             format!(
                 "Недопустимый уровень {}: {tier}. Допустимый диапазон: 0..{}",

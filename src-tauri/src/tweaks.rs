@@ -4,9 +4,6 @@ use crate::tweak_state::{self, ActiveTweak, StoredValue};
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
-use std::sync::{Mutex, OnceLock};
-
-static TWEAK_OPERATION_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
 // ── Tweak operation transaction ──────────────────────────────────────────
 
@@ -321,6 +318,14 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Optio
         .map(|config| &config.active_tweaks);
 
     let mut bind_map = BTreeMap::new();
+    let keys_state_ref = if let Some(ref keys_path) = keys_cfg_path {
+        let kp = Path::new(keys_path);
+        tweak_state::config_key(kp)
+            .ok()
+            .and_then(|ck| state.configs.get(&ck).map(|c| &c.active_tweaks))
+    } else {
+        None
+    };
     if let Some(ref keys_path) = keys_cfg_path {
         let keys_cfg_path = Path::new(keys_path);
         if keys_cfg_path.exists() {
@@ -342,8 +347,14 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Optio
                 .get(&bind_tweak.default_key)
                 .map(|cmd| cmd == &bind_tweak.command)
                 .unwrap_or(false);
+            // Bind tweaks are tracked in tweak_state under the keys.cfg path,
+            // not client.cfg's; look them up there or the UI would never mark
+            // them as managed.
+            let managed = keys_state_ref
+                .and_then(|active| active.get(&tweak.key))
+                .is_some();
             states.insert(tweak.key.clone(), is_on);
-            managed_states.insert(tweak.key.clone(), is_on);
+            managed_states.insert(tweak.key.clone(), managed);
         } else {
             let managed_tweak = active_tweaks.and_then(|active| active.get(&tweak.key));
             let expected_values = managed_tweak
@@ -389,7 +400,7 @@ pub fn toggle_tweak(
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
 
     if let Some(bind_tweak) = &tweak.bind {
-        return toggle_bind_tweak(&tweak, bind_tweak, enabled, keys_cfg_path);
+        return toggle_bind_tweak(&app, &tweak, bind_tweak, enabled, keys_cfg_path);
     }
 
     let cfg_path = Path::new(&path);
@@ -514,6 +525,7 @@ pub fn toggle_tweak(
 }
 
 fn toggle_bind_tweak(
+    app: &tauri::AppHandle,
     tweak: &TweakDef,
     bind_tweak: &BindTweak,
     enabled: bool,
@@ -524,28 +536,79 @@ fn toggle_bind_tweak(
         .ok_or_else(|| "Не указан путь к keys.cfg".to_string())?;
     let keys_cfg_path = Path::new(keys_path);
 
-    let mut binds = if keys_cfg_path.exists() {
-        keys_cfg::load_binds(keys_cfg_path)?
+    let existing = if keys_cfg_path.exists() {
+        std::fs::read_to_string(keys_cfg_path).unwrap_or_default()
     } else {
-        Vec::new()
+        String::new()
+    };
+    let prior_command = keys_cfg::load_binds(keys_cfg_path)
+        .ok()
+        .and_then(|binds| {
+            binds
+                .into_iter()
+                .find(|b| b.key == bind_tweak.default_key)
+                .map(|c| c.command)
+        });
+
+    let config_key = tweak_state::config_key(keys_cfg_path)?;
+    let mut state = tweak_state::load(app)?;
+    let previous_state = state.clone();
+    let config = state.configs.entry(config_key.clone()).or_default();
+
+    let new_content = if enabled {
+        let captured = std::iter::once((
+            bind_tweak.default_key.clone(),
+            StoredValue { value: prior_command },
+        ))
+        .collect();
+        let desired = std::iter::once((
+            bind_tweak.default_key.clone(),
+            bind_tweak.command.clone(),
+        ))
+        .collect();
+        config.active_tweaks.insert(
+            tweak.key.clone(),
+            ActiveTweak {
+                captured_values: captured,
+                desired_values: desired,
+            },
+        );
+        config.activation_order.retain(|k| k != &tweak.key);
+        config.activation_order.push(tweak.key.clone());
+        keys_cfg::apply_bind(&existing, &bind_tweak.default_key, Some(&bind_tweak.command))
+    } else {
+        let removed = config.active_tweaks.remove(&tweak.key);
+        config.activation_order.retain(|k| k != &tweak.key);
+        let restore = removed.and_then(|a| {
+            a.captured_values
+                .get(&bind_tweak.default_key)
+                .and_then(|v| v.value.clone())
+        });
+        match restore {
+            Some(cmd) => keys_cfg::apply_bind(&existing, &bind_tweak.default_key, Some(&cmd)),
+            None => keys_cfg::apply_bind(&existing, &bind_tweak.default_key, None),
+        }
     };
 
-    if enabled {
-        binds.retain(|b| b.key != bind_tweak.default_key);
-        binds.push(keys_cfg::KeyBind {
-            key: bind_tweak.default_key.clone(),
-            command: bind_tweak.command.clone(),
-        });
-        let content = keys_cfg::serialize_binds(&binds);
-        client_cfg::write_atomic(keys_cfg_path, &content)?;
-        log::info!("Bind tweak enabled: tweak={}, key={}", tweak.key, bind_tweak.default_key);
-    } else {
-        binds.retain(|b| b.key != bind_tweak.default_key);
-        let content = keys_cfg::serialize_binds(&binds);
-        client_cfg::write_atomic(keys_cfg_path, &content)?;
-        log::info!("Bind tweak disabled: tweak={}, key={}", tweak.key, bind_tweak.default_key);
+    if config.active_tweaks.is_empty() {
+        state.configs.remove(&config_key);
     }
 
+    tweak_state::save(app, &state)?;
+    if let Err(write_error) = client_cfg::write_atomic(keys_cfg_path, &new_content) {
+        match tweak_state::save(app, &previous_state) {
+            Ok(()) => return Err(write_error),
+            Err(rollback_error) => {
+                return Err(format!("{write_error}; откат состояния не удался: {rollback_error}"))
+            }
+        }
+    }
+    log::info!(
+        "Bind tweak {}: tweak={}, key={}",
+        if enabled { "enabled" } else { "disabled" },
+        tweak.key,
+        bind_tweak.default_key
+    );
     Ok(())
 }
 
@@ -633,8 +696,5 @@ fn rollback_state(
 }
 
 fn operation_lock() -> Result<std::sync::MutexGuard<'static, ()>, String> {
-    TWEAK_OPERATION_LOCK
-        .get_or_init(|| Mutex::new(()))
-        .lock()
-        .map_err(|_| "Внутренняя блокировка твиков повреждена".to_string())
+    client_cfg::operation_lock()
 }
