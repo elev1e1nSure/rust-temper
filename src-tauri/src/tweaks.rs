@@ -1,6 +1,6 @@
 use crate::client_cfg;
 use crate::keys_cfg;
-use crate::tweak_defs::{self as defs, AdvancedSlider, BackendKeyRule, BindTweak, TweakBadge, TweakDef, TweakSection};
+use crate::tweak_defs::{self as defs, BindTweak, TweakDef};
 use crate::tweak_state::{self, ActiveTweak, ConfigState, StoredValue};
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
@@ -9,7 +9,7 @@ use std::path::Path;
 // Re-export catalogue helpers/types so the existing `#[cfg(test)] mod tests
 // { use super::*; }` keeps resolving `known_tweaks`, `rule`, `group`, `TweakDef`
 // etc. without touching the test bodies.
-pub(crate) use defs::{group, known_tweaks, known_tweaks_ref, rule};
+pub(crate) use defs::{known_tweaks, known_tweaks_ref};
 
 // ── Tweak operation transaction ──────────────────────────────────────────
 
@@ -555,6 +555,7 @@ fn operation_lock() -> Result<std::sync::MutexGuard<'static, ()>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tweak_defs::{group, rule, AdvancedSlider, BackendKeyRule, BindTweak, TweakBadge, TweakSection};
 
     // ── rule ──────────────────────────────────────────────────────────────────
 

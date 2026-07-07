@@ -77,7 +77,8 @@ pub fn config_key(path: &Path) -> Result<String, String> {
     let parent = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or(path);
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
     let file_name = path
         .file_name()
         .map(PathBuf::from)
