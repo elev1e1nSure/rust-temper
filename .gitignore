@@ -49,3 +49,4 @@ Desktop.ini
 .env.*.local
 /.claude
 log.txt
+quill.toml
