@@ -368,7 +368,7 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Optio
         .get(&config_key)
         .map(|config| &config.active_tweaks);
 
-    let mut bind_map = BTreeMap::new();
+    let bind_map = load_bind_map(keys_cfg_path.as_deref());
     let keys_state_ref = if let Some(ref keys_path) = keys_cfg_path {
         let kp = Path::new(keys_path);
         tweak_state::config_key(kp)
@@ -377,16 +377,6 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Optio
     } else {
         None
     };
-    if let Some(ref keys_path) = keys_cfg_path {
-        let keys_cfg_path = Path::new(keys_path);
-        if keys_cfg_path.exists() {
-            if let Ok(binds) = keys_cfg::load_binds(keys_cfg_path) {
-                for bind in binds {
-                    bind_map.insert(bind.key, bind.command);
-                }
-            }
-        }
-    }
 
     Ok(compute_tweak_states(&known_tweaks(), &parsed, active_tweaks, &bind_map, keys_state_ref))
 }
@@ -433,11 +423,7 @@ pub fn toggle_tweak(
             .unwrap_or(false);
         if !is_managed {
             if force_unmanaged {
-                let changes: BTreeMap<_, _> = tweak
-                    .backend_keys
-                    .iter()
-                    .map(|bk| (bk.key.clone(), Some(bk.off.clone())))
-                    .collect();
+                let changes = compute_force_off_changes(&tweak);
                 log::warn!(
                     "Force-disabling unmanaged tweak: path={}, tweak={}, applying={:?}",
                     cfg_path.display(), tweak.key, changes
@@ -572,6 +558,39 @@ fn toggle_bind_tweak(
     Ok(())
 }
 
+pub(crate) fn compute_slider_changes(
+    config: &mut ConfigState,
+    tweak_key: &str,
+    backend_key: &str,
+    desired_value: String,
+) -> Result<BTreeMap<String, Option<String>>, String> {
+    let active_tweak = config
+        .active_tweaks
+        .get_mut(tweak_key)
+        .ok_or_else(|| format!("Твик {tweak_key} не включён"))?;
+    active_tweak.desired_values.insert(backend_key.to_string(), desired_value.clone());
+    let mut changes = BTreeMap::new();
+    changes.insert(backend_key.to_string(), Some(desired_value));
+    Ok(changes)
+}
+
+pub(crate) fn validate_slider_value(tweak: &TweakDef, value: f64) -> Result<String, String> {
+    let slider = tweak
+        .advanced_slider
+        .as_ref()
+        .ok_or_else(|| format!("У твика {} нет настраиваемого значения", tweak.key))?;
+    if !value.is_finite() || value < slider.min || value > slider.max {
+        return Err(format!(
+            "Значение {value} вне диапазона {}..{}",
+            slider.min, slider.max
+        ));
+    }
+    let bk = tweak.backend_keys.first().ok_or_else(|| {
+        format!("У твика {} нет backend-ключа", tweak.key)
+    })?;
+    Ok(bk.key.clone())
+}
+
 #[tauri::command]
 pub fn set_tweak_slider(
     app: tauri::AppHandle,
@@ -584,45 +603,21 @@ pub fn set_tweak_slider(
         .into_iter()
         .find(|t| t.key == key)
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
-    let slider = tweak
-        .advanced_slider
-        .as_ref()
-        .ok_or_else(|| format!("У твика {key} нет настраиваемого значения"))?;
-
-    if !value.is_finite() || value < slider.min || value > slider.max {
-        return Err(format!(
-            "Значение {value} вне диапазона {}..{}",
-            slider.min, slider.max
-        ));
-    }
-
-    let Some(bk) = tweak.backend_keys.first() else {
-        return Err(format!("У твика {key} нет backend-ключа"));
-    };
+    let backend_key = validate_slider_value(&tweak, value)?;
 
     let cfg_path = Path::new(&path);
     let desired_value = value.to_string();
     let mut tx = TweakTx::begin(&app, cfg_path)?;
-
     let ck = tx.config_key.clone();
-    let active_tweak = tx
-        .state_mut()
-        .configs
-        .get_mut(&ck)
-        .and_then(|c| c.active_tweaks.get_mut(&key))
+    let config = tx.state_mut().configs.get_mut(&ck)
         .ok_or_else(|| format!("Твик {key} не включён"))?;
-    active_tweak.desired_values.insert(bk.key.clone(), desired_value.clone());
+    let changes = compute_slider_changes(config, &key, &backend_key, desired_value)?;
 
-    log::info!(
-        "Updating tweak slider: path={}, tweak={}, backend_key={}, value={}",
-        path, key, bk.key, desired_value
-    );
+    log::info!("Updating tweak slider: path={path}, tweak={key}, backend_key={backend_key}");
 
-    let mut changes = BTreeMap::new();
-    changes.insert(bk.key.clone(), Some(desired_value));
     tx.commit(changes)?;
 
-    log::info!("Tweak slider updated: path={}, tweak={}", path, key);
+    log::info!("Tweak slider updated: path={path}, tweak={key}");
     Ok(())
 }
 
@@ -639,6 +634,28 @@ fn desired_values(tweak: &TweakDef) -> BTreeMap<String, String> {
             (backend_key.key.clone(), value)
         })
         .collect()
+}
+
+pub(crate) fn compute_force_off_changes(tweak: &TweakDef) -> BTreeMap<String, Option<String>> {
+    tweak.backend_keys
+        .iter()
+        .map(|bk| (bk.key.clone(), Some(bk.off.clone())))
+        .collect()
+}
+
+pub(crate) fn load_bind_map(keys_cfg_path: Option<&str>) -> BTreeMap<String, String> {
+    let mut bind_map = BTreeMap::new();
+    if let Some(keys_path) = keys_cfg_path {
+        let path = Path::new(keys_path);
+        if path.exists() {
+            if let Ok(binds) = keys_cfg::load_binds(path) {
+                for bind in binds {
+                    bind_map.insert(bind.key, bind.command);
+                }
+            }
+        }
+    }
+    bind_map
 }
 
 pub(crate) fn compute_enable_changes(
@@ -1170,6 +1187,176 @@ mod tests {
     }
 
     // ── backend_key_rule_and_bind_tweak ──────────────────────────────────────
+
+    // ── compute_force_off_changes ────────────────────────────────────────────
+
+    #[test]
+    fn force_off_changes_returns_off_values() {
+        let tw = single_key_tweak();
+        let changes = compute_force_off_changes(&tw);
+        assert_eq!(changes.len(), 1);
+        assert_eq!(
+            changes.get(&tw.backend_keys[0].key).unwrap(),
+            &Some(tw.backend_keys[0].off.clone())
+        );
+    }
+
+    // ── compute_slider_changes ───────────────────────────────────────────────
+
+    #[test]
+    fn slider_changes_updates_active_tweak() {
+        let mut config = ConfigState::default();
+        config.active_tweaks.insert("test".into(), ActiveTweak {
+            captured_values: BTreeMap::new(),
+            desired_values: BTreeMap::new(),
+        });
+        config.activation_order.push("test".into());
+        let changes = compute_slider_changes(&mut config, "test", "graphics.fov", "70.0".into()).unwrap();
+        assert_eq!(changes.get("graphics.fov").unwrap(), &Some("70.0".into()));
+        assert_eq!(
+            config.active_tweaks.get("test").unwrap().desired_values.get("graphics.fov").unwrap(),
+            "70.0"
+        );
+    }
+
+    #[test]
+    fn slider_changes_nonexistent_tweak_error() {
+        let mut config = ConfigState::default();
+        let result = compute_slider_changes(&mut config, "nope", "key", "val".into());
+        assert!(result.is_err());
+    }
+
+    // ── validate_slider_value ────────────────────────────────────────────────
+
+    #[test]
+    fn validate_slider_valid_returns_backend_key() {
+        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let bk = validate_slider_value(&tw, 0.2).unwrap();
+        assert_eq!(bk, "input.holdtime");
+    }
+
+    #[test]
+    fn validate_slider_below_min() {
+        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let result = validate_slider_value(&tw, 0.01);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn validate_slider_above_max() {
+        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let result = validate_slider_value(&tw, 1.0);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn validate_slider_nan() {
+        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let result = validate_slider_value(&tw, f64::NAN);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn validate_slider_infinite() {
+        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let result = validate_slider_value(&tw, f64::INFINITY);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn validate_slider_non_slider_tweak() {
+        let tw = single_key_tweak();
+        let result = validate_slider_value(&tw, 1.0);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn validate_slider_no_backend_keys() {
+        let tw = TweakDef {
+            key: "test.no_bk".into(),
+            title: String::new(),
+            description: String::new(),
+            section: TweakSection::Qol,
+            badge: None,
+            backend_keys: vec![],
+            advanced_slider: Some(AdvancedSlider {
+                min: 0.0,
+                max: 1.0,
+                step: 0.1,
+                default_value: 0.5,
+                label: String::new(),
+                value_format: None,
+            }),
+            bind: None,
+        };
+        let result = validate_slider_value(&tw, 0.5);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("нет backend-ключа"));
+    }
+
+    // ── load_bind_map ────────────────────────────────────────────────────────
+
+    #[test]
+    fn load_bind_map_none_path() {
+        let result = load_bind_map(None);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn load_bind_map_missing_file() {
+        let result = load_bind_map(Some(r"C:\nonexistent\file.cfg"));
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn load_bind_map_existing_file() {
+        let dir = std::env::temp_dir().join(format!("bind_map_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("keys.cfg");
+        std::fs::write(&path, b"bind p jump\nbind f attack\n").unwrap();
+        let result = load_bind_map(Some(path.to_str().unwrap()));
+        assert_eq!(result.len(), 2);
+        assert_eq!(result.get("p").unwrap(), "jump");
+        assert_eq!(result.get("f").unwrap(), "attack");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // ── compute_tweak_states with bind tweaks ────────────────────────────────
+
+    #[test]
+    fn compute_tweak_states_bind_tweak_on_when_bind_map_matches() {
+        let tw = make_bind_tweak();
+        let bind_map = [("p".into(), "jump".into())].into();
+        let result = compute_tweak_states(&[tw], &BTreeMap::new(), None, &bind_map, None);
+        assert!(result.states.get("test.bind") == Some(&true));
+        assert!(result.managed_states.get("test.bind") == Some(&false));
+    }
+
+    #[test]
+    fn compute_tweak_states_bind_tweak_off_when_bind_map_mismatch() {
+        let tw = make_bind_tweak();
+        let bind_map = [("p".into(), "kill".into())].into();
+        let result = compute_tweak_states(&[tw], &BTreeMap::new(), None, &bind_map, None);
+        assert!(result.states.get("test.bind") == Some(&false));
+    }
+
+    #[test]
+    fn compute_tweak_states_bind_tweak_off_when_not_in_bind_map() {
+        let tw = make_bind_tweak();
+        let result = compute_tweak_states(&[tw], &BTreeMap::new(), None, &BTreeMap::new(), None);
+        assert!(result.states.get("test.bind") == Some(&false));
+    }
+
+    #[test]
+    fn compute_tweak_states_bind_tweak_managed_when_in_keys_state() {
+        let tw = make_bind_tweak();
+        let keys_state = [("test.bind".into(), ActiveTweak {
+            captured_values: BTreeMap::new(),
+            desired_values: BTreeMap::new(),
+        })].into();
+        let result = compute_tweak_states(&[tw], &BTreeMap::new(), None, &BTreeMap::new(), Some(&keys_state));
+        assert!(result.managed_states.get("test.bind") == Some(&true));
+    }
 
     // ── compute_bind_content ─────────────────────────────────────────────────
 

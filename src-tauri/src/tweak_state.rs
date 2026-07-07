@@ -31,7 +31,7 @@ pub struct TweakState {
     pub configs: BTreeMap<String, ConfigState>,
 }
 
-pub fn load(app: &tauri::AppHandle) -> Result<TweakState, String> {
+pub fn load<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<TweakState, String> {
     let path = state_path(app)?;
     let content = client_cfg::read(&path)?;
     deserialize_state(&content).map_err(|error| {
@@ -42,7 +42,7 @@ pub fn load(app: &tauri::AppHandle) -> Result<TweakState, String> {
     })
 }
 
-pub fn save(app: &tauri::AppHandle, state: &TweakState) -> Result<(), String> {
+pub fn save<R: tauri::Runtime>(app: &tauri::AppHandle<R>, state: &TweakState) -> Result<(), String> {
     let path = state_path(app)?;
     let content = serialize_state(state).map_err(|error| {
         format!("Не удалось сохранить состояние твиков {}: {error}", path.display())
@@ -98,7 +98,7 @@ pub fn config_key(path: &Path) -> Result<String, String> {
     Ok(normalized)
 }
 
-fn state_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+fn state_path<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<PathBuf, String> {
     app.path()
         .app_data_dir()
         .map(|directory| directory.join(STATE_FILE_NAME))
@@ -297,4 +297,5 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["configs"], serde_json::json!({}));
     }
+
 }
