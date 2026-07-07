@@ -211,3 +211,71 @@ pub fn presets() -> Vec<CommandPreset> {
 pub fn get_known_commands() -> Vec<CommandPreset> {
     presets()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn presets_non_empty() {
+        let p = presets();
+        assert!(!p.is_empty());
+        assert!(p.len() > 50);
+    }
+
+    #[test]
+    fn presets_has_essential_commands() {
+        let p = presets();
+        let names: Vec<&str> = p.iter().map(|c| c.name.as_str()).collect();
+        assert!(names.contains(&"Вперёд"));
+        assert!(names.contains(&"Прыжок"));
+        assert!(names.contains(&"Атака"));
+        assert!(names.contains(&"Инвентарь"));
+        assert!(names.contains(&"Консоль"));
+    }
+
+    #[test]
+    fn presets_contains_single_and_combination() {
+        let p = presets();
+        let has_single = p.iter().any(|c| matches!(c.kind, CommandKind::Single));
+        let has_combo = p.iter().any(|c| matches!(c.kind, CommandKind::Combination));
+        assert!(has_single);
+        assert!(has_combo);
+    }
+
+    #[test]
+    fn preset_single_command() {
+        let cp = preset("Тест", "+forward");
+        assert_eq!(cp.name, "Тест");
+        assert_eq!(cp.command, "+forward");
+        assert!(matches!(cp.kind, CommandKind::Single));
+    }
+
+    #[test]
+    fn preset_combination_with_semicolon() {
+        let cp = preset("Авто", "+attack;+forward");
+        assert!(matches!(cp.kind, CommandKind::Combination));
+    }
+
+    #[test]
+    fn preset_combination_with_meta() {
+        let cp = preset("Зум", "+meta.if_true \"fov 70\"");
+        assert!(matches!(cp.kind, CommandKind::Combination));
+    }
+
+    #[test]
+    fn preset_untoggleable_attack() {
+        let cp = preset("Автоатака", "~attack");
+        assert!(matches!(cp.kind, CommandKind::Single));
+    }
+
+    #[test]
+    fn preset_unique_names() {
+        let p = presets();
+        let mut names: Vec<&str> = p.iter().map(|c| c.name.as_str()).collect();
+        names.sort();
+        let original_len = names.len();
+        names.dedup();
+        assert_eq!(names.len(), original_len);
+    }
+}

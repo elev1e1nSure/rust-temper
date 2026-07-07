@@ -176,3 +176,362 @@ fn temporary_path(path: &Path) -> PathBuf {
         counter
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+    use std::fs;
+
+    // ── parse_line ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn parse_line_valid() {
+        assert_eq!(parse_line(r#"graphics.fov "90""#), Some(("graphics.fov", "90")));
+    }
+
+    #[test]
+    fn parse_line_trimmed() {
+        assert_eq!(
+            parse_line(r#"  graphics.fov  "90"  "#),
+            Some(("graphics.fov", "90"))
+        );
+    }
+
+    #[test]
+    fn parse_line_single_quotes_not_special() {
+        // single quotes are not parsed as quotes
+        assert_eq!(parse_line(r#"key 'value'"#), None);
+    }
+
+    #[test]
+    fn parse_line_comment_slash() {
+        assert_eq!(parse_line(r#"// this is a comment"#), None);
+    }
+
+    #[test]
+    fn parse_line_comment_hash() {
+        assert_eq!(parse_line(r#"# comment"#), None);
+    }
+
+    #[test]
+    fn parse_line_empty() {
+        assert_eq!(parse_line(""), None);
+    }
+
+    #[test]
+    fn parse_line_whitespace_only() {
+        assert_eq!(parse_line("   "), None);
+    }
+
+    #[test]
+    fn parse_line_no_quotes() {
+        assert_eq!(parse_line("key value"), None);
+    }
+
+    #[test]
+    fn parse_line_no_closing_quote() {
+        assert_eq!(parse_line(r#"key "value"#), None);
+    }
+
+    #[test]
+    fn parse_line_no_key() {
+        assert_eq!(parse_line(r#""value""#), None);
+    }
+
+    #[test]
+    fn parse_line_untrimmed_key_is_valid() {
+        // key is trimmed even if there are spaces before it
+        assert_eq!(parse_line(r#"  key "val""#), Some(("key", "val")));
+    }
+
+    // ── line_suffix ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn line_suffix_with_comment() {
+        assert_eq!(
+            line_suffix(r#"graphics.fov "90" // competitive"#),
+            " // competitive"
+        );
+    }
+
+    #[test]
+    fn line_suffix_none() {
+        assert_eq!(line_suffix(r#"graphics.fov "90""#), "");
+    }
+
+    #[test]
+    fn line_suffix_trailing_comment() {
+        assert_eq!(line_suffix(r#"key "val" // comment"#), " // comment");
+    }
+
+    #[test]
+    fn line_suffix_no_quotes() {
+        assert_eq!(line_suffix("key value"), "");
+    }
+
+    #[test]
+    fn line_suffix_unclosed_quote() {
+        assert_eq!(line_suffix(r#"key "value"#), "");
+    }
+
+    // ── parse ────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn parse_empty_content() {
+        let result = parse("");
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn parse_single_line() {
+        let result = parse(r#"graphics.fov "90""#);
+        let mut expected = BTreeMap::new();
+        expected.insert("graphics.fov".to_string(), "90".to_string());
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_multiple_lines() {
+        let content = r#"graphics.fov "90"
+graphics.quality "2"
+// comment
+key "value""#;
+        let result = parse(content);
+        assert_eq!(result.get("graphics.fov").unwrap(), "90");
+        assert_eq!(result.get("graphics.quality").unwrap(), "2");
+        assert_eq!(result.get("key").unwrap(), "value");
+        assert_eq!(result.len(), 3);
+    }
+
+    #[test]
+    fn parse_comments_ignored() {
+        let content = r#"# hash comment
+// slash comment
+key "val""#;
+        let result = parse(content);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get("key").unwrap(), "val");
+    }
+
+    #[test]
+    fn parse_blank_lines_ignored() {
+        let content = "key1 \"v1\"\n\n\nkey2 \"v2\"";
+        let result = parse(content);
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn parse_duplicate_key_last_wins() {
+        let content = r#"key "first"
+key "second""#;
+        let result = parse(content);
+        assert_eq!(result.get("key").unwrap(), "second");
+    }
+
+    // ── read ─────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn read_existing_file() {
+        let dir = std::env::temp_dir().join(format!("client_cfg_test_{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join("test.cfg");
+        fs::write(&path, b"key \"val\"").unwrap();
+        assert_eq!(read(&path).unwrap(), "key \"val\"");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn read_missing_file_returns_empty() {
+        let temp = std::env::temp_dir()
+            .join(format!("nonexistent_{}.cfg", std::process::id()));
+        let path = Path::new(&temp);
+        assert_eq!(read(path).unwrap(), "");
+    }
+
+    #[test]
+    fn read_error_on_directory() {
+        let dir = std::env::temp_dir().join(format!("is_a_dir_{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        assert!(read(&dir).is_err());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    // ── apply_values ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn apply_values_update_existing() {
+        let content = r#"graphics.fov "90""#;
+        let mut changes = BTreeMap::new();
+        changes.insert("graphics.fov".to_string(), Some("70".to_string()));
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "graphics.fov \"70\"\n");
+    }
+
+    #[test]
+    fn apply_values_insert_new() {
+        let content = r#"graphics.fov "90""#;
+        let mut changes = BTreeMap::new();
+        changes.insert("new.key".to_string(), Some("val".to_string()));
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "graphics.fov \"90\"\nnew.key \"val\"\n");
+    }
+
+    #[test]
+    fn apply_values_remove_existing() {
+        let content = r#"graphics.fov "90"
+key "val""#;
+        let mut changes = BTreeMap::new();
+        changes.insert("key".to_string(), None);
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "graphics.fov \"90\"\n");
+    }
+
+    #[test]
+    fn apply_values_remove_nonexistent() {
+        let content = r#"graphics.fov "90""#;
+        let mut changes = BTreeMap::new();
+        changes.insert("nonexistent".to_string(), None);
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "graphics.fov \"90\"\n");
+    }
+
+    #[test]
+    fn apply_values_empty_content() {
+        let mut changes = BTreeMap::new();
+        changes.insert("key".to_string(), Some("val".to_string()));
+        let result = apply_values("", &changes);
+        assert_eq!(result, "key \"val\"\n");
+    }
+
+    #[test]
+    fn apply_values_remove_last_line_returns_empty() {
+        let content = r#"key "val""#;
+        let mut changes = BTreeMap::new();
+        changes.insert("key".to_string(), None);
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn apply_values_windows_newline() {
+        let content = "key \"val\"\r\nfoo \"bar\"";
+        let mut changes = BTreeMap::new();
+        changes.insert("key".to_string(), Some("new".to_string()));
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "key \"new\"\r\nfoo \"bar\"\r\n");
+    }
+
+    #[test]
+    fn apply_values_preserves_inline_comment() {
+        let content = r#"graphics.fov "90" // competitive"#;
+        let mut changes = BTreeMap::new();
+        changes.insert("graphics.fov".to_string(), Some("70".to_string()));
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "graphics.fov \"70\" // competitive\n");
+    }
+
+    #[test]
+    fn apply_values_multiple_matches_updates_last() {
+        let content = "key \"1\"\nkey \"2\"";
+        let mut changes = BTreeMap::new();
+        changes.insert("key".to_string(), Some("3".to_string()));
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "key \"1\"\nkey \"3\"\n");
+    }
+
+    #[test]
+    fn apply_values_new_lines_have_no_suffix() {
+        let content = r#"existing "val""#;
+        let mut changes = BTreeMap::new();
+        changes.insert("new".to_string(), Some("val".to_string()));
+        let result = apply_values(content, &changes);
+        // new lines shouldn't have trailing comment
+        assert!(result.contains("new \"val\"\n"));
+    }
+
+    #[test]
+    fn apply_values_duplicate_key_triggers_warning() {
+        // duplicate key in content — should update the last occurrence
+        let content = "key \"first\"\nkey \"second\"";
+        let mut changes = BTreeMap::new();
+        changes.insert("key".to_string(), Some("third".to_string()));
+        let result = apply_values(content, &changes);
+        assert_eq!(result, "key \"first\"\nkey \"third\"\n");
+    }
+
+
+
+    // ── temporary_path ───────────────────────────────────────────────────────
+
+    #[test]
+    fn temporary_path_uses_pid_and_counter() {
+        let path = Path::new(r"C:\cfg\client.cfg");
+        let result = temporary_path(path);
+        let result_str = result.to_string_lossy();
+        assert!(result_str.contains(".client.cfg."));
+        assert!(result_str.contains(std::process::id().to_string().as_str()));
+        assert!(result_str.ends_with(".tmp"));
+    }
+
+    #[test]
+    fn temporary_path_no_file_name() {
+        let path = Path::new(r"C:\");
+        let result = temporary_path(path);
+        assert!(result.to_string_lossy().contains(".client.cfg."));
+    }
+
+    // ── write_atomic ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn write_atomic_creates_file() {
+        let dir = std::env::temp_dir().join(format!("atomic_test_{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join("test.cfg");
+        write_atomic(&path, "hello world").unwrap();
+        let content = fs::read_to_string(&path).unwrap();
+        assert_eq!(content, "hello world");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn write_atomic_overwrites() {
+        let dir = std::env::temp_dir().join(format!("atomic_test_over_{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join("test.cfg");
+        write_atomic(&path, "first").unwrap();
+        write_atomic(&path, "second").unwrap();
+        let content = fs::read_to_string(&path).unwrap();
+        assert_eq!(content, "second");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn write_atomic_creates_parent_dirs() {
+        let dir = std::env::temp_dir().join(format!("atomic_parent_{}", std::process::id()));
+        let path = dir.join("sub").join("nested").join("test.cfg");
+        write_atomic(&path, "content").unwrap();
+        assert!(path.exists());
+        let content = fs::read_to_string(&path).unwrap();
+        assert_eq!(content, "content");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn write_atomic_error_on_directory_path() {
+        let dir = std::env::temp_dir().join(format!("atomic_dir_{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        assert!(write_atomic(&dir, "content").is_err());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    // ── operation_lock ───────────────────────────────────────────────────────
+
+    #[test]
+    fn operation_lock_acquires() {
+        let guard = operation_lock();
+        assert!(guard.is_ok());
+    }
+
+
+}
