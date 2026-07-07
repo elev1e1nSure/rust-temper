@@ -287,16 +287,11 @@
   color: var(--text-dim);
   line-height: 1.5;
   margin: 0;
-  height: 63px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
 }
 
 .graphics-preview-art {
   position: relative;
-  height: 320px;
+  height: 420px;
   flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
