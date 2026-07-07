@@ -319,34 +319,34 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                   <span className="graphics-row-value">{row.tiers[value]}</span>
                 </div>
                 <div className="graphics-slider-wrap">
-                  <div className="graphics-slider-track">
-                    <div
-                      className="graphics-slider-fill"
-                      style={
-                        {
-                          "--slider-pct": `${pct}%`,
-                          transition: interacted
-                            ? "width 0.12s ease-out"
-                            : "none",
-                        } as React.CSSProperties
-                      }
-                    />
-                    {row.tiers.map((_, i) => (
+                    <div className="graphics-slider-track">
                       <div
-                        key={i}
-                        className="graphics-slider-tick"
+                        className="graphics-slider-fill"
                         style={
                           {
-                            "--tick-left": `${(i / (row.tiers.length - 1)) * 100}%`,
+                            "--slider-pct": `${pct}%`,
+                            transition: interacted
+                              ? "width 0.12s ease-out"
+                              : "none",
                           } as React.CSSProperties
                         }
                       />
-                    ))}
-                    <div
-                      className="graphics-slider-thumb"
-                      style={
-                        {
-                          "--slider-pct": `${pct}%`,
+                      {row.tiers.map((_, i) => (
+                        <div
+                          key={i}
+                          className="graphics-slider-tick"
+                          style={
+                            {
+                              "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 98 + 1 : 50}%`,
+                            } as React.CSSProperties
+                          }
+                        />
+                      ))}
+                      <div
+                        className="graphics-slider-thumb"
+                        style={
+                          {
+                            "--slider-pct": `${pct}%`,
                           transition: interacted
                             ? "left 0.12s ease-out, background 0.15s ease, box-shadow 0.15s ease"
                             : "background 0.15s ease, box-shadow 0.15s ease",
