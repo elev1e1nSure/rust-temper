@@ -272,7 +272,7 @@
 }
 
 .graphics-preview-header {
-  margin-bottom: auto;
+  padding: 18px 20px 0;
 }
 
 .graphics-preview-title {
@@ -297,10 +297,16 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: var(--row);
+}
+
+.graphics-preview-art-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: var(--row);
 }
 
 .graphics-preview-art-icon {

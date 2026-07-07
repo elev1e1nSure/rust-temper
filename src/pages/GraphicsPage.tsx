@@ -373,18 +373,20 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
       </div>
 
       <div className="settings-card graphics-preview">
-        <div className="graphics-preview-header">
-          <div className="graphics-preview-title">{previewRow.label}</div>
-          <p className="graphics-preview-desc">{previewRow.description}</p>
-        </div>
-
         <div className="graphics-preview-art">
-          <div className="graphics-preview-art-icon">
-            <Mountain2Line size={40} />
+          <div className="graphics-preview-header">
+            <div className="graphics-preview-title">{previewRow.label}</div>
+            <p className="graphics-preview-desc">{previewRow.description}</p>
           </div>
-          <span className="graphics-preview-art-text">
-            Предпросмотр скоро появится
-          </span>
+
+          <div className="graphics-preview-art-body">
+            <div className="graphics-preview-art-icon">
+              <Mountain2Line size={40} />
+            </div>
+            <span className="graphics-preview-art-text">
+              Предпросмотр скоро появится
+            </span>
+          </div>
         </div>
 
         <div className="graphics-preview-footer">
