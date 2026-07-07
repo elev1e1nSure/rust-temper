@@ -19,7 +19,7 @@
   overflow-y: auto;
 }
 
-.graphics-preset-card {
+.graphics-main .graphics-preset-card {
   padding: 8px 20px;
   gap: 16px;
 }
