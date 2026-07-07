@@ -46,10 +46,7 @@ pub fn presets() -> Vec<CommandPreset> {
             "Свободный обзор",
             "+altlook",
         ),
-        preset(
-            "Автобег",
-            "+prevskin;+autowalk",
-        ),
+        preset("Автобег", "+autowalk"),
         // Бой и оружие
         preset("Атака", "+attack"),
         preset(
@@ -88,6 +85,10 @@ pub fn presets() -> Vec<CommandPreset> {
             "+hoverloot",
         ),
         preset(
+            "Убрать в кобуру",
+            "+holsteritem",
+        ),
+        preset(
             "Ноуклип",
             "noclip",
         ),
@@ -95,8 +96,12 @@ pub fn presets() -> Vec<CommandPreset> {
         // Инвентарь и крафт
         preset("Инвентарь", "inventory.toggle"),
         preset(
-            "Выбросить предмет",
-            "inventory.drop.active",
+            "Выбросить один предмет",
+            "+dropitemsingle",
+        ),
+        preset(
+            "Выбросить стак",
+            "+dropitemstack",
         ),
         preset(
             "Пред. слот в инвентаре",
@@ -106,7 +111,15 @@ pub fn presets() -> Vec<CommandPreset> {
             "След. слот в инвентаре",
             "+invnext",
         ),
-        preset("Меню крафта", "crafting.open"),
+        preset(
+            "Пред. скин",
+            "+prevskin",
+        ),
+        preset(
+            "След. скин",
+            "+nextskin",
+        ),
+        preset("Меню крафта", "inventory.togglecrafting"),
         // Слоты пояса
         preset("Слот 1", "+slot1"),
         preset("Слот 2", "+slot2"),
@@ -118,10 +131,22 @@ pub fn presets() -> Vec<CommandPreset> {
         preset("Открыть чат", "chat.open"),
         preset("Написать в чат", "chat.say"),
         preset(
-            "Карта (полноэкранная)",
-            "map.toggle",
+            "Голосовой чат",
+            "+voice",
         ),
-        preset("Карта (удержание)", "+map"),
+        preset(
+            "Пинг (метка)",
+            "+ping",
+        ),
+        preset(
+            "Карта (удержание)",
+            "+map",
+        ),
+        preset(
+            "Карта — по центру игрока",
+            "+focusmap",
+        ),
+        preset("Компас", "+compass"),
         preset("Консоль", "consoletoggle"),
         preset(
             "Меню жестов",
@@ -131,7 +156,6 @@ pub fn presets() -> Vec<CommandPreset> {
             "Меню питомцев (Зачем?)",
             "+pets",
         ),
-        preset("Фонарик", "flashlight.toggle"),
         preset(
             "Переключить мод на оружии",
             "lighttoggle",
@@ -158,9 +182,11 @@ pub fn presets() -> Vec<CommandPreset> {
             "Приближение",
             "+meta.if_true \"graphics.fov 70\";+meta.if_false \"graphics.fov 90\"",
         ),
+        // `~` cycles the flip on each press; a plain `a;b` chain would run both
+        // every press and always settle on `1`, never toggling.
         preset(
             "Смена рук",
-            "graphics.vm_horizontal_flip 0; graphics.vm_horizontal_flip 1",
+            "~graphics.vm_horizontal_flip 0;graphics.vm_horizontal_flip 1",
         ),
         preset(
             "Радиус взаимодействия",
@@ -203,6 +229,23 @@ pub fn presets() -> Vec<CommandPreset> {
         preset(
             "Пересесть на место 8",
             "swaptoseat 7",
+        ),
+        // Debug-камера (cinematic/admin layer)
+        preset(
+            "Debug-камера: привязка к цели",
+            "+debugcamera_targetbind",
+        ),
+        preset(
+            "Debug-камера: приблизить",
+            "+debugcamera_dollyforward",
+        ),
+        preset(
+            "Debug-камера: отдалить",
+            "+debugcamera_dollyback",
+        ),
+        preset(
+            "Debug-камера: сменить кость",
+            "+debugcamera_cyclebone",
         ),
     ]
 }
