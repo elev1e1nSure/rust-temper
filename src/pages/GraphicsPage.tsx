@@ -157,12 +157,15 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     { type: "success" | "error"; message: string } | undefined
   >();
   const [applying, setApplying] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  // Slider transitions are only ever declared inline, and only once the
+  // user has actually touched a control. This keeps the initial load
+  // from client.cfg (which lands asynchronously, after the default-value
+  // first paint) from ever having a transition to animate through.
+  const [interacted, setInteracted] = useState(false);
 
   const clientCfgPath = configPath ? clientCfgPathFor(configPath) : "";
 
   useEffect(() => {
-    setLoaded(false);
     if (!clientCfgPath) return;
     let cancelled = false;
 
@@ -184,15 +187,6 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         }
         return next;
       });
-      // Wait two frames so the browser paints the final values with
-      // transitions disabled before we re-enable them, otherwise the
-      // class removal and the value change land in the same commit and
-      // the slider still animates from its default position.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!cancelled) setLoaded(true);
-        });
-      });
     });
 
     return () => {
@@ -206,16 +200,19 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const setRowValue = useCallback((key: string, value: number) => {
     setValues((prev) => ({ ...prev, [key]: value }));
     setPresetLabel("Пользовательский");
+    setInteracted(true);
   }, []);
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
     setPresetLabel(preset.label);
+    setInteracted(true);
   };
 
   const resetToDefaults = () => {
     setValues(DEFAULT_VALUES);
     setPresetLabel("Пользовательский");
+    setInteracted(true);
   };
 
   const handleApply = useCallback(async () => {
@@ -290,13 +287,16 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                   <span className="graphics-row-value">{row.tiers[value]}</span>
                 </div>
                 <div className="graphics-slider-wrap">
-                  <div
-                    className={`graphics-slider-track${loaded ? "" : " no-transition"}`}
-                  >
+                  <div className="graphics-slider-track">
                     <div
                       className="graphics-slider-fill"
                       style={
-                        { "--slider-pct": `${pct}%` } as React.CSSProperties
+                        {
+                          "--slider-pct": `${pct}%`,
+                          transition: interacted
+                            ? "width 0.12s ease-out"
+                            : "none",
+                        } as React.CSSProperties
                       }
                     />
                     {row.tiers.map((_, i) => (
@@ -313,7 +313,12 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
                     <div
                       className="graphics-slider-thumb"
                       style={
-                        { "--slider-pct": `${pct}%` } as React.CSSProperties
+                        {
+                          "--slider-pct": `${pct}%`,
+                          transition: interacted
+                            ? "left 0.12s ease-out, background 0.15s ease, box-shadow 0.15s ease"
+                            : "background 0.15s ease, box-shadow 0.15s ease",
+                        } as React.CSSProperties
                       }
                     />
                   </div>

@@ -143,7 +143,6 @@
   background: #3b82f6;
   pointer-events: none;
   width: var(--slider-pct, 0%);
-  transition: width 0.12s ease-out;
 }
 
 .graphics-slider-tick {
@@ -170,7 +169,6 @@
   pointer-events: none;
   left: var(--slider-pct, 0%);
   transition:
-    left 0.12s ease-out,
     background 0.15s ease,
     box-shadow 0.15s ease;
 }
@@ -181,12 +179,6 @@
   inset: 7px;
   border-radius: 50%;
   background: #3b82f6;
-}
-
-.graphics-slider-track.no-transition,
-.graphics-slider-fill.no-transition,
-.graphics-slider-thumb.no-transition {
-  transition: none;
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,
