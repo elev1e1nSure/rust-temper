@@ -96,7 +96,7 @@ function App() {
   // Autosave on bind change
   useEffect(() => {
     if (!bindsLoaded.current) return;
-    if (configFile.isReloadingRef.current) return;
+    if (configFile._isReloadingRef.current) return;
     invoke("write_keys_cfg", {
       path: configFile.configPath,
       binds: bindEditor.binds,

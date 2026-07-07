@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { Bind } from "../types";
@@ -7,17 +7,22 @@ import { DEFAULT_CONFIG_PATH } from "../constants";
 export function useConfigFile() {
   const [configPath, setConfigPath] = useState(DEFAULT_CONFIG_PATH);
   const [detecting, setDetecting] = useState(false);
+  // Флаг реентерабельности: хранится в ref, чтобы не вызывать лишних рендеров,
+  // но НЕ экспортируется как ref — потребитель получает только read-only boolean через state.
   const isReloadingRef = useRef(false);
+  const [isReloading, setIsReloading] = useState(false);
 
-  const loadFromPath = async (path: string) => {
+  const loadFromPath = useCallback(async (path: string) => {
     isReloadingRef.current = true;
+    setIsReloading(true);
     try {
       const loaded = await invoke<Bind[]>("read_keys_cfg", { path });
       return loaded;
     } finally {
       isReloadingRef.current = false;
+      setIsReloading(false);
     }
-  };
+  }, []);
 
   const handleSelectFile = async () => {
     const selected = await open({
@@ -52,7 +57,10 @@ export function useConfigFile() {
     configPath,
     setConfigPath,
     detecting,
-    isReloadingRef,
+    /** true пока идёт чтение файла — безопасно читать в эффектах */
+    isReloading,
+    /** @internal используется только внутри App для guard в autosave-эффекте */
+    _isReloadingRef: isReloadingRef,
     loadFromPath,
     handleSelectFile,
     autoDetectConfigPath,
