@@ -82,7 +82,9 @@ export function BindsPage({
         <Keyboard selectedKeys={selectedKeys} onKeyClick={handleKeyboardKey} />
       </div>
 
-      <AnimatedHeight className="binds-list-anim">
+      <AnimatedHeight
+        className={`binds-list-anim ${filteredBinds.length > 0 ? "has-binds" : ""}`}
+      >
         {filteredBinds.length === 0 ? (
           <div className="binds-empty">
             <div className="binds-empty-icon">

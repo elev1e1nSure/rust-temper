@@ -10,6 +10,16 @@
   margin-top: 16px;
 }
 
+/* The panel background must sit on the height-animated wrapper itself, not the
+   inner list, so the visible rectangle shrinks/grows with the transition
+   instead of the inner box snapping while a transparent wrapper eases. Same
+   var(--panel) on both keeps the fill seamless during the animation. Empty
+   state (no .has-binds) stays background-less. */
+.binds-list-anim.has-binds {
+  border-radius: 12px;
+  background: var(--panel);
+}
+
 .binds-list-wrap {
   border-radius: 12px;
   background: var(--panel);
