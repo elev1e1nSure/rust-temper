@@ -24,7 +24,7 @@
   gap: 16px;
 }
 
-.graphics-preset-header {
+.graphics-preset-card .graphics-preset-header {
   border-top: none;
   padding-top: 0;
   gap: 12px;
