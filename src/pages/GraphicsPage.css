@@ -291,8 +291,8 @@
 
 .graphics-preview-art {
   position: relative;
-  height: 420px;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 420px;
   border-radius: 12px;
   overflow: hidden;
   display: flex;
