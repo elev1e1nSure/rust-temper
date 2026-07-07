@@ -158,9 +158,13 @@ fn parse_line(line: &str) -> Option<(&str, &str)> {
 /// inline comments (`graphics.fov "90" // competitive`) survive being rewritten.
 fn line_suffix(line: &str) -> String {
     let trimmed = line.trim();
-    let Some(quote_start) = trimmed.find('"') else { return String::new() };
+    let Some(quote_start) = trimmed.find('"') else {
+        return String::new();
+    };
     let rest = &trimmed[quote_start + 1..];
-    let Some(quote_end) = rest.find('"') else { return String::new() };
+    let Some(quote_end) = rest.find('"') else {
+        return String::new();
+    };
     rest[quote_end + 1..].to_string()
 }
 
@@ -187,7 +191,10 @@ mod tests {
 
     #[test]
     fn parse_line_valid() {
-        assert_eq!(parse_line(r#"graphics.fov "90""#), Some(("graphics.fov", "90")));
+        assert_eq!(
+            parse_line(r#"graphics.fov "90""#),
+            Some(("graphics.fov", "90"))
+        );
     }
 
     #[test]
@@ -343,8 +350,7 @@ key "second""#;
 
     #[test]
     fn read_missing_file_returns_empty() {
-        let temp = std::env::temp_dir()
-            .join(format!("nonexistent_{}.cfg", std::process::id()));
+        let temp = std::env::temp_dir().join(format!("nonexistent_{}.cfg", std::process::id()));
         let path = Path::new(&temp);
         assert_eq!(read(path).unwrap(), "");
     }
@@ -460,8 +466,6 @@ key "val""#;
         assert_eq!(result, "key \"first\"\nkey \"third\"\n");
     }
 
-
-
     // ── temporary_path ───────────────────────────────────────────────────────
 
     #[test]
@@ -532,6 +536,4 @@ key "val""#;
         let guard = operation_lock();
         assert!(guard.is_ok());
     }
-
-
 }

@@ -42,10 +42,16 @@ pub fn load<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<TweakState, 
     })
 }
 
-pub fn save<R: tauri::Runtime>(app: &tauri::AppHandle<R>, state: &TweakState) -> Result<(), String> {
+pub fn save<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    state: &TweakState,
+) -> Result<(), String> {
     let path = state_path(app)?;
     let content = serialize_state(state).map_err(|error| {
-        format!("Не удалось сохранить состояние твиков {}: {error}", path.display())
+        format!(
+            "Не удалось сохранить состояние твиков {}: {error}",
+            path.display()
+        )
     })?;
     client_cfg::write_atomic(&path, &content)
 }
@@ -68,7 +74,10 @@ pub fn config_key(path: &Path) -> Result<String, String> {
     // the baselines and breaking the disable path ("Нет сохранённого значения").
     // Canonicalize the parent directory (which normally exists regardless) and
     // only fall back to lexical resolution when even the parent is missing.
-    let parent = path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(path);
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(path);
     let file_name = path
         .file_name()
         .map(PathBuf::from)
@@ -169,7 +178,9 @@ mod tests {
         let tweak = ActiveTweak {
             captured_values: [(
                 "graphics.fov".into(),
-                StoredValue { value: Some("90".into()) },
+                StoredValue {
+                    value: Some("90".into()),
+                },
             )]
             .into(),
             desired_values: [("graphics.fov".into(), "70".into())].into(),
@@ -177,7 +188,11 @@ mod tests {
         let json = serde_json::to_string(&tweak).unwrap();
         let deserialized: ActiveTweak = serde_json::from_str(&json).unwrap();
         assert_eq!(
-            deserialized.captured_values.get("graphics.fov").unwrap().value,
+            deserialized
+                .captured_values
+                .get("graphics.fov")
+                .unwrap()
+                .value,
             Some("90".into())
         );
         assert_eq!(
@@ -191,7 +206,9 @@ mod tests {
         let state = ConfigState {
             baselines: [(
                 "graphics.fov".into(),
-                StoredValue { value: Some("90".into()) },
+                StoredValue {
+                    value: Some("90".into()),
+                },
             )]
             .into(),
             active_tweaks: [(
@@ -245,7 +262,9 @@ mod tests {
                 ConfigState {
                     baselines: [(
                         "graphics.fov".into(),
-                        StoredValue { value: Some("90".into()) },
+                        StoredValue {
+                            value: Some("90".into()),
+                        },
                     )]
                     .into(),
                     active_tweaks: [(
@@ -264,7 +283,10 @@ mod tests {
         let serialized = serialize_state(&state).unwrap();
         let deserialized = deserialize_state(&serialized).unwrap();
         assert_eq!(deserialized.configs.len(), 1);
-        let cfg = deserialized.configs.get(r"d:\games\cfg\client.cfg").unwrap();
+        let cfg = deserialized
+            .configs
+            .get(r"d:\games\cfg\client.cfg")
+            .unwrap();
         assert!(!cfg.activation_order.is_empty());
         assert_eq!(
             cfg.baselines.get("graphics.fov").unwrap().value,
@@ -297,5 +319,4 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["configs"], serde_json::json!({}));
     }
-
 }

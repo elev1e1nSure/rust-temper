@@ -22,7 +22,14 @@ impl<'a> TweakTx<'a> {
         let content = client_cfg::read(cfg_path)?;
         let state = tweak_state::load(app)?;
         let previous_state = state.clone();
-        Ok(Self { app, cfg_path, config_key, state, previous_state, content })
+        Ok(Self {
+            app,
+            cfg_path,
+            config_key,
+            state,
+            previous_state,
+            content,
+        })
     }
 
     fn state_mut(&mut self) -> &mut tweak_state::TweakState {
@@ -356,7 +363,11 @@ pub(crate) fn compute_tweak_states(
 }
 
 #[tauri::command]
-pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Option<String>) -> Result<ClientCfgState, String> {
+pub fn read_client_cfg(
+    app: tauri::AppHandle,
+    path: String,
+    keys_cfg_path: Option<String>,
+) -> Result<ClientCfgState, String> {
     let _guard = operation_lock()?;
     let cfg_path = Path::new(&path);
     let content = client_cfg::read(cfg_path)?;
@@ -378,7 +389,13 @@ pub fn read_client_cfg(app: tauri::AppHandle, path: String, keys_cfg_path: Optio
         None
     };
 
-    Ok(compute_tweak_states(&known_tweaks(), &parsed, active_tweaks, &bind_map, keys_state_ref))
+    Ok(compute_tweak_states(
+        &known_tweaks(),
+        &parsed,
+        active_tweaks,
+        &bind_map,
+        keys_state_ref,
+    ))
 }
 
 #[tauri::command]
@@ -410,7 +427,9 @@ pub fn toggle_tweak(
         let changes = compute_enable_changes(&tweak, config, &current_values);
         log::info!(
             "Enabling tweak: path={}, tweak={}, applying={:?}",
-            cfg_path.display(), tweak.key, changes
+            cfg_path.display(),
+            tweak.key,
+            changes
         );
         tx.commit(changes)
     } else {
@@ -426,11 +445,17 @@ pub fn toggle_tweak(
                 let changes = compute_force_off_changes(&tweak);
                 log::warn!(
                     "Force-disabling unmanaged tweak: path={}, tweak={}, applying={:?}",
-                    cfg_path.display(), tweak.key, changes
+                    cfg_path.display(),
+                    tweak.key,
+                    changes
                 );
                 let updated = client_cfg::apply_values(&tx.content, &changes);
                 return client_cfg::write_atomic(cfg_path, &updated).map(|_| {
-                    log::info!("Unmanaged tweak force-disabled: path={}, tweak={}", cfg_path.display(), tweak.key);
+                    log::info!(
+                        "Unmanaged tweak force-disabled: path={}, tweak={}",
+                        cfg_path.display(),
+                        tweak.key
+                    );
                 });
             }
             return Err(format!(
@@ -449,7 +474,9 @@ pub fn toggle_tweak(
 
         log::info!(
             "Disabling tweak: path={}, tweak={}, restoring={:?}",
-            cfg_path.display(), tweak.key, changes
+            cfg_path.display(),
+            tweak.key,
+            changes
         );
         if config.active_tweaks.is_empty() {
             let ck = tx.config_key.clone();
@@ -470,14 +497,13 @@ pub(crate) fn compute_bind_content(
     if enabled {
         let captured = std::iter::once((
             bind_tweak.default_key.clone(),
-            StoredValue { value: prior_command },
+            StoredValue {
+                value: prior_command,
+            },
         ))
         .collect();
-        let desired = std::iter::once((
-            bind_tweak.default_key.clone(),
-            bind_tweak.command.clone(),
-        ))
-        .collect();
+        let desired =
+            std::iter::once((bind_tweak.default_key.clone(), bind_tweak.command.clone())).collect();
         config.active_tweaks.insert(
             tweak.key.clone(),
             ActiveTweak {
@@ -520,21 +546,20 @@ fn toggle_bind_tweak(
     } else {
         String::new()
     };
-    let prior_command = keys_cfg::load_binds(keys_cfg_path)
-        .ok()
-        .and_then(|binds| {
-            binds
-                .into_iter()
-                .find(|b| b.key == bind_tweak.default_key)
-                .map(|c| c.command)
-        });
+    let prior_command = keys_cfg::load_binds(keys_cfg_path).ok().and_then(|binds| {
+        binds
+            .into_iter()
+            .find(|b| b.key == bind_tweak.default_key)
+            .map(|c| c.command)
+    });
 
     let config_key = tweak_state::config_key(keys_cfg_path)?;
     let mut state = tweak_state::load(app)?;
     let previous_state = state.clone();
     let config = state.configs.entry(config_key.clone()).or_default();
 
-    let new_content = compute_bind_content(config, tweak, bind_tweak, &existing, prior_command, enabled);
+    let new_content =
+        compute_bind_content(config, tweak, bind_tweak, &existing, prior_command, enabled);
 
     if config.active_tweaks.is_empty() {
         state.configs.remove(&config_key);
@@ -545,7 +570,9 @@ fn toggle_bind_tweak(
         match tweak_state::save(app, &previous_state) {
             Ok(()) => return Err(write_error),
             Err(rollback_error) => {
-                return Err(format!("{write_error}; откат состояния не удался: {rollback_error}"))
+                return Err(format!(
+                    "{write_error}; откат состояния не удался: {rollback_error}"
+                ))
             }
         }
     }
@@ -568,7 +595,9 @@ pub(crate) fn compute_slider_changes(
         .active_tweaks
         .get_mut(tweak_key)
         .ok_or_else(|| format!("Твик {tweak_key} не включён"))?;
-    active_tweak.desired_values.insert(backend_key.to_string(), desired_value.clone());
+    active_tweak
+        .desired_values
+        .insert(backend_key.to_string(), desired_value.clone());
     let mut changes = BTreeMap::new();
     changes.insert(backend_key.to_string(), Some(desired_value));
     Ok(changes)
@@ -585,9 +614,10 @@ pub(crate) fn validate_slider_value(tweak: &TweakDef, value: f64) -> Result<Stri
             slider.min, slider.max
         ));
     }
-    let bk = tweak.backend_keys.first().ok_or_else(|| {
-        format!("У твика {} нет backend-ключа", tweak.key)
-    })?;
+    let bk = tweak
+        .backend_keys
+        .first()
+        .ok_or_else(|| format!("У твика {} нет backend-ключа", tweak.key))?;
     Ok(bk.key.clone())
 }
 
@@ -609,7 +639,10 @@ pub fn set_tweak_slider(
     let desired_value = value.to_string();
     let mut tx = TweakTx::begin(&app, cfg_path)?;
     let ck = tx.config_key.clone();
-    let config = tx.state_mut().configs.get_mut(&ck)
+    let config = tx
+        .state_mut()
+        .configs
+        .get_mut(&ck)
         .ok_or_else(|| format!("Твик {key} не включён"))?;
     let changes = compute_slider_changes(config, &key, &backend_key, desired_value)?;
 
@@ -637,7 +670,8 @@ fn desired_values(tweak: &TweakDef) -> BTreeMap<String, String> {
 }
 
 pub(crate) fn compute_force_off_changes(tweak: &TweakDef) -> BTreeMap<String, Option<String>> {
-    tweak.backend_keys
+    tweak
+        .backend_keys
         .iter()
         .map(|bk| (bk.key.clone(), Some(bk.off.clone())))
         .collect()
@@ -667,7 +701,12 @@ pub(crate) fn compute_enable_changes(
     let captured_values: BTreeMap<_, _> = desired_values
         .keys()
         .map(|bk| {
-            (bk.clone(), StoredValue { value: current_values.get(bk).cloned() })
+            (
+                bk.clone(),
+                StoredValue {
+                    value: current_values.get(bk).cloned(),
+                },
+            )
         })
         .collect();
 
@@ -685,16 +724,24 @@ pub(crate) fn compute_enable_changes(
             if !already_owned {
                 config.baselines.insert(
                     backend_key.clone(),
-                    StoredValue { value: current_values.get(backend_key).cloned() },
+                    StoredValue {
+                        value: current_values.get(backend_key).cloned(),
+                    },
                 );
             }
         }
         config.active_tweaks.insert(
             tweak.key.clone(),
-            ActiveTweak { captured_values, desired_values: desired_values.clone() },
+            ActiveTweak {
+                captured_values,
+                desired_values: desired_values.clone(),
+            },
         );
         config.activation_order.push(tweak.key.clone());
-        desired_values.into_iter().map(|(k, v)| (k, Some(v))).collect()
+        desired_values
+            .into_iter()
+            .map(|(k, v)| (k, Some(v)))
+            .collect()
     }
 }
 
@@ -710,19 +757,21 @@ pub(crate) fn compute_disable_changes(
 
     let mut changes = BTreeMap::new();
     for backend_key in removed.desired_values.keys() {
-        let remaining = config
-            .activation_order
-            .iter()
-            .rev()
-            .find_map(|active_key| {
-                config.active_tweaks.get(active_key)?.desired_values.get(backend_key).cloned()
-            });
+        let remaining = config.activation_order.iter().rev().find_map(|active_key| {
+            config
+                .active_tweaks
+                .get(active_key)?
+                .desired_values
+                .get(backend_key)
+                .cloned()
+        });
         if let Some(value) = remaining {
             changes.insert(backend_key.clone(), Some(value));
         } else {
-            let baseline = config.baselines.remove(backend_key).ok_or_else(|| {
-                format!("Нет сохранённого значения для {backend_key}")
-            })?;
+            let baseline = config
+                .baselines
+                .remove(backend_key)
+                .ok_or_else(|| format!("Нет сохранённого значения для {backend_key}"))?;
             changes.insert(backend_key.clone(), baseline.value);
         }
     }
@@ -934,41 +983,74 @@ mod tests {
 
     fn single_key_tweak() -> TweakDef {
         // Uses the tree marker tweak which has exactly 1 backend key
-        known_tweaks().into_iter().find(|t| t.key == "accessibility.treemarkercolor").unwrap()
+        known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "accessibility.treemarkercolor")
+            .unwrap()
     }
 
     fn multi_key_tweak() -> TweakDef {
-        known_tweaks().into_iter().find(|t| t.key == "disableParasiticParams").unwrap()
+        known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "disableParasiticParams")
+            .unwrap()
     }
 
     #[test]
     fn compute_tweak_states_tweak_on_when_values_match() {
         let tw = single_key_tweak();
         let mut parsed = BTreeMap::new();
-        parsed.insert(tw.backend_keys[0].key.clone(), tw.backend_keys[0].on.clone());
+        parsed.insert(
+            tw.backend_keys[0].key.clone(),
+            tw.backend_keys[0].on.clone(),
+        );
         let result = compute_tweak_states(&[tw], &parsed, None, &BTreeMap::new(), None);
-        assert_eq!(result.states.get("accessibility.treemarkercolor").unwrap(), &true);
+        assert_eq!(
+            result.states.get("accessibility.treemarkercolor").unwrap(),
+            &true
+        );
     }
 
     #[test]
     fn compute_tweak_states_tweak_off_when_values_dont_match() {
         let tw = single_key_tweak();
         let mut parsed = BTreeMap::new();
-        parsed.insert(tw.backend_keys[0].key.clone(), tw.backend_keys[0].off.clone());
+        parsed.insert(
+            tw.backend_keys[0].key.clone(),
+            tw.backend_keys[0].off.clone(),
+        );
         let result = compute_tweak_states(&[tw], &parsed, None, &BTreeMap::new(), None);
-        assert_eq!(result.states.get("accessibility.treemarkercolor").unwrap(), &false);
+        assert_eq!(
+            result.states.get("accessibility.treemarkercolor").unwrap(),
+            &false
+        );
     }
 
     #[test]
     fn compute_tweak_states_managed_when_in_active_tweaks() {
         let tw = single_key_tweak();
         let mut active = BTreeMap::new();
-        active.insert(tw.key.clone(), ActiveTweak {
-            captured_values: BTreeMap::new(),
-            desired_values: BTreeMap::new(),
-        });
-        let result = compute_tweak_states(&[tw], &BTreeMap::new(), Some(&active), &BTreeMap::new(), None);
-        assert_eq!(result.managed_states.get("accessibility.treemarkercolor").unwrap(), &true);
+        active.insert(
+            tw.key.clone(),
+            ActiveTweak {
+                captured_values: BTreeMap::new(),
+                desired_values: BTreeMap::new(),
+            },
+        );
+        let result = compute_tweak_states(
+            &[tw],
+            &BTreeMap::new(),
+            Some(&active),
+            &BTreeMap::new(),
+            None,
+        );
+        assert_eq!(
+            result
+                .managed_states
+                .get("accessibility.treemarkercolor")
+                .unwrap(),
+            &true
+        );
     }
 
     #[test]
@@ -987,14 +1069,20 @@ mod tests {
         let tw = multi_key_tweak();
         let mut parsed = BTreeMap::new();
         // Only set the first key to its ON value
-        parsed.insert(tw.backend_keys[0].key.clone(), tw.backend_keys[0].on.clone());
+        parsed.insert(
+            tw.backend_keys[0].key.clone(),
+            tw.backend_keys[0].on.clone(),
+        );
         let result = compute_tweak_states(&[tw], &parsed, None, &BTreeMap::new(), None);
         assert_eq!(result.states.get("disableParasiticParams").unwrap(), &false);
     }
 
     #[test]
     fn compute_tweak_states_raw_value_for_slider() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let mut parsed = BTreeMap::new();
         parsed.insert("input.holdtime".into(), "0.15".into());
         let result = compute_tweak_states(&[tw], &parsed, None, &BTreeMap::new(), None);
@@ -1003,7 +1091,10 @@ mod tests {
 
     #[test]
     fn compute_tweak_states_no_raw_value_when_missing() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let result = compute_tweak_states(&[tw], &BTreeMap::new(), None, &BTreeMap::new(), None);
         assert!(result.raw_values.is_empty());
     }
@@ -1028,16 +1119,34 @@ mod tests {
         let tw = single_key_tweak();
         let mut active = BTreeMap::new();
         let mut desired = BTreeMap::new();
-        desired.insert(tw.backend_keys[0].key.clone(), tw.backend_keys[0].on.clone());
-        active.insert(tw.key.clone(), ActiveTweak {
-            captured_values: BTreeMap::new(),
-            desired_values: desired,
-        });
+        desired.insert(
+            tw.backend_keys[0].key.clone(),
+            tw.backend_keys[0].on.clone(),
+        );
+        active.insert(
+            tw.key.clone(),
+            ActiveTweak {
+                captured_values: BTreeMap::new(),
+                desired_values: desired,
+            },
+        );
         let mut parsed = BTreeMap::new();
-        parsed.insert(tw.backend_keys[0].key.clone(), tw.backend_keys[0].on.clone());
+        parsed.insert(
+            tw.backend_keys[0].key.clone(),
+            tw.backend_keys[0].on.clone(),
+        );
         let result = compute_tweak_states(&[tw], &parsed, Some(&active), &BTreeMap::new(), None);
-        assert_eq!(result.states.get("accessibility.treemarkercolor").unwrap(), &true);
-        assert_eq!(result.managed_states.get("accessibility.treemarkercolor").unwrap(), &true);
+        assert_eq!(
+            result.states.get("accessibility.treemarkercolor").unwrap(),
+            &true
+        );
+        assert_eq!(
+            result
+                .managed_states
+                .get("accessibility.treemarkercolor")
+                .unwrap(),
+            &true
+        );
     }
 
     // ── compute_enable_changes ────────────────────────────────────────────────
@@ -1063,7 +1172,9 @@ mod tests {
             Some("0".into())
         );
         // Active tweak should be set
-        assert!(config.active_tweaks.contains_key("accessibility.treemarkercolor"));
+        assert!(config
+            .active_tweaks
+            .contains_key("accessibility.treemarkercolor"));
         assert_eq!(config.activation_order.len(), 1);
     }
 
@@ -1071,11 +1182,8 @@ mod tests {
     fn enable_changes_reapply_existing_tweak_reuses_desired() {
         let tw = single_key_tweak();
         let mut config = ConfigState::default();
-        let original_desired: BTreeMap<_, _> = [(
-            tw.backend_keys[0].key.clone(),
-            "overridden".into(),
-        )]
-        .into();
+        let original_desired: BTreeMap<_, _> =
+            [(tw.backend_keys[0].key.clone(), "overridden".into())].into();
         config.active_tweaks.insert(
             tw.key.clone(),
             ActiveTweak {
@@ -1103,7 +1211,9 @@ mod tests {
             captured_values: BTreeMap::new(),
             desired_values: BTreeMap::new(),
         };
-        other.desired_values.insert(tw.backend_keys[0].key.clone(), "owned".into());
+        other
+            .desired_values
+            .insert(tw.backend_keys[0].key.clone(), "owned".into());
         config.active_tweaks.insert("other_tweak".into(), other);
         config.activation_order.push("other_tweak".into());
 
@@ -1122,18 +1232,25 @@ mod tests {
         let mut config = ConfigState::default();
         config.baselines.insert(
             tw.backend_keys[0].key.clone(),
-            StoredValue { value: Some("original".into()) },
+            StoredValue {
+                value: Some("original".into()),
+            },
         );
         config.active_tweaks.insert(
             tw.key.clone(),
             ActiveTweak {
                 captured_values: [(
                     tw.backend_keys[0].key.clone(),
-                    StoredValue { value: Some("original".into()) },
+                    StoredValue {
+                        value: Some("original".into()),
+                    },
                 )]
                 .into(),
-                desired_values: [(tw.backend_keys[0].key.clone(), tw.backend_keys[0].on.clone())]
-                    .into(),
+                desired_values: [(
+                    tw.backend_keys[0].key.clone(),
+                    tw.backend_keys[0].on.clone(),
+                )]
+                .into(),
             },
         );
         config.activation_order.push(tw.key.clone());
@@ -1158,7 +1275,9 @@ mod tests {
             captured_values: BTreeMap::new(),
             desired_values: BTreeMap::new(),
         };
-        previous.desired_values.insert(bk_key.clone(), "from_other".into());
+        previous
+            .desired_values
+            .insert(bk_key.clone(), "from_other".into());
         config.active_tweaks.insert("other".into(), previous);
         config.active_tweaks.insert(
             tw.key.clone(),
@@ -1206,15 +1325,25 @@ mod tests {
     #[test]
     fn slider_changes_updates_active_tweak() {
         let mut config = ConfigState::default();
-        config.active_tweaks.insert("test".into(), ActiveTweak {
-            captured_values: BTreeMap::new(),
-            desired_values: BTreeMap::new(),
-        });
+        config.active_tweaks.insert(
+            "test".into(),
+            ActiveTweak {
+                captured_values: BTreeMap::new(),
+                desired_values: BTreeMap::new(),
+            },
+        );
         config.activation_order.push("test".into());
-        let changes = compute_slider_changes(&mut config, "test", "graphics.fov", "70.0".into()).unwrap();
+        let changes =
+            compute_slider_changes(&mut config, "test", "graphics.fov", "70.0".into()).unwrap();
         assert_eq!(changes.get("graphics.fov").unwrap(), &Some("70.0".into()));
         assert_eq!(
-            config.active_tweaks.get("test").unwrap().desired_values.get("graphics.fov").unwrap(),
+            config
+                .active_tweaks
+                .get("test")
+                .unwrap()
+                .desired_values
+                .get("graphics.fov")
+                .unwrap(),
             "70.0"
         );
     }
@@ -1230,35 +1359,50 @@ mod tests {
 
     #[test]
     fn validate_slider_valid_returns_backend_key() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let bk = validate_slider_value(&tw, 0.2).unwrap();
         assert_eq!(bk, "input.holdtime");
     }
 
     #[test]
     fn validate_slider_below_min() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let result = validate_slider_value(&tw, 0.01);
         assert!(result.is_err());
     }
 
     #[test]
     fn validate_slider_above_max() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let result = validate_slider_value(&tw, 1.0);
         assert!(result.is_err());
     }
 
     #[test]
     fn validate_slider_nan() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let result = validate_slider_value(&tw, f64::NAN);
         assert!(result.is_err());
     }
 
     #[test]
     fn validate_slider_infinite() {
-        let tw = known_tweaks().into_iter().find(|t| t.key == "input.holdtime").unwrap();
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let result = validate_slider_value(&tw, f64::INFINITY);
         assert!(result.is_err());
     }
@@ -1350,11 +1494,21 @@ mod tests {
     #[test]
     fn compute_tweak_states_bind_tweak_managed_when_in_keys_state() {
         let tw = make_bind_tweak();
-        let keys_state = [("test.bind".into(), ActiveTweak {
-            captured_values: BTreeMap::new(),
-            desired_values: BTreeMap::new(),
-        })].into();
-        let result = compute_tweak_states(&[tw], &BTreeMap::new(), None, &BTreeMap::new(), Some(&keys_state));
+        let keys_state = [(
+            "test.bind".into(),
+            ActiveTweak {
+                captured_values: BTreeMap::new(),
+                desired_values: BTreeMap::new(),
+            },
+        )]
+        .into();
+        let result = compute_tweak_states(
+            &[tw],
+            &BTreeMap::new(),
+            None,
+            &BTreeMap::new(),
+            Some(&keys_state),
+        );
         assert!(result.managed_states.get("test.bind") == Some(&true));
     }
 
@@ -1395,11 +1549,7 @@ mod tests {
         config.active_tweaks.insert(
             "test.bind".into(),
             ActiveTweak {
-                captured_values: [(
-                    "p".into(),
-                    StoredValue { value: None },
-                )]
-                .into(),
+                captured_values: [("p".into(), StoredValue { value: None })].into(),
                 desired_values: [("p".into(), "jump".into())].into(),
             },
         );
@@ -1420,14 +1570,23 @@ mod tests {
             ActiveTweak {
                 captured_values: [(
                     "p".into(),
-                    StoredValue { value: Some("kill".into()) },
+                    StoredValue {
+                        value: Some("kill".into()),
+                    },
                 )]
                 .into(),
                 desired_values: [("p".into(), "jump".into())].into(),
             },
         );
         config.activation_order.push("test.bind".into());
-        let result = compute_bind_content(&mut config, &tw, bt, "bind p jump", Some("kill".into()), false);
+        let result = compute_bind_content(
+            &mut config,
+            &tw,
+            bt,
+            "bind p jump",
+            Some("kill".into()),
+            false,
+        );
         assert!(result.contains("bind p kill"));
         assert!(!config.active_tweaks.contains_key("test.bind"));
     }

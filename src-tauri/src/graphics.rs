@@ -428,11 +428,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("graphics_test_shu_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg");
-        std::fs::write(
-            &path,
-            b"graphicssettings.shadowqualitypreset \"999\"\n",
-        )
-        .unwrap();
+        std::fs::write(&path, b"graphicssettings.shadowqualitypreset \"999\"\n").unwrap();
         // unexpected value → default 0
         assert_eq!(SHADOWS.read(path.to_str().unwrap()).unwrap(), 0);
         let _ = std::fs::remove_dir_all(&dir);
@@ -732,11 +728,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg");
         for (value, tier) in &[("0", 0), ("1", 1), ("2", 2), ("4", 3)] {
-            std::fs::write(
-                &path,
-                format!("graphics.volumetric_clouds \"{value}\"\n"),
-            )
-            .unwrap();
+            std::fs::write(&path, format!("graphics.volumetric_clouds \"{value}\"\n")).unwrap();
             assert_eq!(CLOUDS.read(path.to_str().unwrap()).unwrap(), *tier);
         }
         let _ = std::fs::remove_dir_all(&dir);

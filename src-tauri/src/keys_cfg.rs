@@ -275,9 +275,10 @@ mod tests {
     #[test]
     fn merge_binds_replaces_existing() {
         let existing = "// comment\nbind p jump\nbind f attack\n";
-        let new_binds = vec![
-            KeyBind { key: "p".into(), command: "kill".into() },
-        ];
+        let new_binds = vec![KeyBind {
+            key: "p".into(),
+            command: "kill".into(),
+        }];
         let result = merge_binds(existing, &new_binds);
         // f not in new list → dropped
         assert_eq!(result, "// comment\nbind p kill\n");
@@ -286,9 +287,10 @@ mod tests {
     #[test]
     fn merge_binds_drops_removed() {
         let existing = "bind p jump\nbind f attack\n";
-        let new_binds = vec![
-            KeyBind { key: "p".into(), command: "jump".into() },
-        ];
+        let new_binds = vec![KeyBind {
+            key: "p".into(),
+            command: "jump".into(),
+        }];
         let result = merge_binds(existing, &new_binds);
         // f bind should be dropped
         assert!(result.contains("bind p jump"));
@@ -299,8 +301,14 @@ mod tests {
     fn merge_binds_appends_new() {
         let existing = "bind p jump\n";
         let new_binds = vec![
-            KeyBind { key: "p".into(), command: "jump".into() },
-            KeyBind { key: "f".into(), command: "attack".into() },
+            KeyBind {
+                key: "p".into(),
+                command: "jump".into(),
+            },
+            KeyBind {
+                key: "f".into(),
+                command: "attack".into(),
+            },
         ];
         let result = merge_binds(existing, &new_binds);
         assert!(result.contains("bind p jump"));
@@ -310,9 +318,10 @@ mod tests {
     #[test]
     fn merge_binds_preserves_non_bind_lines() {
         let existing = "// header comment\nbind p jump\n# footer comment\n";
-        let new_binds = vec![
-            KeyBind { key: "p".into(), command: "kill".into() },
-        ];
+        let new_binds = vec![KeyBind {
+            key: "p".into(),
+            command: "kill".into(),
+        }];
         let result = merge_binds(existing, &new_binds);
         assert!(result.contains("// header comment"));
         assert!(result.contains("# footer comment"));
@@ -322,9 +331,10 @@ mod tests {
     #[test]
     fn merge_binds_empty_existing() {
         let existing = "";
-        let new_binds = vec![
-            KeyBind { key: "p".into(), command: "jump".into() },
-        ];
+        let new_binds = vec![KeyBind {
+            key: "p".into(),
+            command: "jump".into(),
+        }];
         let result = merge_binds(existing, &new_binds);
         assert_eq!(result, "bind p jump\n");
     }
@@ -350,11 +360,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("keys_load_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("keys.cfg");
-        std::fs::write(
-            &path,
-            b"bind p jump\nbind f attack\n// comment\n",
-        )
-        .unwrap();
+        std::fs::write(&path, b"bind p jump\nbind f attack\n// comment\n").unwrap();
         let binds = load_binds(&path).unwrap();
         assert_eq!(binds.len(), 2);
         assert_eq!(binds[0].key, "p");
@@ -393,9 +399,10 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("keys_write_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("keys.cfg").to_string_lossy().to_string();
-        let binds = vec![
-            KeyBind { key: "p".into(), command: "jump".into() },
-        ];
+        let binds = vec![KeyBind {
+            key: "p".into(),
+            command: "jump".into(),
+        }];
         write_keys_cfg(path.clone(), binds.clone()).unwrap();
         let loaded = load_binds(Path::new(&path)).unwrap();
         assert_eq!(loaded.len(), 1);
@@ -411,8 +418,14 @@ mod tests {
         let path = dir.join("keys.cfg");
         std::fs::write(&path, b"bind f attack\n// keep me\n").unwrap();
         let binds = vec![
-            KeyBind { key: "p".into(), command: "jump".into() },
-            KeyBind { key: "f".into(), command: "attack".into() },
+            KeyBind {
+                key: "p".into(),
+                command: "jump".into(),
+            },
+            KeyBind {
+                key: "f".into(),
+                command: "attack".into(),
+            },
         ];
         write_keys_cfg(path.to_string_lossy().to_string(), binds).unwrap();
         let content = std::fs::read_to_string(&path).unwrap();
