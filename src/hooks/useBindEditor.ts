@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Bind, CommandPreset } from "../types";
-import { parseCombo } from "../utils/bindKey";
+import { parseCombo, normalizeRustKey } from "../utils/bindKey";
 
 export function useBindEditor(commandPresets: CommandPreset[]) {
   const [binds, setBinds] = useState<Bind[]>([]);
@@ -37,7 +37,8 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
         if (selectedKeys.length > 0) {
           // Match the whole combination regardless of the order keys were pressed.
           // Rust stores combos as "[a+b]"; a single key has no brackets.
-          const tokens = parseCombo(bind.key);
+          // Normalize so a file bind on "period" matches the on-screen "." cap.
+          const tokens = parseCombo(bind.key).map(normalizeRustKey);
           if (
             tokens.length !== selectedSet.size ||
             !tokens.every((t) => selectedSet.has(t))

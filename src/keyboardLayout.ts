@@ -4,7 +4,7 @@
 // bind.key equals a cap's rustKey. Keys with no `rustKey` (FN, decorative
 // labels) are non-bindable and rendered dimmed.
 
-import { parseCombo } from "./utils/bindKey";
+import { parseCombo, normalizeRustKey } from "./utils/bindKey";
 
 export interface KeyDef {
   label: string;
@@ -205,11 +205,15 @@ const DISPLAY_NAMES: Record<string, string> = {
   kp_plus: "Num +",
   kp_enter: "Num Enter",
   kp_dot: "Num .",
-  mouse1: "ЛКМ",
-  mouse2: "ПКМ",
-  mouse3: "СКМ",
+  // Rust follows Unity mouse indexing: mouse0 = left, mouse1 = right,
+  // mouse2 = middle, mouse3+ = side buttons.
+  mouse0: "ЛКМ",
+  mouse1: "ПКМ",
+  mouse2: "СКМ",
+  mouse3: "Мышь 3",
   mouse4: "Мышь 4",
   mouse5: "Мышь 5",
+  mouse6: "Мышь 6",
 };
 
 export function keyDisplayName(rustKey: string): string {
@@ -217,7 +221,7 @@ export function keyDisplayName(rustKey: string): string {
   // Combination bind, stored by Rust as "[a+b]" — display each part.
   const parts = parseCombo(rustKey);
   if (parts.length > 1) return parts.map(keyDisplayName).join(" + ");
-  const combo = parts[0]!;
+  const combo = normalizeRustKey(parts[0]!);
   if (DISPLAY_NAMES[combo]) return DISPLAY_NAMES[combo];
   const kp = combo.match(/^kp(\d)$/);
   if (kp) return `Num ${kp[1]}`;
