@@ -1,4 +1,5 @@
 import { LoadingLine } from "@mingcute/react";
+import "./SettingsPage.css";
 
 interface SettingsPageProps {
   configPath: string;

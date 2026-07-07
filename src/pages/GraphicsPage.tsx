@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Mountain2Line, Refresh1Line } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
 import { clientCfgPathFor } from "../utils/paths";
+import "./GraphicsPage.css";
 
 interface QualityRow {
   key: string;

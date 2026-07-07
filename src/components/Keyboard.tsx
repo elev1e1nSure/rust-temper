@@ -41,10 +41,10 @@ export function Keyboard({
           <div
             className="kb-fn-group"
             key={gi}
-            style={{ flex: `${group.length} ${group.length} 0` }}
+            style={{ "--group-flex": group.length } as React.CSSProperties}
           >
             {group.map((key, ki) => (
-              <span key={ki} style={{ flex: `${key.w ?? 1} ${key.w ?? 1} 0` }}>
+              <span key={ki} className="kb-flex-cell" style={{ "--key-w": key.w ?? 1 } as React.CSSProperties}>
                 {renderKey(key)}
               </span>
             ))}
@@ -59,7 +59,8 @@ export function Keyboard({
               {row.map((key, ki) => (
                 <span
                   key={ki}
-                  style={{ flex: `${key.w ?? 1} ${key.w ?? 1} 0` }}
+                  className="kb-flex-cell"
+                  style={{ "--key-w": key.w ?? 1 } as React.CSSProperties}
                 >
                   {renderKey(key)}
                 </span>
@@ -73,7 +74,7 @@ export function Keyboard({
             <div className="kb-row" key={ri}>
               {row.map((key, ki) =>
                 key ? (
-                  <span key={ki} style={{ flex: "1 1 0" }}>
+                  <span key={ki} className="kb-flex-cell kb-flex-fill" style={{ "--key-w": 1 } as React.CSSProperties}>
                     {renderKey(key)}
                   </span>
                 ) : (
@@ -90,9 +91,11 @@ export function Keyboard({
               key={i}
               className="kb-numpad-cell"
               style={{
-                gridColumn: `${cell.c} / span ${cell.colSpan ?? 1}`,
-                gridRow: `${cell.r} / span ${cell.rowSpan ?? 1}`,
-              }}
+                "--numpad-col": cell.c,
+                "--numpad-col-span": cell.colSpan ?? 1,
+                "--numpad-row": cell.r,
+                "--numpad-row-span": cell.rowSpan ?? 1,
+              } as React.CSSProperties}
             >
               {renderKey(cell, true)}
             </div>

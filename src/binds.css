@@ -421,10 +421,12 @@
   overflow: hidden;
   transition: height 0.22s ease;
   user-select: auto;
+  height: var(--anim-height, auto);
 }
 
 .bind-config-key-height {
   transition-duration: 0.14s;
+  height: var(--anim-height, auto);
 }
 
 .bind-config-value.has-keys {
@@ -438,7 +440,11 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  animation: bindConfigKeyIn 0.14s ease-out both;
+  animation-name: bindConfigKeyIn;
+  animation-duration: 0.14s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+  animation-delay: var(--anim-delay, 0ms);
 }
 
 .bind-config-key-group.exiting {
@@ -498,7 +504,11 @@
   border-radius: 8px;
   background: var(--row);
   transform-origin: center left;
-  animation: bindConfigItemIn 0.22s cubic-bezier(0.2, 0.85, 0.25, 1.1) both;
+  animation-name: bindConfigItemIn;
+  animation-duration: 0.22s;
+  animation-timing-function: cubic-bezier(0.2, 0.85, 0.25, 1.1);
+  animation-fill-mode: both;
+  animation-delay: var(--anim-delay, 0ms);
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
@@ -552,6 +562,10 @@ body:has(.bind-config-action.dragging) {
   pointer-events: none;
   transform: scale(1.02) rotate(-1deg);
   animation: bindConfigOverlayPickup 0.15s cubic-bezier(0.2, 0.85, 0.25, 1);
+  left: var(--overlay-x, 0);
+  top: var(--overlay-y, 0);
+  width: var(--overlay-w, auto);
+  height: var(--overlay-h, auto);
 }
 
 @keyframes bindConfigOverlayPickup {
@@ -770,6 +784,18 @@ body:has(.bind-config-action.dragging) {
   min-width: 0;
   display: flex;
   gap: 5px;
+  flex: var(--group-flex, 1) var(--group-flex, 1) 0;
+}
+
+.kb-flex-cell {
+  width: 0;
+  min-width: 0;
+  display: flex;
+  flex: var(--key-w, 1) var(--key-w, 1) 0;
+}
+
+.kb-flex-fill {
+  flex: 1 1 0;
 }
 
 .kb-fn-group > span,
@@ -824,6 +850,8 @@ body:has(.bind-config-action.dragging) {
 
 .kb-numpad-cell {
   display: flex;
+  grid-column: var(--numpad-col, auto) / span var(--numpad-col-span, 1);
+  grid-row: var(--numpad-row, auto) / span var(--numpad-row-span, 1);
 }
 
 .kb-key {

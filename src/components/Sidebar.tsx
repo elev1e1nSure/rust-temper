@@ -1,5 +1,6 @@
 import type { PageId } from "../navigation";
 import { NAV_ITEMS } from "../navigation";
+import "./Sidebar.css";
 
 interface SidebarProps {
   activePage: PageId;
@@ -17,13 +18,11 @@ export function Sidebar({
   const activeIndex = NAV_ITEMS.findIndex((item) => item.id === activePage);
 
   return (
-    <div className="sidebar" style={{ width: sidebarWidth }}>
+    <div className="sidebar" style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}>
       <div className="nav">
         <div
           className="nav-indicator"
-          style={{
-            transform: `translateY(${activeIndex * 42}px)`,
-          }}
+          style={{ "--nav-y": `${activeIndex * 42}px` } as React.CSSProperties}
         />
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button

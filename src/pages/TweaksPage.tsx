@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import { useTweaks } from "../hooks/useTweaks";
 import { ChevronIcon } from "../icons";
 import type { AdvancedSlider, TweakDef, TweakSection } from "../types";
+import "./TweaksPage.css";
 
 interface TweaksPageProps {
   configPath: string;

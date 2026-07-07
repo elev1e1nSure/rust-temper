@@ -23,7 +23,7 @@ export function AnimatedHeight({
   return (
     <div
       className={`bind-config-animated-height ${className}`}
-      style={height === undefined ? undefined : { height }}
+      style={height === undefined ? undefined : ({ "--anim-height": `${height}px` } as React.CSSProperties)}
     >
       <div ref={contentRef}>{children}</div>
     </div>

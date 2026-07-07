@@ -636,7 +636,7 @@ export function BindsPage({
                             <span
                               className={`bind-config-key-group ${exitingDraftKeys.has(key) ? "exiting" : ""}`}
                               key={key}
-                              style={{ animationDelay: `${index * 35}ms` }}
+                              style={{ "--anim-delay": `${index * 35}ms` } as React.CSSProperties}
                             >
                               <span className="bind-config-key-card">
                                 {keyDisplayName(key)}
@@ -674,7 +674,7 @@ export function BindsPage({
                             }}
                             className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""}`}
                             key={action.id}
-                            style={{ animationDelay: `${index * 40}ms` }}
+                            style={{ "--anim-delay": `${index * 40}ms` } as React.CSSProperties}
                           >
                             {commandModal.kind === "single" &&
                               draftActions.length > 1 && (
@@ -777,11 +777,11 @@ export function BindsPage({
               <div
                 className="bind-config-action-overlay"
                 style={{
-                  left: dragOverlay.x / getCssZoomFactor(),
-                  top: dragOverlay.y / getCssZoomFactor(),
-                  width: dragOverlay.width / getCssZoomFactor(),
-                  height: dragOverlay.height / getCssZoomFactor(),
-                }}
+                  "--overlay-x": `${dragOverlay.x / getCssZoomFactor()}px`,
+                  "--overlay-y": `${dragOverlay.y / getCssZoomFactor()}px`,
+                  "--overlay-w": `${dragOverlay.width / getCssZoomFactor()}px`,
+                  "--overlay-h": `${dragOverlay.height / getCssZoomFactor()}px`,
+                } as React.CSSProperties}
               >
                 <div className="bind-config-drag-handle">
                   <DragIcon />

@@ -183,6 +183,12 @@
   background: #3b82f6;
 }
 
+.graphics-slider-track.no-transition,
+.graphics-slider-fill.no-transition,
+.graphics-slider-thumb.no-transition {
+  transition: none;
+}
+
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,
 .graphics-slider-wrap:has(.graphics-slider-input:focus-visible)
   .graphics-slider-track {

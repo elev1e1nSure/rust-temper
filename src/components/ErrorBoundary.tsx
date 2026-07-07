@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import "./ErrorBoundary.css";
 
 interface Props {
   children: ReactNode;
@@ -22,24 +23,15 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: 32, color: "#f2f2f3" }}>
+        <div className="error-boundary">
           <h2>Произошла ошибка</h2>
-          <pre style={{ color: "#8e8e93", fontSize: 13 }}>
+          <pre className="error-boundary-pre">
             {this.state.error.message}
           </pre>
           <button
             type="button"
+            className="error-boundary-btn"
             onClick={() => this.setState({ error: null })}
-            style={{
-              marginTop: 16,
-              padding: "8px 16px",
-              background: "#2b2b2f",
-              color: "#f2f2f3",
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontSize: 14,
-            }}
           >
             Попробовать снова
           </button>
