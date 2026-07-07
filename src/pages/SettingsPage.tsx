@@ -20,9 +20,7 @@ export function SettingsPage({
     <div className="settings-container page-container">
       <div className="settings-card">
         <div className="setting-group">
-          <label className="setting-label">
-            Путь к файлу конфигурации (keys.cfg)
-          </label>
+          <label className="setting-label">Путь к игре (Rust)</label>
           <input
             type="text"
             className="setting-input"
