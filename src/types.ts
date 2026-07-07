@@ -8,6 +8,12 @@ export interface FilteredBind {
   sourceIndex: number;
 }
 
+// Every bind kept mounted for the list, tagged with whether the current
+// filter matches it — non-matches collapse (animated) instead of unmounting.
+export interface DisplayBind extends FilteredBind {
+  matched: boolean;
+}
+
 export interface CommandPreset {
   name: string;
   command: string;

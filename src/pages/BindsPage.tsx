@@ -1,10 +1,9 @@
 import { useState } from "react";
-import type { CommandPreset, FilteredBind } from "../types";
+import type { CommandPreset, DisplayBind, FilteredBind } from "../types";
 import { ChevronIcon, KeyboardIcon, PlusIcon, TrashIcon } from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
 import { BindsHeader } from "../components/BindsHeader";
-import { AnimatedHeight } from "../components/layout/AnimatedHeight";
 import {
   CommandModal,
   type CommandModalKind,
@@ -12,6 +11,7 @@ import {
 
 interface BindsPageProps {
   filteredBinds: FilteredBind[];
+  displayBinds: DisplayBind[];
   commandPresets: CommandPreset[];
   search: string;
   setSearch: (v: string) => void;
@@ -35,6 +35,7 @@ interface CommandModalTarget {
 
 export function BindsPage({
   filteredBinds,
+  displayBinds,
   commandPresets,
   search,
   setSearch,
@@ -82,33 +83,36 @@ export function BindsPage({
         <Keyboard selectedKeys={selectedKeys} onKeyClick={handleKeyboardKey} />
       </div>
 
-      <AnimatedHeight
-        className={`binds-list-anim ${filteredBinds.length > 0 ? "has-binds" : ""}`}
-      >
-        {filteredBinds.length === 0 ? (
-          <div className="binds-empty">
-            <div className="binds-empty-icon">
-              <KeyboardIcon size={32} />
-            </div>
-            <p>Биндов нет</p>
-            <button
-              className="btn-add"
-              type="button"
-              onClick={() => openCommandModal("single", "new")}
-            >
-              <PlusIcon />
-              Создать бинд
-            </button>
+      {filteredBinds.length === 0 ? (
+        <div className="binds-empty">
+          <div className="binds-empty-icon">
+            <KeyboardIcon size={32} />
           </div>
-        ) : (
-          <div className="binds-list-wrap">
-            {filteredBinds.map(({ bind, sourceIndex }) => {
-              const hasConflict =
-                bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-              return (
+          <p>Биндов нет</p>
+          <button
+            className="btn-add"
+            type="button"
+            onClick={() => openCommandModal("single", "new")}
+          >
+            <PlusIcon />
+            Создать бинд
+          </button>
+        </div>
+      ) : (
+        <div className="binds-list-wrap">
+          {displayBinds.map(({ bind, sourceIndex, matched }) => {
+            const hasConflict =
+              bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+            return (
+              // Grid 1fr->0fr collapses the row to its exact height with no
+              // measurement, so the panel (sum of rows) resizes in sync with
+              // the rows themselves instead of lagging behind them.
+              <div
+                className={`bind-row-collapse ${matched ? "" : "filtered-out"}`}
+                key={`${bind.key}-${bind.command}-${sourceIndex}`}
+              >
                 <div
                   className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
-                  key={`${bind.key}-${bind.command}-${sourceIndex}`}
                   onAnimationEnd={() => {
                     if (exitingBindIndex === sourceIndex) {
                       confirmRemoveBind(sourceIndex);
@@ -142,11 +146,11 @@ export function BindsPage({
                     <TrashIcon />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </AnimatedHeight>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {commandModalState !== null && (
         <CommandModal

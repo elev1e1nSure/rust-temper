@@ -147,6 +147,7 @@ function App() {
               <>
                 <BindsPage
                   filteredBinds={bindEditor.filteredBinds}
+                  displayBinds={bindEditor.displayBinds}
                   commandPresets={commandPresets}
                   search={bindEditor.search}
                   setSearch={bindEditor.setSearch}

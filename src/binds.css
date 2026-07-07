@@ -3,30 +3,41 @@
    formatter that owns App.css while it is open in the editor. */
 
 /* Bind list -------------------------------------------------------------- */
-/* Gap lives on the animated wrapper, not the inner panel: keeping the inner
-   content's box margin-free avoids margin-collapse skewing the measured
-   scrollHeight AnimatedHeight animates to. */
-.binds-list-anim {
-  margin-top: 16px;
-}
-
-/* The panel background must sit on the height-animated wrapper itself, not the
-   inner list, so the visible rectangle shrinks/grows with the transition
-   instead of the inner box snapping while a transparent wrapper eases. Same
-   var(--panel) on both keeps the fill seamless during the animation. Empty
-   state (no .has-binds) stays background-less. */
-.binds-list-anim.has-binds {
-  border-radius: 12px;
-  background: var(--panel);
-}
-
 .binds-list-wrap {
   border-radius: 12px;
   background: var(--panel);
   padding: 6px 0;
+  margin-top: 16px;
+}
+
+/* Filter animation: each row is its own collapsing grid track. Animating
+   grid-template-rows 1fr->0fr eases to the row's exact height with no JS
+   measurement, and the panel height (sum of the rows) follows in the same
+   frame — so rows and the backing panel shrink/grow together instead of the
+   rows snapping out and the panel catching up afterwards. */
+.bind-row-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 0.16s ease,
+    opacity 0.16s ease;
+}
+
+.bind-row-collapse.filtered-out {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* min-height:0 lets the grid track shrink below the row's content height;
+   overflow hides the content as the track closes. */
+.bind-row-collapse > .bind-row {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .binds-empty {
+  margin-top: 16px;
   padding: 48px 0;
   display: flex;
   flex-direction: column;
