@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CommandPreset, FilteredBind } from "../types";
-import { ChevronIcon, TrashIcon } from "../icons";
+import { ChevronIcon, CommandIcon, PlusIcon, TrashIcon } from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
 import { BindsHeader } from "../components/BindsHeader";
@@ -81,48 +81,65 @@ export function BindsPage({
         <Keyboard selectedKeys={selectedKeys} onKeyClick={handleKeyboardKey} />
       </div>
 
-      <div className="binds-list-wrap">
-        {filteredBinds.map(({ bind, sourceIndex }) => {
-          const hasConflict =
-            bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-          return (
-            <div
-              className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
-              key={`${bind.key}-${bind.command}-${sourceIndex}`}
-              onAnimationEnd={() => {
-                if (exitingBindIndex === sourceIndex) {
-                  confirmRemoveBind(sourceIndex);
-                }
-                if (newBindIndex === sourceIndex) {
-                  setNewBindIndex(null);
-                }
-              }}
-            >
-              <button
-                className="action-cell"
-                type="button"
-                onClick={() => openBindCommandModal(sourceIndex, bind.command)}
-              >
-                {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                <ChevronIcon />
-              </button>
-
+      {filteredBinds.length === 0 ? (
+        <div className="binds-empty">
+          <CommandIcon size={28} />
+          <p>Биндов нет</p>
+          <button
+            className="btn-add"
+            type="button"
+            onClick={() => openCommandModal("single", "new")}
+          >
+            <PlusIcon />
+            Создать бинд
+          </button>
+        </div>
+      ) : (
+        <div className="binds-list-wrap">
+          {filteredBinds.map(({ bind, sourceIndex }) => {
+            const hasConflict =
+              bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+            return (
               <div
-                className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
+                key={`${bind.key}-${bind.command}-${sourceIndex}`}
+                onAnimationEnd={() => {
+                  if (exitingBindIndex === sourceIndex) {
+                    confirmRemoveBind(sourceIndex);
+                  }
+                  if (newBindIndex === sourceIndex) {
+                    setNewBindIndex(null);
+                  }
+                }}
               >
-                {bind.key ? keyDisplayName(bind.key) : "—"}
-              </div>
+                <button
+                  className="action-cell"
+                  type="button"
+                  onClick={() =>
+                    openBindCommandModal(sourceIndex, bind.command)
+                  }
+                >
+                  {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                  <ChevronIcon />
+                </button>
 
-              <div
-                className="delete-btn"
-                onClick={() => removeBind(sourceIndex)}
-              >
-                <TrashIcon />
+                <div
+                  className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                >
+                  {bind.key ? keyDisplayName(bind.key) : "—"}
+                </div>
+
+                <div
+                  className="delete-btn"
+                  onClick={() => removeBind(sourceIndex)}
+                >
+                  <TrashIcon />
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {commandModalState !== null && (
         <CommandModal
