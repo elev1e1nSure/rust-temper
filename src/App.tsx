@@ -4,6 +4,7 @@ import type { CommandPreset } from "./types";
 import { useConfigFile } from "./hooks/useConfigFile";
 import { useBindEditor } from "./hooks/useBindEditor";
 import { useSidebarResize } from "./hooks/useSidebarResize";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Sidebar } from "./components/Sidebar";
 import { BindsPage } from "./pages/BindsPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -120,48 +121,56 @@ function App() {
 
         <div className="main">
           {activePage === "binds" && (
-            <>
-              <BindsPage
-                filteredBinds={bindEditor.filteredBinds}
-                commandPresets={commandPresets}
-                search={bindEditor.search}
-                setSearch={bindEditor.setSearch}
-                addBind={bindEditor.addBind}
-                removeBind={bindEditor.removeBind}
-                confirmRemoveBind={bindEditor.confirmRemoveBind}
-                newBindIndex={bindEditor.newBindIndex}
-                setNewBindIndex={bindEditor.setNewBindIndex}
-                exitingBindIndex={bindEditor.exitingBindIndex}
-                keyConflicts={bindEditor.keyConflicts}
-                selectedKeys={bindEditor.selectedKeys}
-                nameFor={bindEditor.nameFor}
-                updateBind={bindEditor.updateBind}
-                handleKeyboardKey={bindEditor.handleKeyboardKey}
-              />
-              {statusMessage && (
-                <div className={`status-message${statusMessage.type === "error" ? " status-error" : ""}`}>
-                  {statusMessage.text}
-                </div>
-              )}
-            </>
+            <ErrorBoundary>
+              <>
+                <BindsPage
+                  filteredBinds={bindEditor.filteredBinds}
+                  commandPresets={commandPresets}
+                  search={bindEditor.search}
+                  setSearch={bindEditor.setSearch}
+                  addBind={bindEditor.addBind}
+                  removeBind={bindEditor.removeBind}
+                  confirmRemoveBind={bindEditor.confirmRemoveBind}
+                  newBindIndex={bindEditor.newBindIndex}
+                  setNewBindIndex={bindEditor.setNewBindIndex}
+                  exitingBindIndex={bindEditor.exitingBindIndex}
+                  keyConflicts={bindEditor.keyConflicts}
+                  selectedKeys={bindEditor.selectedKeys}
+                  nameFor={bindEditor.nameFor}
+                  updateBind={bindEditor.updateBind}
+                  handleKeyboardKey={bindEditor.handleKeyboardKey}
+                />
+                {statusMessage && (
+                  <div className={`status-message${statusMessage.type === "error" ? " status-error" : ""}`}>
+                    {statusMessage.text}
+                  </div>
+                )}
+              </>
+            </ErrorBoundary>
           )}
 
           {activePage === "tweaks" && (
-            <TweaksPage configPath={configFile.configPath} />
+            <ErrorBoundary>
+              <TweaksPage configPath={configFile.configPath} />
+            </ErrorBoundary>
           )}
 
           {activePage === "graphics" && (
-            <GraphicsPage configPath={configFile.configPath} />
+            <ErrorBoundary>
+              <GraphicsPage configPath={configFile.configPath} />
+            </ErrorBoundary>
           )}
 
           {activePage === "settings" && (
-            <SettingsPage
-              configPath={configFile.configPath}
-              setConfigPath={handleConfigPathChange}
-              detecting={configFile.detecting}
-              handleAutoDetect={handleAutoDetect}
-              handleSelectFile={configFile.handleSelectFile}
-            />
+            <ErrorBoundary>
+              <SettingsPage
+                configPath={configFile.configPath}
+                setConfigPath={handleConfigPathChange}
+                detecting={configFile.detecting}
+                handleAutoDetect={handleAutoDetect}
+                handleSelectFile={configFile.handleSelectFile}
+              />
+            </ErrorBoundary>
           )}
         </div>
       </div>
