@@ -149,9 +149,18 @@ interface GraphicsPageProps {
   configPath: string;
 }
 
+const PRESET_UNSET = "Пользовательский";
+
+function matchPreset(values: Record<string, number>): string {
+  const match = QUICK_PRESETS.find((preset) =>
+    QUALITY_ROWS.every((row) => preset.values[row.key] === values[row.key]),
+  );
+  return match?.label ?? PRESET_UNSET;
+}
+
 export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
-  const [presetLabel, setPresetLabel] = useState("Пользовательский");
+  const presetLabel = matchPreset(values);
   const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0]!.key);
   const [applyStatus, setApplyStatus] = useState<
     { type: "success" | "error"; message: string } | undefined
@@ -199,19 +208,16 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
 
   const setRowValue = useCallback((key: string, value: number) => {
     setValues((prev) => ({ ...prev, [key]: value }));
-    setPresetLabel("Пользовательский");
     setInteracted(true);
   }, []);
 
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
-    setPresetLabel(preset.label);
     setInteracted(true);
   };
 
   const resetToDefaults = () => {
     setValues(DEFAULT_VALUES);
-    setPresetLabel("Пользовательский");
     setInteracted(true);
   };
 
