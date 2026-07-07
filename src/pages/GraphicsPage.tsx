@@ -373,7 +373,7 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
       </div>
 
       <div className="settings-card graphics-preview">
-        <div>
+        <div className="graphics-preview-header">
           <div className="graphics-preview-title">{previewRow.label}</div>
           <p className="graphics-preview-desc">{previewRow.description}</p>
         </div>

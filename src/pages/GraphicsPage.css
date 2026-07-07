@@ -271,18 +271,23 @@
   flex-direction: column;
 }
 
+.graphics-preview-header {
+  margin-bottom: auto;
+}
+
 .graphics-preview-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   margin-bottom: 8px;
 }
 
 .graphics-preview-desc {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-dim);
   line-height: 1.5;
   margin: 0;
-  height: 58px;
+  height: 63px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
