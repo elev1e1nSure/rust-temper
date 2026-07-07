@@ -4,6 +4,7 @@ import {
   SearchLine,
   CloseLine,
   CommandLine,
+  KeyboardLine,
 } from "@mingcute/react";
 
 export function ChevronIcon() {
@@ -24,6 +25,10 @@ export function CloseIcon({ size = 16 }: { size?: number }) {
 
 export function CommandIcon({ size = 16 }: { size?: number }) {
   return <CommandLine size={size} />;
+}
+
+export function KeyboardIcon({ size = 16 }: { size?: number }) {
+  return <KeyboardLine size={size} />;
 }
 
 export function PlusIcon() {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CommandPreset, FilteredBind } from "../types";
-import { ChevronIcon, CommandIcon, PlusIcon, TrashIcon } from "../icons";
+import { ChevronIcon, KeyboardIcon, PlusIcon, TrashIcon } from "../icons";
 import { Keyboard } from "../components/Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
 import { BindsHeader } from "../components/BindsHeader";
@@ -83,7 +83,9 @@ export function BindsPage({
 
       {filteredBinds.length === 0 ? (
         <div className="binds-empty">
-          <CommandIcon size={28} />
+          <div className="binds-empty-icon">
+            <KeyboardIcon size={32} />
+          </div>
           <p>Биндов нет</p>
           <button
             className="btn-add"
