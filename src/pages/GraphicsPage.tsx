@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Mountain2Line, Refresh1Line } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
 import { clientCfgPathFor } from "../utils/paths";
+import { ChevronIcon } from "../icons";
 import "./GraphicsPage.css";
 
 interface QualityRow {
@@ -161,6 +162,8 @@ function matchPreset(values: Record<string, number>): string {
 export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const [values, setValues] = useState<Record<string, number>>(DEFAULT_VALUES);
   const presetLabel = matchPreset(values);
+  const [presetMenuOpen, setPresetMenuOpen] = useState(false);
+  const presetMenuRef = useRef<HTMLDivElement>(null);
   const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0]!.key);
   const [applyStatus, setApplyStatus] = useState<
     { type: "success" | "error"; message: string } | undefined
@@ -203,6 +206,17 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
     };
   }, [clientCfgPath]);
 
+  useEffect(() => {
+    if (!presetMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!presetMenuRef.current?.contains(e.target as Node)) {
+        setPresetMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [presetMenuOpen]);
+
   const previewRow =
     QUALITY_ROWS.find((r) => r.key === previewKey) ?? QUALITY_ROWS[0]!;
 
@@ -214,6 +228,7 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
   const applyQuickPreset = (preset: (typeof QUICK_PRESETS)[number]) => {
     setValues(preset.values);
     setInteracted(true);
+    setPresetMenuOpen(false);
   };
 
   const resetToDefaults = () => {
@@ -260,19 +275,30 @@ export function GraphicsPage({ configPath }: GraphicsPageProps) {
         <div className="settings-card graphics-preset-card">
           <div className="setting-row graphics-preset-header">
             <span className="setting-name">Пресет</span>
-            <span className="graphics-preset-value">{presetLabel}</span>
-          </div>
-          <div className="graphics-preset-tabs">
-            {QUICK_PRESETS.map((preset) => (
+            <div className="graphics-preset-menu" ref={presetMenuRef}>
               <button
-                key={preset.label}
                 type="button"
-                className={`graphics-preset-tab${presetLabel === preset.label ? " active" : ""}`}
-                onClick={() => applyQuickPreset(preset)}
+                className={`graphics-preset-trigger${presetMenuOpen ? " open" : ""}`}
+                onClick={() => setPresetMenuOpen((open) => !open)}
               >
-                {preset.label}
+                <span className="graphics-preset-value">{presetLabel}</span>
+                <ChevronIcon />
               </button>
-            ))}
+              <div
+                className={`graphics-preset-dropdown${presetMenuOpen ? " open" : ""}`}
+              >
+                {QUICK_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    className={`graphics-preset-option${presetLabel === preset.label ? " active" : ""}`}
+                    onClick={() => applyQuickPreset(preset)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

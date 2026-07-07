@@ -40,52 +40,99 @@
 .graphics-preset-value {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-dim);
+  color: var(--text);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.graphics-preset-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  background: var(--row);
-  padding: 4px;
-  border-radius: 8px;
-  gap: 4px;
+.graphics-preset-menu {
+  position: relative;
+  flex-shrink: 0;
 }
 
-.graphics-preset-tab {
+.graphics-preset-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--row);
+  color: var(--text-dim);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.graphics-preset-trigger svg {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.graphics-preset-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.graphics-preset-trigger.open svg {
+  transform: rotate(180deg);
+}
+
+.graphics-preset-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: rgba(30, 30, 36, 0.6);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0.15s;
+}
+
+.graphics-preset-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.graphics-preset-option {
   background: transparent;
   color: var(--text-dim);
   border: none;
   border-radius: 6px;
-  padding: 8px 4px;
-  font-size: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  transition: all 0.15s ease;
 }
 
-.graphics-preset-tab:hover {
+.graphics-preset-option:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.graphics-preset-tab.active {
+.graphics-preset-option.active {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.graphics-preset-tab.active:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .graphics-settings-card {
