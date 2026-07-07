@@ -3,15 +3,20 @@
    formatter that owns App.css while it is open in the editor. */
 
 /* Bind list -------------------------------------------------------------- */
+/* Gap lives on the animated wrapper, not the inner panel: keeping the inner
+   content's box margin-free avoids margin-collapse skewing the measured
+   scrollHeight AnimatedHeight animates to. */
+.binds-list-anim {
+  margin-top: 16px;
+}
+
 .binds-list-wrap {
   border-radius: 12px;
   background: var(--panel);
   padding: 6px 0;
-  margin-top: 16px;
 }
 
 .binds-empty {
-  margin-top: 16px;
   padding: 48px 0;
   display: flex;
   flex-direction: column;
