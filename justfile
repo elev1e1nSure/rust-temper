@@ -27,10 +27,10 @@ check: typecheck lint fmt-check build
     cargo test --manifest-path src-tauri/Cargo.toml
 
 set-version VERSION:
-    @$v = "{{VERSION}}"; echo "setting version to $v"
-    @(Get-Content package.json -Raw) -replace '"version":\s*"[^"]*"', '"version": "$v"' | Set-Content package.json -NoNewline
-    @(Get-Content src-tauri/Cargo.toml -Raw) -replace '^version = "[^"]*"', 'version = "$v"' | Set-Content src-tauri/Cargo.toml -NoNewline
-    @(Get-Content src-tauri/tauri.conf.json -Raw) -replace '"version":\s*"[^"]*"', '"version": "$v"' | Set-Content src-tauri/tauri.conf.json -NoNewline
+    @echo "setting version to {{VERSION}}"
+    @(Get-Content package.json -Raw) -replace '"version":\s*"[^"]*"', '"version": "{{VERSION}}"' | Set-Content package.json -NoNewline
+    @(Get-Content src-tauri/Cargo.toml -Raw) -replace '(?m)^version = "[^"]*"', 'version = "{{VERSION}}"' | Set-Content src-tauri/Cargo.toml -NoNewline
+    @(Get-Content src-tauri/tauri.conf.json -Raw) -replace '"version":\s*"[^"]*"', '"version": "{{VERSION}}"' | Set-Content src-tauri/tauri.conf.json -NoNewline
 
 ci-build:
     pnpm install --frozen-lockfile
