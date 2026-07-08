@@ -1,11 +1,15 @@
 # RustTemper
 
+<div align="center">
+
 [![CI](https://github.com/elev1e1nSure/rust-temper/actions/workflows/ci.yml/badge.svg)](https://github.com/elev1e1nSure/rust-temper/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/elev1e1nSure/rust-temper?label=version)](https://github.com/elev1e1nSure/rust-temper/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2-ffc131?logo=tauri&logoColor=white)](https://tauri.app)
 
 ![Screenshot](docs/screenshot.png)
+
+</div>
 
 GUI-утилита для тонкой настройки конфигурационных файлов игры Rust.
 Без правки блокнотом, без гайдов на форумах. Все популярные твики и бинды --
