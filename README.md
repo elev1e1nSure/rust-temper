@@ -4,10 +4,6 @@
 [![Version](https://img.shields.io/github/v/release/elev1e1nSure/rust-temper?label=version)](https://github.com/elev1e1nSure/rust-temper/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2-ffc131?logo=tauri&logoColor=white)](https://tauri.app)
-[![Rust](https://img.shields.io/badge/Rust-2021-ed7422?logo=rust&logoColor=white)](https://www.rust-lang.org)
-[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Windows](https://img.shields.io/badge/platform-Windows-0078d6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 
 ![Screenshot](docs/screenshot.png)
 
