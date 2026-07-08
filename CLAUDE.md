@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-RustPatch — a Tauri (Rust backend) + React (TypeScript frontend) desktop GUI for editing the game Rust's config files: `keys.cfg` (keybinds) and `client.cfg` (graphics/tweaks). It auto-detects install paths via Steam's registry/`libraryfolders.vdf`, offers an interactive keyboard layout for rebinding, a known-command dictionary, and quality-tier sliders for graphics settings.
+RustTemper — a Tauri (Rust backend) + React (TypeScript frontend) desktop GUI for editing the game Rust's config files: `keys.cfg` (keybinds) and `client.cfg` (graphics/tweaks). It auto-detects install paths via Steam's registry/`libraryfolders.vdf`, offers an interactive keyboard layout for rebinding, a known-command dictionary, and quality-tier sliders for graphics settings.
 
 ## Commands
 

@@ -39,7 +39,7 @@ Adding a graphics setting: one `const Quality` + two command wrappers. Adding a 
 
 ## Conventions
 
-- Crate name is `rust_patch_lib` in Cargo.toml (not `rust-patch`) -- required on Windows to avoid bin/lib name collision.
+- Crate name is `rust_temper_lib` in Cargo.toml (not `rust-temper`) -- required on Windows to avoid bin/lib name collision.
 - User-facing error strings are Russian; log messages are English with `key=value` fields.
 - Rust DTOs use `#[serde(rename_all = "camelCase")]`. Frontend fields use camelCase, Rust source uses snake_case. Check the struct before assuming field names on either side.
 - Each page component has a co-located `.css` scoped to that page's root class.

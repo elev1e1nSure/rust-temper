@@ -1,7 +1,7 @@
-# RustPatch
+# RustTemper
 
-[![CI](https://github.com/elev1e1nSure/rust-patch/actions/workflows/ci.yml/badge.svg)](https://github.com/elev1e1nSure/rust-patch/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/release/elev1e1nSure/rust-patch?label=version)](https://github.com/elev1e1nSure/rust-patch/releases)
+[![CI](https://github.com/elev1e1nSure/rust-temper/actions/workflows/ci.yml/badge.svg)](https://github.com/elev1e1nSure/rust-temper/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/release/elev1e1nSure/rust-temper?label=version)](https://github.com/elev1e1nSure/rust-temper/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2-ffc131?logo=tauri&logoColor=white)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-2021-ed7422?logo=rust&logoColor=white)](https://www.rust-lang.org)
@@ -37,15 +37,15 @@ GUI-утилита для тонкой настройки конфигураци
 ### Готовый бинарник
 
 Скачайте последнюю версию со страницы
-[Releases](https://github.com/elev1e1nSure/rust-patch/releases).
+[Releases](https://github.com/elev1e1nSure/rust-temper/releases).
 
 Доступны установщики `.exe` (NSIS) и `.msi`.
 
 ### Сборка из исходников
 
 ```bash
-git clone https://github.com/elev1e1nSure/rust-patch.git
-cd rust-patch
+git clone https://github.com/elev1e1nSure/rust-temper.git
+cd rust-temper
 pnpm install
 pnpm tauri build
 ```
