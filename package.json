@@ -11,7 +11,9 @@
     "tauri": "tauri",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm build"
   },
   "dependencies": {
     "@mingcute/react": "^1.4.1",
