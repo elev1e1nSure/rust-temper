@@ -18,6 +18,7 @@ pnpm format                      # prettier --write .
 ```
 
 Rust backend (`src-tauri/`):
+
 ```bash
 cargo test                       # run all Rust unit tests (each module has #[cfg(test)] blocks)
 cargo test <test_name>           # run a single test

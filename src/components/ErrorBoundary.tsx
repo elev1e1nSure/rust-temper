@@ -25,9 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="error-boundary">
           <h2>Произошла ошибка</h2>
-          <pre className="error-boundary-pre">
-            {this.state.error.message}
-          </pre>
+          <pre className="error-boundary-pre">{this.state.error.message}</pre>
           <button
             type="button"
             className="error-boundary-btn"

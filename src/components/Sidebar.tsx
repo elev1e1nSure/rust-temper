@@ -18,7 +18,10 @@ export function Sidebar({
   const activeIndex = NAV_ITEMS.findIndex((item) => item.id === activePage);
 
   return (
-    <div className="sidebar" style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}>
+    <div
+      className="sidebar"
+      style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}
+    >
       <div className="nav">
         <div
           className="nav-indicator"

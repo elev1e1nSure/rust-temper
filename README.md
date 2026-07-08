@@ -4,10 +4,12 @@
 
 [![CI](https://github.com/elev1e1nSure/rust-temper/actions/workflows/ci.yml/badge.svg)](https://github.com/elev1e1nSure/rust-temper/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/elev1e1nSure/rust-temper?label=version)](https://github.com/elev1e1nSure/rust-temper/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](./LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2-ffc131?logo=tauri&logoColor=white)](https://tauri.app)
 
 ![Screenshot](docs/screenshot.png)
+
+[<img src="https://img.shields.io/badge/Скачать-Последнюю_версию_для_Windows-0078d4?style=for-the-badge&logo=windows&logoColor=white" height="40">](https://github.com/elev1e1nSure/rust-temper/releases/latest)
 
 </div>
 
@@ -32,16 +34,7 @@ GUI-утилита для тонкой настройки конфигураци
 **Настройки** — автоопределение папки игры через реестр Steam, ручной
 выбор каталога.
 
-## Установка
-
-### Готовый бинарник
-
-Скачайте последнюю версию со страницы
-[Releases](https://github.com/elev1e1nSure/rust-temper/releases).
-
-Доступен установщик `.exe` (NSIS).
-
-### Сборка из исходников
+## Установка (из исходников)
 
 ```bash
 git clone https://github.com/elev1e1nSure/rust-temper.git
@@ -70,4 +63,4 @@ pnpm tauri dev
 
 ## Лицензия
 
-[MIT](./LICENSE)
+[GPL-3.0](./LICENSE)
