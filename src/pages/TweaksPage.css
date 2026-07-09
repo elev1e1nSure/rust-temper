@@ -6,13 +6,16 @@
 }
 
 .setting-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
   margin-bottom: 4px;
 }
 
 .setting-desc {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
   color: var(--text-dim);
 }
 
@@ -37,7 +40,7 @@
 
 .tweak-row {
   border-top: none;
-  padding: 9px 20px;
+  padding: 11px 20px;
   gap: 24px;
 }
 
@@ -89,7 +92,7 @@
 }
 
 .toggle-switch.on {
-  background: #3b82f6;
+  background: #ce3f27;
 }
 
 .setting-row-clickable:hover .toggle-switch {
@@ -134,8 +137,9 @@
 }
 
 .accordion-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .accordion-arrow {
@@ -156,10 +160,10 @@
 
 .tweak-badge {
   margin-left: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  color: #ce3f27;
+  background: rgba(206, 63, 39, 0.12);
   border-radius: 999px;
   padding: 2px 8px;
   vertical-align: middle;
@@ -174,13 +178,14 @@
 }
 
 .tweak-slider-label {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-dim);
 }
 
 .tweak-slider {
   width: 100%;
-  accent-color: #3b82f6;
+  accent-color: #ce3f27;
   cursor: pointer;
 }
 
@@ -224,15 +229,16 @@
 .tweak-confirm-modal h2 {
   margin: 0;
   color: var(--text);
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1.25;
 }
 
 .tweak-confirm-modal p {
   margin: 12px 0 0;
-  color: var(--text-dim);
-  font-size: 13px;
-  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .tweak-confirm-actions {
@@ -249,8 +255,8 @@
   border-radius: 8px;
   color: var(--text);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
 }
 

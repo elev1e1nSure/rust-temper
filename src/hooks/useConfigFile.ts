@@ -38,7 +38,6 @@ export function useConfigFile() {
   };
 
   const autoDetectConfigPath = async () => {
-    const minDelay = new Promise((r) => setTimeout(r, 900));
     setDetecting(true);
     try {
       const found = await invoke<string | null>("find_rust_install");
@@ -51,8 +50,9 @@ export function useConfigFile() {
       console.error("Автопоиск установки Rust не удался:", err);
       return null;
     } finally {
-      await minDelay;
-      setDetecting(false);
+      window.setTimeout(() => {
+        setDetecting(false);
+      }, 250);
     }
   };
 

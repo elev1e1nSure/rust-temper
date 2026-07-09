@@ -3,7 +3,7 @@
   flex-shrink: 0;
   border-right: 2px solid #111113;
   background: #0a0a0c;
-  padding: 0 14px;
+  padding: 8px 14px 0;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -33,7 +33,7 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--nav-gap, 6px);
   position: relative;
 }
 
@@ -41,9 +41,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 38px;
-  background: var(--sidebar-active);
-  border-radius: 8px;
+  height: var(--nav-item-height, 46px);
+  background: linear-gradient(180deg, #222227 0%, #18181d 100%);
+  border-radius: 12px;
   pointer-events: none;
   z-index: 0;
   transform: translateY(var(--nav-y, 0px));
@@ -51,16 +51,16 @@
 }
 
 .nav-item {
-  height: 38px;
+  height: var(--nav-item-height, 46px);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 10px;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 0 14px;
+  border-radius: 12px;
   color: var(--text-dim);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.15px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   cursor: pointer;
@@ -77,10 +77,15 @@
 
 .nav-item svg {
   flex-shrink: 0;
+  filter: saturate(1.08);
 }
 
 .nav-item.active {
   color: var(--text);
+}
+
+.nav-item.active svg {
+  transform: scale(1.06);
 }
 
 .nav-item:hover:not(.active) {

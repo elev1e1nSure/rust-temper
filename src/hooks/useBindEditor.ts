@@ -56,6 +56,16 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     return counts;
   }, [binds]);
 
+  const occupiedKeys = useMemo(() => {
+    const occupied = new Set<string>();
+    for (const bind of binds) {
+      for (const key of parseCombo(bind.key).map(normalizeRustKey)) {
+        occupied.add(key);
+      }
+    }
+    return occupied;
+  }, [binds]);
+
   const filteredBinds = useMemo(() => {
     const query = search.trim().toLowerCase();
     const selectedSet = new Set(selectedKeys);
@@ -130,6 +140,7 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
     setSearch,
     selectedKeys,
     keyConflicts,
+    occupiedKeys,
     filteredBinds,
     nameFor,
     newBindIndex,

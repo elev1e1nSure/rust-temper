@@ -34,6 +34,9 @@
   flex: 1;
   min-width: 0;
   margin-bottom: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -41,7 +44,7 @@
 
 .graphics-preset-value {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   flex-shrink: 0;
@@ -62,10 +65,11 @@
   color: var(--text-dim);
   border: none;
   border-radius: 8px;
-  padding: 10px 16px;
+  padding: 11px 16px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 700;
   transition: background 0.15s ease;
 }
 
@@ -123,9 +127,9 @@
   color: var(--text-dim);
   border: none;
   border-radius: 6px;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -147,7 +151,7 @@
 }
 
 .graphics-row {
-  padding: 14px 20px;
+  padding: 15px 20px;
 }
 
 .graphics-row-header {
@@ -161,14 +165,24 @@
 .graphics-row-header .setting-name {
   flex: 1;
   min-width: 0;
+  margin-bottom: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .graphics-row-value {
-  font-size: 13px;
-  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -194,7 +208,7 @@
   inset: 0 auto 0 0;
   height: 100%;
   border-radius: 999px;
-  background: #3b82f6;
+  background: #ce3f27;
   pointer-events: none;
   width: var(--slider-pct, 0%);
 }
@@ -232,7 +246,7 @@
   position: absolute;
   inset: 7px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #ce3f27;
 }
 
 .graphics-slider-wrap:has(.graphics-slider-input:hover) .graphics-slider-track,
@@ -276,16 +290,17 @@
 }
 
 .graphics-preview-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   margin-bottom: 8px;
+  letter-spacing: 0;
 }
 
 .graphics-preview-desc {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  color: var(--text-dim);
-  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -323,9 +338,9 @@
 }
 
 .graphics-preview-art-text {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
   color: var(--text-dim);
   text-align: center;
   padding: 0 20px;
@@ -358,13 +373,13 @@
 
 .graphics-apply-btn {
   flex: 1;
-  background: #3b82f6;
+  background: #ce3f27;
   color: #fff;
   border: 1px solid transparent;
   border-radius: 8px;
   padding: 0 16px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: filter 0.15s ease;

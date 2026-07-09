@@ -63,6 +63,15 @@ const QUALITY_ROWS: QualityRow[] = [
     applyCmd: "apply_grass_quality",
   },
   {
+    key: "trees",
+    label: "Качество деревьев",
+    description:
+      "Плотность и детализация деревьев. Сильнее заметно в лесных зонах, где лишняя геометрия может просаживать FPS.",
+    tiers: ["Низкое", "Среднее", "Высокое"],
+    readCmd: "read_trees_quality",
+    applyCmd: "apply_trees_quality",
+  },
+  {
     key: "clouds",
     label: "Качество облаков",
     description:
@@ -88,6 +97,7 @@ const DEFAULT_VALUES: Record<string, number> = {
   lighting: 0,
   water: 0,
   grass: 1,
+  trees: 1,
   clouds: 0,
   smoothing: 0,
 };
@@ -104,6 +114,7 @@ const QUICK_PRESETS: {
       lighting: 0,
       water: 0,
       grass: 0,
+      trees: 1,
       clouds: 0,
       smoothing: 0,
     },
@@ -116,6 +127,7 @@ const QUICK_PRESETS: {
       lighting: 0,
       water: 0,
       grass: 0,
+      trees: 0,
       clouds: 0,
       smoothing: 0,
     },
@@ -128,6 +140,7 @@ const QUICK_PRESETS: {
       lighting: 1,
       water: 1,
       grass: 1,
+      trees: 1,
       clouds: 1,
       smoothing: 1,
     },
@@ -140,6 +153,7 @@ const QUICK_PRESETS: {
       lighting: 2,
       water: 2,
       grass: 2,
+      trees: 2,
       clouds: 3,
       smoothing: 3,
     },

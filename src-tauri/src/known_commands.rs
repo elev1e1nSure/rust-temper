@@ -71,10 +71,6 @@ pub fn presets() -> Vec<CommandPreset> {
         // Бой и оружие
         preset("Атака", "+attack"),
         preset(
-            "Автоатака",
-            "~attack",
-        ),
-        preset(
             "Атака (вторичная)",
             "+attack2",
         ),

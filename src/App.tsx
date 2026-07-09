@@ -18,12 +18,29 @@ import type { PageId } from "./navigation";
 import "./App.css";
 import "./binds.css";
 
+function presetKey(preset: CommandPreset): string {
+  return [preset.kind, preset.command, preset.defaultMode, preset.name].join(
+    ":",
+  );
+}
+
+function dedupeCommandPresets(presets: CommandPreset[]): CommandPreset[] {
+  const seen = new Set<string>();
+  return presets.filter((preset) => {
+    const key = presetKey(preset);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function App() {
   const [activePage, setActivePage] = useState<PageId>("binds");
   const [statusMessage, setStatusMessage] = useState<{
     type: "error" | "info";
     text: string;
   } | null>(null);
+  const [isLoadingBinds, setIsLoadingBinds] = useState(true);
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
   const [backupRefreshKey, setBackupRefreshKey] = useState(0);
   const configFile = useConfigFile();
@@ -34,7 +51,7 @@ function App() {
   // Load command dictionary
   useEffect(() => {
     invoke<CommandPreset[]>("get_known_commands")
-      .then(setCommandPresets)
+      .then((presets) => setCommandPresets(dedupeCommandPresets(presets)))
       .catch((err) =>
         console.error("Не удалось загрузить словарь команд:", err),
       );
@@ -46,6 +63,7 @@ function App() {
   useEffect(() => {
     if (autoDetectRan.current) return;
     autoDetectRan.current = true;
+    setIsLoadingBinds(true);
     configFile.autoDetectConfigPath().then((found) => {
       if (found) {
         configFile
@@ -55,6 +73,7 @@ function App() {
               bindEditor.setBinds(loaded);
             }
             bindsLoaded.current = true;
+            setIsLoadingBinds(false);
           })
           .catch((err) => {
             setStatusMessage({
@@ -62,6 +81,7 @@ function App() {
               text: `Не удалось прочитать keys.cfg: ${err}`,
             });
             bindsLoaded.current = true;
+            setIsLoadingBinds(false);
           });
       } else {
         setStatusMessage({
@@ -69,6 +89,7 @@ function App() {
           text: "Не удалось найти keys.cfg автоматически.",
         });
         bindsLoaded.current = true;
+        setIsLoadingBinds(false);
       }
     });
   }, []);
@@ -76,25 +97,33 @@ function App() {
   // Load binds when gamePath changes (from user input or auto-detection)
   const handleGamePathChange = useCallback((path: string) => {
     configFile.setGamePath(path);
+    setIsLoadingBinds(true);
     configFile
       .loadFromPath(path)
       .then((loaded) => {
         if (loaded) {
           bindEditor.setBinds(loaded);
         }
+        setIsLoadingBinds(false);
       })
       .catch((err) => {
         setStatusMessage({
           type: "error",
           text: `Не удалось прочитать keys.cfg: ${err}`,
         });
+        setIsLoadingBinds(false);
       });
   }, []);
 
   const reloadBindsFromCurrentPath = useCallback(async () => {
-    const loaded = await configFile.loadFromPath(configFile.gamePath);
-    if (loaded) {
-      bindEditor.setBinds(loaded);
+    setIsLoadingBinds(true);
+    try {
+      const loaded = await configFile.loadFromPath(configFile.gamePath);
+      if (loaded) {
+        bindEditor.setBinds(loaded);
+      }
+    } finally {
+      setIsLoadingBinds(false);
     }
   }, [bindEditor, configFile]);
 
@@ -190,6 +219,8 @@ function App() {
                   exitingBindIndex={bindEditor.exitingBindIndex}
                   keyConflicts={bindEditor.keyConflicts}
                   selectedKeys={bindEditor.selectedKeys}
+                  occupiedKeys={bindEditor.occupiedKeys}
+                  isLoading={isLoadingBinds}
                   nameFor={bindEditor.nameFor}
                   updateBind={bindEditor.updateBind}
                   handleKeyboardKey={bindEditor.handleKeyboardKey}

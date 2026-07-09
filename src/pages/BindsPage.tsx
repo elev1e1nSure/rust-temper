@@ -22,6 +22,8 @@ interface BindsPageProps {
   exitingBindIndex: number | null;
   keyConflicts: Map<string, number>;
   selectedKeys: string[];
+  occupiedKeys: ReadonlySet<string>;
+  isLoading: boolean;
   nameFor: (command: string) => string;
   updateBind: (idx: number, key: string, cmd: string) => void;
   handleKeyboardKey: (rustKey: string) => void;
@@ -45,6 +47,8 @@ export function BindsPage({
   exitingBindIndex,
   keyConflicts,
   selectedKeys,
+  occupiedKeys,
+  isLoading,
   nameFor,
   updateBind,
   handleKeyboardKey,
@@ -67,6 +71,9 @@ export function BindsPage({
     openCommandModal(kind, index);
   };
 
+  const showEmptyState = !isLoading && filteredBinds.length === 0;
+  const showList = !isLoading && filteredBinds.length > 0;
+
   return (
     <div className="page-container binds-page">
       <BindsHeader
@@ -78,15 +85,70 @@ export function BindsPage({
       />
 
       <div className="keyboard-panel">
-        <Keyboard selectedKeys={selectedKeys} onKeyClick={handleKeyboardKey} />
+        {isLoading ? (
+          <div className="kb-skeleton" aria-hidden="true">
+            <div className="kb-skeleton-row">
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-gap" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+            </div>
+            <div className="kb-skeleton-row">
+              <span className="kb-skeleton-key w-10" />
+              <span className="kb-skeleton-key w-7" />
+              <span className="kb-skeleton-key w-7" />
+              <span className="kb-skeleton-key w-7" />
+              <span className="kb-skeleton-key w-7" />
+              <span className="kb-skeleton-key w-12" />
+            </div>
+            <div className="kb-skeleton-row">
+              <span className="kb-skeleton-key w-12" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-14" />
+            </div>
+            <div className="kb-skeleton-row">
+              <span className="kb-skeleton-key w-14" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-8" />
+              <span className="kb-skeleton-key w-16" />
+            </div>
+          </div>
+        ) : (
+          <Keyboard
+            selectedKeys={selectedKeys}
+            occupiedKeys={occupiedKeys}
+            onKeyClick={handleKeyboardKey}
+          />
+        )}
       </div>
 
-      {filteredBinds.length === 0 ? (
+      {isLoading ? (
+        <div className="binds-skeleton" aria-hidden="true">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div className="binds-skeleton-row" key={index}>
+              <div className="binds-skeleton-action" />
+              <div className="binds-skeleton-key" />
+              <div className="binds-skeleton-delete" />
+            </div>
+          ))}
+        </div>
+      ) : showEmptyState ? (
         <div className="binds-empty">
-          <div className="binds-empty-icon">
+          <div className="binds-empty-icon binds-empty-icon-soft">
             <KeyboardIcon size={32} />
           </div>
-          <p>Биндов нет</p>
+          <p>Здесь пока пусто</p>
+          <span className="binds-empty-copy">
+            Выбери команду из списка или создай свой бинд вручную.
+          </span>
           <button
             className="btn-add"
             type="button"
@@ -96,7 +158,7 @@ export function BindsPage({
             Создать бинд
           </button>
         </div>
-      ) : (
+      ) : showList ? (
         <div className="binds-list-wrap">
           {filteredBinds.map(({ bind, sourceIndex }) => {
             const hasConflict =
@@ -141,7 +203,7 @@ export function BindsPage({
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {commandModalState !== null && (
         <CommandModal
@@ -149,6 +211,7 @@ export function BindsPage({
           target={commandModalState.target}
           filteredBinds={filteredBinds}
           selectedKeys={selectedKeys}
+          occupiedKeys={occupiedKeys}
           commandPresets={commandPresets}
           nameFor={nameFor}
           addBind={addBind}

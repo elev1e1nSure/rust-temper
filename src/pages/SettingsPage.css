@@ -15,12 +15,13 @@
 .setting-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .setting-label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05px;
   color: var(--text);
 }
 
@@ -28,9 +29,10 @@
   background: var(--row);
   border: 1px solid transparent;
   border-radius: 8px;
-  padding: 11px 14px;
+  padding: 12px 14px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
   outline: none;
   font-family: inherit;
 }
@@ -46,9 +48,10 @@
   color: var(--text-dim);
   border: 1px solid transparent;
   border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 10px 15px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
@@ -71,15 +74,16 @@
   padding: 0 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .backup-description {
-  max-width: 620px;
+  max-width: 700px;
   margin: 0;
-  color: var(--text-dim);
-  font-size: 13px;
-  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.65;
 }
 
 .backup-actions {
@@ -88,15 +92,16 @@
 }
 
 .btn-restore-backup {
-  min-height: 38px;
+  min-height: 42px;
   padding: 0 15px;
   border: 1px solid transparent;
   border-radius: 8px;
   background: var(--row);
   color: var(--text-dim);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -113,8 +118,9 @@
 
 .backup-message {
   color: #86efac;
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .backup-message.error {
@@ -145,7 +151,8 @@
 
 .accordion-title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.05px;
 }
 
 .accordion-arrow {

@@ -257,6 +257,21 @@ const GRASS: Quality = Quality {
     },
 };
 
+const TREES: Quality = Quality {
+    label: "качества деревьев",
+    log_name: "Tree quality",
+    tiers: &[
+        &[("tree.meshes", "10"), ("tree.quality", "30")],
+        &[("tree.meshes", "50"), ("tree.quality", "100")],
+        &[("tree.meshes", "100"), ("tree.quality", "150")],
+    ],
+    read: ReadSpec::Lookup {
+        key: "tree.meshes",
+        map: &[("10", 0), ("50", 1), ("100", 2)],
+        default: 1,
+    },
+};
+
 const CLOUDS: Quality = Quality {
     label: "качества облаков",
     log_name: "Clouds quality",
@@ -339,6 +354,16 @@ pub fn apply_grass_quality(path: String, tier: u32) -> Result<(), String> {
 #[tauri::command]
 pub fn read_grass_quality(path: String) -> Result<u32, String> {
     GRASS.read(&path)
+}
+
+#[tauri::command]
+pub fn apply_trees_quality(path: String, tier: u32) -> Result<(), String> {
+    TREES.apply(&path, tier)
+}
+
+#[tauri::command]
+pub fn read_trees_quality(path: String) -> Result<u32, String> {
+    TREES.read(&path)
 }
 
 #[tauri::command]

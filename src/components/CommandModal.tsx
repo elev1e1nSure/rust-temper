@@ -42,6 +42,7 @@ interface CommandModalProps {
   target: number | "new";
   filteredBinds: FilteredBind[];
   selectedKeys: string[];
+  occupiedKeys: ReadonlySet<string>;
   commandPresets: CommandPreset[];
   nameFor: (command: string) => string;
   addBind: (key: string, command: string) => void;
@@ -66,6 +67,15 @@ function modeFromCommand(command: string): ActionMode {
   return command.startsWith("~") ? "toggle" : "hold";
 }
 
+function presetListKey(preset: CommandPreset): string {
+  return [
+    preset.kind,
+    preset.command,
+    preset.defaultMode,
+    preset.name,
+  ].join(":");
+}
+
 function getCssZoomFactor(): number {
   const zoom = parseFloat(getComputedStyle(document.documentElement).zoom);
   return Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
@@ -76,6 +86,7 @@ export function CommandModal({
   target,
   filteredBinds,
   selectedKeys,
+  occupiedKeys,
   commandPresets,
   nameFor,
   addBind,
@@ -163,6 +174,15 @@ export function CommandModal({
     if (manualModalClosing) return;
     setManualModalClosing(true);
   }, [manualModalClosing]);
+
+  const setModalKind = useCallback((nextKind: CommandModalKind) => {
+    setCommandModal((modal) =>
+      modal.kind === nextKind ? modal : { ...modal, kind: nextKind },
+    );
+    setManualSearch("");
+    setManualCustomMode(false);
+    setManualCustomCommand("");
+  }, []);
 
   const handleManualModalAnimationEnd = (
     e: React.AnimationEvent<HTMLDivElement>,
@@ -411,13 +431,15 @@ export function CommandModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="manual-modal-header">
-          <h2>
-            {commandModal.step === "configure"
-              ? "Настройка бинда"
-              : commandModal.kind === "single"
-                ? "Простые команды"
-                : "Составные команды"}
-          </h2>
+          <div className="manual-modal-header-main">
+            <h2>
+              {commandModal.step === "configure"
+                ? "Настройка бинда"
+                : commandModal.kind === "single"
+                  ? "Простые команды"
+                  : "Составные команды"}
+            </h2>
+          </div>
           <button
             className="manual-modal-close"
             type="button"
@@ -452,6 +474,31 @@ export function CommandModal({
               )}
             </div>
 
+            <div
+              className="manual-modal-kind-switch"
+              aria-label="Тип команд"
+              role="tablist"
+            >
+              <button
+                className={commandModal.kind === "single" ? "active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={commandModal.kind === "single"}
+                onClick={() => setModalKind("single")}
+              >
+                Простые
+              </button>
+              <button
+                className={commandModal.kind === "combination" ? "active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={commandModal.kind === "combination"}
+                onClick={() => setModalKind("combination")}
+              >
+                Составные
+              </button>
+            </div>
+
             {commandModal.kind === "single" && manualCustomMode && (
               <div className="manual-modal-custom-row">
                 <input
@@ -477,7 +524,7 @@ export function CommandModal({
 
             <div className="manual-modal-list">
               {manualPresets.map((preset) => (
-                <div className="manual-modal-row" key={preset.command}>
+                <div className="manual-modal-row" key={presetListKey(preset)}>
                   <div className="manual-modal-row-icon">
                     <CommandIcon />
                   </div>
@@ -540,6 +587,7 @@ export function CommandModal({
               <div className="bind-config-keyboard">
                 <Keyboard
                   selectedKeys={draftKeys}
+                  occupiedKeys={occupiedKeys}
                   exitingKeys={exitingDraftKeys}
                   onKeyClick={toggleDraftKey}
                 />

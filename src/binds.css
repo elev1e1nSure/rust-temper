@@ -12,12 +12,17 @@
 
 .binds-empty {
   margin-top: 16px;
-  padding: 48px 0;
+  padding: 44px 28px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
   color: var(--text-dim);
+  text-align: center;
 }
 
 .binds-empty-icon {
@@ -31,11 +36,80 @@
   color: var(--text-dim);
 }
 
+.binds-empty-icon-soft {
+  width: 72px;
+  height: 72px;
+}
+
 .binds-empty p {
   margin: 0;
   color: var(--text);
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.binds-empty-copy {
+  max-width: 420px;
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.binds-skeleton {
+  margin-top: 16px;
+  padding: 8px 0;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.binds-skeleton-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px 38px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+}
+
+.binds-skeleton-action,
+.binds-skeleton-key,
+.binds-skeleton-delete,
+.kb-skeleton-key {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.binds-skeleton-action::after,
+.binds-skeleton-key::after,
+.binds-skeleton-delete::after,
+.kb-skeleton-key::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: bindsSkeletonShimmer 1.2s ease-in-out infinite;
+}
+
+.binds-skeleton-action {
+  height: 44px;
+}
+
+.binds-skeleton-key {
+  height: 42px;
+}
+
+.binds-skeleton-delete {
+  width: 38px;
+  height: 38px;
 }
 
 /* Key badge sits on the right (action -> key), fixed width. */
@@ -70,6 +144,27 @@
   padding: 10px 0;
   border: none;
   background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.binds-page .btn-add {
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.binds-page .action-cell {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.binds-page .key-badge {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .key-filter-chip {
@@ -77,16 +172,20 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  height: 26px;
-  padding: 0 6px 0 10px;
+  height: 28px;
+  padding: 0 8px 0 11px;
   border: none;
-  border-radius: 6px;
-  background: rgba(59, 130, 246, 0.18);
+  border-radius: 7px;
+  background: rgba(206, 63, 39, 0.72);
   color: var(--text);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .key-filter-chip.exiting {
@@ -97,7 +196,11 @@
 .key-filter-chip-x {
   font-size: 15px;
   line-height: 1;
-  color: var(--text-dim);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.key-filter-chip:hover {
+  background: rgba(206, 63, 39, 0.8);
 }
 
 .key-filter-chip:hover .key-filter-chip-x {
@@ -127,8 +230,9 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   background: rgba(0, 0, 0, 0.72);
   user-select: auto;
@@ -162,6 +266,7 @@
 .manual-modal {
   width: min(640px, 100%);
   max-height: min(720px, calc(100vh - 48px));
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   padding: 28px;
@@ -203,16 +308,61 @@
 }
 
 .manual-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 14px;
+  padding-bottom: 12px;
+  background: var(--panel);
+}
+
+.manual-modal-header-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .manual-modal-header h2 {
   margin: 0;
   color: var(--text);
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.manual-modal-kind-switch {
+  display: flex;
+  width: 100%;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--row);
+  margin-bottom: 10px;
+}
+
+.manual-modal-kind-switch button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.manual-modal-kind-switch button.active {
+  background: #3a3a42;
+  color: var(--text);
 }
 
 .manual-modal-close {
@@ -233,6 +383,16 @@
   background: #222228;
 }
 
+@media (max-width: 720px) {
+  .manual-modal-header {
+    align-items: stretch;
+  }
+
+  .manual-modal-header-main {
+    flex: 1;
+  }
+}
+
 .manual-modal-toolbar {
   display: flex;
   gap: 8px;
@@ -251,7 +411,8 @@
 .manual-modal-search input {
   background: none;
   padding: 0;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .manual-modal-plus {
@@ -276,8 +437,8 @@
 
 .manual-modal-plus.active {
   color: var(--text);
-  background: rgba(59, 130, 246, 0.22);
-  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(206, 63, 39, 0.22);
+  border-color: rgba(206, 63, 39, 0.4);
 }
 
 .manual-modal-custom-row {
@@ -362,7 +523,8 @@
 .manual-modal-row-name {
   color: var(--text);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -371,6 +533,7 @@
 .manual-modal-row-id {
   color: var(--text-dim);
   font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -383,15 +546,15 @@
   border-radius: 8px;
   background: var(--key-bg);
   color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .manual-modal-add-btn:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.28);
+  background: rgba(206, 63, 39, 0.28);
 }
 
 .manual-modal-add-btn:disabled {
@@ -403,7 +566,8 @@
   padding: 24px 0;
   text-align: center;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Bind setup ------------------------------------------------------------- */
@@ -435,14 +599,16 @@
 
 .bind-config-label {
   color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .bind-config-value {
   min-height: 20px;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .bind-config-animated-height {
@@ -488,8 +654,8 @@
   border-radius: 8px;
   background: var(--key-bg);
   color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
 }
 
@@ -543,7 +709,7 @@
 }
 
 .bind-config-action.dragging {
-  border: 1.5px dashed var(--accent, #6e7bff);
+  border: 1.5px dashed var(--accent, #ce3f27);
   background: transparent;
 }
 
@@ -630,8 +796,8 @@ body:has(.bind-config-action.dragging) {
   background: transparent;
   color: var(--text-dim);
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -651,7 +817,7 @@ body:has(.bind-config-action.dragging) {
   border-radius: 8px;
   color: var(--text);
   font-family: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -695,7 +861,7 @@ body:has(.bind-config-action.dragging) {
 .bind-config-cancel,
 .bind-config-submit {
   padding: 10px 18px;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .bind-config-cancel {
@@ -703,11 +869,11 @@ body:has(.bind-config-action.dragging) {
 }
 
 .bind-config-submit {
-  background: rgba(59, 130, 246, 0.34);
+  background: rgba(206, 63, 39, 0.34);
 }
 
 .bind-config-submit:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.48);
+  background: rgba(206, 63, 39, 0.48);
 }
 
 .bind-config-add-action:active,
@@ -793,6 +959,52 @@ body:has(.bind-config-action.dragging) {
 
 .keyboard-panel .kb {
   min-width: 0;
+}
+
+.kb-skeleton {
+  width: 100%;
+  min-width: 920px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kb-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.kb-skeleton-gap {
+  flex: 1 1 40px;
+}
+
+.kb-skeleton-key {
+  height: 34px;
+}
+
+.kb-skeleton-key.w-7 {
+  flex: 7 1 0;
+}
+
+.kb-skeleton-key.w-8 {
+  flex: 8 1 0;
+}
+
+.kb-skeleton-key.w-10 {
+  flex: 10 1 0;
+}
+
+.kb-skeleton-key.w-12 {
+  flex: 12 1 0;
+}
+
+.kb-skeleton-key.w-14 {
+  flex: 14 1 0;
+}
+
+.kb-skeleton-key.w-16 {
+  flex: 16 1 0;
 }
 
 .kb {
@@ -904,6 +1116,8 @@ body:has(.bind-config-action.dragging) {
   transition:
     background 0.15s ease,
     color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.18s ease,
     filter 0.15s ease;
 }
 
@@ -918,8 +1132,17 @@ body:has(.bind-config-action.dragging) {
 
 /* Key currently selected as the list filter. */
 .kb-key.selected {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(206, 63, 39, 0.72);
   color: var(--text);
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.kb-key.occupied:not(.selected) {
+  color: rgba(142, 142, 147, 0.52);
+  background: color-mix(in srgb, var(--key-bg) 72%, black 28%);
+  border-color: rgba(0, 0, 0, 0.24);
+  box-shadow: none;
 }
 
 .kb-key.selected.exiting {
@@ -928,12 +1151,22 @@ body:has(.bind-config-action.dragging) {
 
 @keyframes kbKeyDeselect {
   from {
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(206, 63, 39, 0.72);
+    border-color: transparent;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   to {
     background: var(--key-bg);
     color: var(--text-dim);
+    border-color: transparent;
+    box-shadow: none;
+  }
+}
+
+@keyframes bindsSkeletonShimmer {
+  to {
+    transform: translateX(100%);
   }
 }
 

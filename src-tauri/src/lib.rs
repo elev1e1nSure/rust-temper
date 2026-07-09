@@ -34,6 +34,8 @@ pub fn run() {
             graphics::read_lighting_quality,
             graphics::apply_grass_quality,
             graphics::read_grass_quality,
+            graphics::apply_trees_quality,
+            graphics::read_trees_quality,
             graphics::apply_clouds_quality,
             graphics::read_clouds_quality,
             graphics::apply_smoothing_quality,
