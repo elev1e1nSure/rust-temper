@@ -27,10 +27,3 @@
   letter-spacing: -0.02em;
   color: var(--text);
 }
-
-.optimization-placeholder p {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-dim);
-}
