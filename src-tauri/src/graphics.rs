@@ -304,86 +304,30 @@ const SMOOTHING: Quality = Quality {
     },
 };
 
-// --- Command wrappers --------------------------------------------------------
+// --- Commands ---------------------------------------------------------------
 
-#[tauri::command]
-pub fn apply_shadow_quality(path: String, tier: u32) -> Result<(), String> {
-    SHADOWS.apply(&path, tier)
+fn quality_by_key(setting: &str) -> Result<&'static Quality, String> {
+    match setting {
+        "shadows" => Ok(&SHADOWS),
+        "textures" => Ok(&TEXTURES),
+        "water" => Ok(&WATER),
+        "lighting" => Ok(&LIGHTING),
+        "grass" => Ok(&GRASS),
+        "trees" => Ok(&TREES),
+        "clouds" => Ok(&CLOUDS),
+        "smoothing" => Ok(&SMOOTHING),
+        _ => Err(format!("Неизвестная настройка графики: {setting}")),
+    }
 }
 
 #[tauri::command]
-pub fn read_shadow_quality(path: String) -> Result<u32, String> {
-    SHADOWS.read(&path)
+pub fn apply_graphics_quality(path: String, setting: String, tier: u32) -> Result<(), String> {
+    quality_by_key(&setting)?.apply(&path, tier)
 }
 
 #[tauri::command]
-pub fn apply_texture_quality(path: String, tier: u32) -> Result<(), String> {
-    TEXTURES.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_texture_quality(path: String) -> Result<u32, String> {
-    TEXTURES.read(&path)
-}
-
-#[tauri::command]
-pub fn apply_water_quality(path: String, tier: u32) -> Result<(), String> {
-    WATER.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_water_quality(path: String) -> Result<u32, String> {
-    WATER.read(&path)
-}
-
-#[tauri::command]
-pub fn apply_lighting_quality(path: String, tier: u32) -> Result<(), String> {
-    LIGHTING.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_lighting_quality(path: String) -> Result<u32, String> {
-    LIGHTING.read(&path)
-}
-
-#[tauri::command]
-pub fn apply_grass_quality(path: String, tier: u32) -> Result<(), String> {
-    GRASS.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_grass_quality(path: String) -> Result<u32, String> {
-    GRASS.read(&path)
-}
-
-#[tauri::command]
-pub fn apply_trees_quality(path: String, tier: u32) -> Result<(), String> {
-    TREES.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_trees_quality(path: String) -> Result<u32, String> {
-    TREES.read(&path)
-}
-
-#[tauri::command]
-pub fn apply_clouds_quality(path: String, tier: u32) -> Result<(), String> {
-    CLOUDS.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_clouds_quality(path: String) -> Result<u32, String> {
-    CLOUDS.read(&path)
-}
-
-#[tauri::command]
-pub fn apply_smoothing_quality(path: String, tier: u32) -> Result<(), String> {
-    SMOOTHING.apply(&path, tier)
-}
-
-#[tauri::command]
-pub fn read_smoothing_quality(path: String) -> Result<u32, String> {
-    SMOOTHING.read(&path)
+pub fn read_graphics_quality(path: String, setting: String) -> Result<u32, String> {
+    quality_by_key(&setting)?.read(&path)
 }
 
 #[cfg(test)]
@@ -652,7 +596,7 @@ mod tests {
         assert_eq!(SHADOWS.read(path.to_str().unwrap()).unwrap(), 0);
     }
 
-    // ── Command wrappers ─────────────────────────────────────────────────────
+    // ── Commands ─────────────────────────────────────────────────────────────
 
     #[test]
     fn command_apply_shadow_quality() {
@@ -660,8 +604,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_shadow_quality(path.clone(), 1).unwrap();
-        assert_eq!(read_shadow_quality(path).unwrap(), 1);
+        apply_graphics_quality(path.clone(), "shadows".into(), 1).unwrap();
+        assert_eq!(read_graphics_quality(path, "shadows".into()).unwrap(), 1);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -670,7 +614,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("gfx_cmd_sr_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
-        assert_eq!(read_shadow_quality(path).unwrap(), 0);
+        assert_eq!(read_graphics_quality(path, "shadows".into()).unwrap(), 0);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -680,8 +624,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_texture_quality(path.clone(), 2).unwrap();
-        assert_eq!(read_texture_quality(path).unwrap(), 2);
+        apply_graphics_quality(path.clone(), "textures".into(), 2).unwrap();
+        assert_eq!(read_graphics_quality(path, "textures".into()).unwrap(), 2);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -691,8 +635,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_water_quality(path.clone(), 1).unwrap();
-        assert_eq!(read_water_quality(path).unwrap(), 1);
+        apply_graphics_quality(path.clone(), "water".into(), 1).unwrap();
+        assert_eq!(read_graphics_quality(path, "water".into()).unwrap(), 1);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -702,8 +646,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_lighting_quality(path.clone(), 2).unwrap();
-        assert_eq!(read_lighting_quality(path).unwrap(), 2);
+        apply_graphics_quality(path.clone(), "lighting".into(), 2).unwrap();
+        assert_eq!(read_graphics_quality(path, "lighting".into()).unwrap(), 2);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -713,8 +657,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_grass_quality(path.clone(), 0).unwrap();
-        assert_eq!(read_grass_quality(path).unwrap(), 0);
+        apply_graphics_quality(path.clone(), "grass".into(), 0).unwrap();
+        assert_eq!(read_graphics_quality(path, "grass".into()).unwrap(), 0);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -724,8 +668,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_clouds_quality(path.clone(), 2).unwrap();
-        assert_eq!(read_clouds_quality(path).unwrap(), 2);
+        apply_graphics_quality(path.clone(), "clouds".into(), 2).unwrap();
+        assert_eq!(read_graphics_quality(path, "clouds".into()).unwrap(), 2);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -735,8 +679,8 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        apply_smoothing_quality(path.clone(), 3).unwrap();
-        assert_eq!(read_smoothing_quality(path).unwrap(), 3);
+        apply_graphics_quality(path.clone(), "smoothing".into(), 3).unwrap();
+        assert_eq!(read_graphics_quality(path, "smoothing".into()).unwrap(), 3);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -746,7 +690,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg").to_string_lossy().to_string();
         std::fs::write(&path, b"").unwrap();
-        let result = apply_shadow_quality(path, 99);
+        let result = apply_graphics_quality(path, "shadows".into(), 99);
         assert!(result.is_err());
         let _ = std::fs::remove_dir_all(&dir);
     }

@@ -10,10 +10,6 @@ interface QualityRow {
   label: string;
   description: string;
   tiers: string[];
-  /** Tauri command that reads the current tier from client.cfg on mount. */
-  readCmd: string;
-  /** Tauri command that writes the selected tier back to client.cfg. */
-  applyCmd: string;
 }
 
 const QUALITY_ROWS: QualityRow[] = [
@@ -23,8 +19,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Влияет на резкость и дальность прорисовки теней. Сильнее всего сказывается на FPS в помещениях и лесах.",
     tiers: ["Производительность", "Качество"],
-    readCmd: "read_shadow_quality",
-    applyCmd: "apply_shadow_quality",
   },
   {
     key: "textures",
@@ -32,8 +26,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Разрешение текстур построек, предметов и ландшафта. Требует больше видеопамяти на высоких значениях.",
     tiers: ["Картошка", "Низкое", "Среднее", "Высокое"],
-    readCmd: "read_texture_quality",
-    applyCmd: "apply_texture_quality",
   },
   {
     key: "lighting",
@@ -41,8 +33,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Количество источников света и качество их обсчёта в кадре. Слабо влияет на FPS.",
     tiers: ["Низкое", "Среднее", "Высокое"],
-    readCmd: "read_lighting_quality",
-    applyCmd: "apply_lighting_quality",
   },
   {
     key: "water",
@@ -50,8 +40,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Качество воды и отражений. Даёт заметный прирост FPS у океана, рек и нефтевышек при снижении.",
     tiers: ["Низкое", "Среднее", "Высокое"],
-    readCmd: "read_water_quality",
-    applyCmd: "apply_water_quality",
   },
   {
     key: "grass",
@@ -59,8 +47,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Чем выше качество, тем сложнее стрелять. Трава оказывает минимальное влияние на FPS, при выборе руководствуйтесь своим стилем игры.",
     tiers: ["Отключено", "Баланс", "Качество"],
-    readCmd: "read_grass_quality",
-    applyCmd: "apply_grass_quality",
   },
   {
     key: "trees",
@@ -68,8 +54,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Плотность и детализация деревьев. Сильнее заметно в лесных зонах, где лишняя геометрия может просаживать FPS.",
     tiers: ["Низкое", "Среднее", "Высокое"],
-    readCmd: "read_trees_quality",
-    applyCmd: "apply_trees_quality",
   },
   {
     key: "clouds",
@@ -77,8 +61,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Детализация и плотность облаков. Минимальное влияние на производительность.",
     tiers: ["Минимальное", "Низкое", "Среднее", "Высокое"],
-    readCmd: "read_clouds_quality",
-    applyCmd: "apply_clouds_quality",
   },
   {
     key: "smoothing",
@@ -86,8 +68,6 @@ const QUALITY_ROWS: QualityRow[] = [
     description:
       "Сглаживает зубчатые края объектов. Высокие значения дают более мягкую картинку, но стоят больше FPS.",
     tiers: ["Отключено", "Низкое", "Среднее", "Высокое"],
-    readCmd: "read_smoothing_quality",
-    applyCmd: "apply_smoothing_quality",
   },
 ];
 
@@ -199,7 +179,10 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
     try {
       const results = await Promise.all(
         QUALITY_ROWS.map((row) =>
-          invoke<number>(row.readCmd, { path: clientCfgPath })
+          invoke<number>("read_graphics_quality", {
+            path: clientCfgPath,
+            setting: row.key,
+          })
             .then((tier) => [row.key, tier] as const)
             .catch((err) => {
               console.error(`Не удалось прочитать «${row.label}»:`, err);
@@ -265,8 +248,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
 
     try {
       for (const row of QUALITY_ROWS) {
-        await invoke(row.applyCmd, {
+        await invoke("apply_graphics_quality", {
           path: clientCfgPath,
+          setting: row.key,
           tier: values[row.key] ?? 0,
         });
       }
