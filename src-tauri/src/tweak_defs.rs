@@ -102,8 +102,6 @@ fn build_registry() -> Vec<TweakDef> {
                 ("client.headbob", "False", "True"),
                 ("client.hurtpunch", "False", "True"),
                 ("graphicssettings.particleraycastbudget", "0", "100"),
-                ("graphicssettings.pixellightcount", "0", "4"),
-                ("water.quality", "0", "2"),
                 ("render.instanced_rendering", "0", "1"),
                 ("client.hascompletedtutorial", "True", "False"),
             ]),

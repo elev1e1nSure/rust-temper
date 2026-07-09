@@ -166,12 +166,12 @@ const WATER: Quality = Quality {
     label: "качества воды",
     log_name: "Water quality",
     tiers: &[
-        &[("water.reflections", "0")],
-        &[("water.reflections", "1")],
-        &[("water.reflections", "2")],
+        &[("water.quality", "0"), ("water.reflections", "0")],
+        &[("water.quality", "1"), ("water.reflections", "1")],
+        &[("water.quality", "2"), ("water.reflections", "2")],
     ],
     read: ReadSpec::Lookup {
-        key: "water.reflections",
+        key: "water.quality",
         map: &[("0", 0), ("1", 1), ("2", 2)],
         default: 0,
     },
@@ -184,15 +184,39 @@ const LIGHTING: Quality = Quality {
         &[
             ("graphics.contactshadows", "False"),
             ("effects.ao", "False"),
+            ("graphicssettings.pixellightcount", "0"),
         ],
-        &[("graphics.contactshadows", "False"), ("effects.ao", "True")],
-        &[("graphics.contactshadows", "True"), ("effects.ao", "True")],
+        &[
+            ("graphics.contactshadows", "False"),
+            ("effects.ao", "True"),
+            ("graphicssettings.pixellightcount", "2"),
+        ],
+        &[
+            ("graphics.contactshadows", "True"),
+            ("effects.ao", "True"),
+            ("graphicssettings.pixellightcount", "4"),
+        ],
     ],
     read: ReadSpec::Custom(read_lighting_tier),
 };
 
-/// Lighting tier is defined by two independent flags, so it needs a joint check.
+/// Prefer the direct light-count setting; older configs may only have AO/contact shadows.
 fn read_lighting_tier(parsed: &BTreeMap<String, String>) -> u32 {
+    match parsed
+        .get("graphicssettings.pixellightcount")
+        .map(String::as_str)
+    {
+        Some("0") => return 0,
+        Some("2") => return 1,
+        Some("4") => return 2,
+        Some(value) => {
+            log::warn!(
+                "Unexpected graphicssettings.pixellightcount value: {value:?}, falling back to AO/contact shadows"
+            );
+        }
+        None => {}
+    }
+
     let ao = parsed.get("effects.ao").map(String::as_str).unwrap_or("");
     let contact = parsed
         .get("graphics.contactshadows")
@@ -441,7 +465,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("graphics_test_w0_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg");
-        std::fs::write(&path, b"water.reflections \"1\"\n").unwrap();
+        std::fs::write(&path, b"water.quality \"1\"\nwater.reflections \"1\"\n").unwrap();
         assert_eq!(WATER.read(path.to_str().unwrap()).unwrap(), 1);
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -451,7 +475,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("graphics_test_w2_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg");
-        std::fs::write(&path, b"water.reflections \"2\"\n").unwrap();
+        std::fs::write(&path, b"water.quality \"2\"\nwater.reflections \"2\"\n").unwrap();
         assert_eq!(WATER.read(path.to_str().unwrap()).unwrap(), 2);
         let _ = std::fs::remove_dir_all(&dir);
     }
