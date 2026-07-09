@@ -75,8 +75,8 @@ const QUALITY_ROWS: QualityRow[] = [
     key: "smoothing",
     label: "Сглаживание",
     description:
-      "Сглаживает зубчатые края объектов. TAA даёт лучшую картинку, но стоит больше FPS, чем FXAA.",
-    tiers: ["Отключено", "FXAA", "SMAA", "TAA"],
+      "Сглаживает зубчатые края объектов. Высокие значения дают более мягкую картинку, но стоят больше FPS.",
+    tiers: ["Отключено", "Низкое", "Среднее", "Высокое"],
     readCmd: "read_smoothing_quality",
     applyCmd: "apply_smoothing_quality",
   },
