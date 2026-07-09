@@ -251,11 +251,9 @@ export function TweaksPage({ gamePath }: TweaksPageProps) {
   };
 
   const requestToggle = (tweak: TweakDef) => {
-    if (isOn(tweak) && !isManaged(tweak)) {
-      setUnmanagedTweak(tweak);
-      return;
-    }
-    void toggleTweak(tweak);
+    // Legacy "enabled manually" confirmation gate disabled: always force so
+    // toggling an unmanaged-but-matching tweak just works instead of warning.
+    void toggleTweak(tweak, true);
   };
 
   const forceDisableUnmanagedTweak = async () => {
