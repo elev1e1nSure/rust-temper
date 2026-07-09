@@ -97,9 +97,10 @@ export function CommandModal({
     step: "select",
   });
   const [manualModalClosing, setManualModalClosing] = useState(false);
-  const [kindSlideDirection, setKindSlideDirection] = useState<
-    "left" | "right"
-  >("right");
+  const [kindSlide, setKindSlide] = useState<{
+    kind: CommandModalKind;
+    direction: "left" | "right";
+  } | null>(null);
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
@@ -179,12 +180,14 @@ export function CommandModal({
   const setModalKind = useCallback((nextKind: CommandModalKind) => {
     setCommandModal((modal) => {
       if (modal.kind === nextKind) return modal;
-      setKindSlideDirection(
-        MODAL_KIND_ORDER.indexOf(nextKind) >
+      setKindSlide({
+        kind: nextKind,
+        direction:
+          MODAL_KIND_ORDER.indexOf(nextKind) >
           MODAL_KIND_ORDER.indexOf(modal.kind)
-          ? "right"
-          : "left",
-      );
+            ? "right"
+            : "left",
+      });
       return { ...modal, kind: nextKind };
     });
     setManualSearch("");
@@ -531,7 +534,11 @@ export function CommandModal({
             )}
 
             <div
-              className={`manual-modal-list-wrap slide-${kindSlideDirection}`}
+              className={`manual-modal-list-wrap ${
+                kindSlide?.kind === commandModal.kind
+                  ? `slide-${kindSlide.direction}`
+                  : ""
+              }`}
               key={commandModal.kind}
             >
               <div className="manual-modal-list">
@@ -576,11 +583,6 @@ export function CommandModal({
                       <span
                         className={`bind-config-key-group ${exitingDraftKeys.has(key) ? "exiting" : ""}`}
                         key={key}
-                        style={
-                          {
-                            "--anim-delay": `${index * 35}ms`,
-                          } as React.CSSProperties
-                        }
                       >
                         <span className="bind-config-key-card">
                           {keyDisplayName(key)}
@@ -611,7 +613,7 @@ export function CommandModal({
               <div className="bind-config-label">Действия</div>
               <AnimatedHeight className="bind-config-actions-height">
                 <div className="bind-config-actions">
-                  {draftActions.map((action, index) => (
+                  {draftActions.map((action) => (
                     <div
                       ref={(el) => {
                         if (el) actionRowRefs.current.set(action.id, el);
@@ -619,11 +621,6 @@ export function CommandModal({
                       }}
                       className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""}`}
                       key={action.id}
-                      style={
-                        {
-                          "--anim-delay": `${index * 40}ms`,
-                        } as React.CSSProperties
-                      }
                     >
                       {commandModal.kind === "single" &&
                         draftActions.length > 1 && (

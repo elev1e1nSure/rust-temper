@@ -273,34 +273,34 @@
   background: var(--panel);
   user-select: auto;
   transform-origin: center;
-  animation: manualModalIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: manualModalIn 0.15s ease forwards;
 }
 
 .manual-modal-backdrop.closing .manual-modal {
-  animation: manualModalOut 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: manualModalOut 0.15s ease forwards;
 }
 
 @keyframes manualModalIn {
   from {
     opacity: 0;
-    transform: scale(0.9) translateY(10px);
+    transform: scale(0.95);
   }
 
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
 }
 
 @keyframes manualModalOut {
   from {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
 
   to {
     opacity: 0;
-    transform: scale(0.94) translateY(6px);
+    transform: scale(0.95);
   }
 }
 
@@ -518,27 +518,6 @@
   padding: 14px 16px;
   border-radius: 10px;
   background: var(--row);
-  animation: bindConfigItemIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-.manual-modal-row:nth-child(2) {
-  animation-delay: 25ms;
-}
-
-.manual-modal-row:nth-child(3) {
-  animation-delay: 50ms;
-}
-
-.manual-modal-row:nth-child(4) {
-  animation-delay: 75ms;
-}
-
-.manual-modal-row:nth-child(5) {
-  animation-delay: 100ms;
-}
-
-.manual-modal-row:nth-child(n + 6) {
-  animation-delay: 125ms;
 }
 
 .manual-modal-row-icon {
@@ -621,7 +600,6 @@
   flex-direction: column;
   gap: 22px;
   user-select: auto;
-  animation: bindConfigContentIn 0.22s ease-out both;
 }
 
 .bind-config-section {
@@ -629,11 +607,6 @@
   flex-direction: column;
   gap: 10px;
   user-select: auto;
-  animation: bindConfigSectionIn 0.24s ease-out both;
-}
-
-.bind-config-section:nth-child(2) {
-  animation-delay: 55ms;
 }
 
 .bind-config-label {
@@ -673,11 +646,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  animation-name: bindConfigKeyIn;
-  animation-duration: 0.14s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: both;
-  animation-delay: var(--anim-delay, 0ms);
 }
 
 .bind-config-key-group.exiting {
@@ -736,11 +704,6 @@
   border-radius: var(--radius-control);
   background: var(--row);
   transform-origin: center left;
-  animation-name: bindConfigItemIn;
-  animation-duration: 0.22s;
-  animation-timing-function: cubic-bezier(0.2, 0.85, 0.25, 1.1);
-  animation-fill-mode: both;
-  animation-delay: var(--anim-delay, 0ms);
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
@@ -885,7 +848,6 @@ body:has(.bind-config-action.dragging) {
   justify-content: flex-end;
   gap: 10px;
   padding-top: 2px;
-  animation: bindConfigSectionIn 0.24s 100ms ease-out both;
 }
 
 .bind-config-cancel,
@@ -916,54 +878,6 @@ body:has(.bind-config-action.dragging) {
 .bind-config-submit:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-@keyframes bindConfigContentIn {
-  from {
-    opacity: 0;
-    transform: scale(0.985) translateY(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes bindConfigSectionIn {
-  from {
-    opacity: 0;
-    transform: translateY(7px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bindConfigItemIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes bindConfigKeyIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 @keyframes bindKeyOut {
