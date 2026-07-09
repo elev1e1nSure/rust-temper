@@ -224,7 +224,8 @@
 
 /* Command-list modal ("Создать вручную" / click a bind's action) --------- */
 .manual-modal-backdrop {
-  --manual-modal-edge-gap: clamp(10px, 4dvh, 24px);
+  --manual-modal-edge-gap: clamp(12px, 4dvh, 24px);
+  --manual-modal-titlebar-offset: 0px;
 
   position: fixed;
   inset: 0;
@@ -233,7 +234,10 @@
   align-items: flex-start;
   justify-content: center;
   overflow-y: auto;
-  padding: var(--manual-modal-edge-gap);
+  padding: calc(
+      var(--manual-modal-titlebar-offset) + var(--manual-modal-edge-gap)
+    )
+    var(--manual-modal-edge-gap) var(--manual-modal-edge-gap);
   background: var(--overlay);
   overscroll-behavior: contain;
   user-select: auto;
@@ -266,7 +270,13 @@
 
 .manual-modal {
   width: min(640px, 100%);
-  max-height: min(720px, calc(100dvh - var(--manual-modal-edge-gap) * 2));
+  max-height: min(
+    720px,
+    calc(
+      100dvh - var(--manual-modal-titlebar-offset) -
+        var(--manual-modal-edge-gap) * 2
+    )
+  );
   margin: auto 0;
   display: flex;
   flex-direction: column;
@@ -396,7 +406,8 @@
 
 @media (max-height: 640px) {
   .manual-modal-backdrop {
-    --manual-modal-edge-gap: 8px;
+    --manual-modal-edge-gap: 16px;
+    --manual-modal-titlebar-offset: 32px;
   }
 
   .manual-modal {
@@ -598,7 +609,7 @@
 }
 
 .manual-modal-add-btn:hover:not(:disabled) {
-  background: var(--accent-muted);
+  background: var(--row-hover);
 }
 
 .manual-modal-add-btn:disabled {
