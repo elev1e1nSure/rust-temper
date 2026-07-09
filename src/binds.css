@@ -224,14 +224,18 @@
 
 /* Command-list modal ("Создать вручную" / click a bind's action) --------- */
 .manual-modal-backdrop {
+  --manual-modal-edge-gap: clamp(10px, 4dvh, 24px);
+
   position: fixed;
   inset: 0;
   z-index: 2000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 24px;
+  overflow-y: auto;
+  padding: var(--manual-modal-edge-gap);
   background: var(--overlay);
+  overscroll-behavior: contain;
   user-select: auto;
   animation: manualModalBackdropIn 0.18s ease forwards;
 }
@@ -262,8 +266,8 @@
 
 .manual-modal {
   width: min(640px, 100%);
-  max-height: min(720px, calc(100vh - 48px));
-  margin: 0 auto;
+  max-height: min(720px, calc(100dvh - var(--manual-modal-edge-gap) * 2));
+  margin: auto 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -387,6 +391,29 @@
 
   .manual-modal-header-main {
     flex: 1;
+  }
+}
+
+@media (max-height: 640px) {
+  .manual-modal-backdrop {
+    --manual-modal-edge-gap: 8px;
+  }
+
+  .manual-modal {
+    padding: 18px;
+  }
+
+  .manual-modal-header {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .bind-config-content {
+    gap: 16px;
+  }
+
+  .bind-config-keyboard {
+    padding: 12px;
   }
 }
 
@@ -865,7 +892,7 @@ body:has(.bind-config-action.dragging) {
 }
 
 .bind-config-submit:hover:not(:disabled) {
-  background: var(--accent);
+  background: var(--row-hover);
 }
 
 .bind-config-add-action:active,
@@ -1067,7 +1094,7 @@ body:has(.bind-config-action.dragging) {
   height: 100%;
 }
 
-.kb-key:hover:not(:disabled) {
+.kb-key:hover:not(:disabled):not(.selected) {
   color: var(--text);
   background: var(--row-hover);
 }
