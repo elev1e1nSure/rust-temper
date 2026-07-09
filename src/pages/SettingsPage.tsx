@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { LoadingLine } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
+import { ChevronIcon } from "../icons";
 import type { BackupStatus } from "../types";
 import "./SettingsPage.css";
 
@@ -29,6 +30,22 @@ export function SettingsPage({
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [backupExpanded, setBackupExpanded] = useState(true);
+  const backupInnerRef = useRef<HTMLDivElement | null>(null);
+  const [backupHeight, setBackupHeight] = useState(0);
+  const [backupShouldAnimate, setBackupShouldAnimate] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = backupInnerRef.current;
+    if (!el) return;
+    setBackupHeight(backupExpanded ? el.scrollHeight : 0);
+    if (!backupExpanded) return;
+    const observer = new ResizeObserver(() => {
+      setBackupHeight(el.scrollHeight);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [backupExpanded]);
 
   useEffect(() => {
     if (!gamePath) return;
@@ -114,35 +131,58 @@ export function SettingsPage({
         </div>
       </div>
 
-      <div className="settings-card backup-card">
-        <div>
-          <div className="setting-label">Первичный бэкап настроек</div>
-          <p className="backup-description">
-            Этот бэкап создаётся один раз при первом запуске программы с
-            найденной папкой Rust. Он хранит исходные keys.cfg и client.cfg,
-            если они уже есть в папке игры, чтобы можно было откатиться, если
-            изменения пошли не так.
-          </p>
-        </div>
+      <div className="accordion-section">
+        <button
+          type="button"
+          className="accordion-header"
+          onClick={() => {
+            setBackupShouldAnimate(true);
+            setBackupExpanded((prev) => !prev);
+          }}
+          aria-expanded={backupExpanded}
+        >
+          <span className="accordion-title">Первичный бэкап настроек</span>
+          <span className={`accordion-arrow${backupExpanded ? " open" : ""}`}>
+            <ChevronIcon />
+          </span>
+        </button>
+        <div
+          className="accordion-content"
+          style={{
+            height: backupHeight,
+            transition: backupShouldAnimate ? undefined : "none",
+          }}
+        >
+          <div className="accordion-content-inner" ref={backupInnerRef}>
+            <div className="backup-body">
+              <p className="backup-description">
+                Этот бэкап создаётся один раз при первом запуске программы с
+                найденной папкой Rust. Он хранит исходные keys.cfg и client.cfg,
+                если они уже есть в папке игры, чтобы можно было откатиться, если
+                изменения пошли не так.
+              </p>
 
-        <div className="backup-actions">
-          <button
-            type="button"
-            className="btn-restore-backup"
-            disabled={!backupStatus?.exists || restoring}
-            onClick={restoreBackup}
-          >
-            {restoring ? "Восстановление..." : "Восстановить бэкап"}
-          </button>
-        </div>
+              <div className="backup-actions">
+                <button
+                  type="button"
+                  className="btn-restore-backup"
+                  disabled={!backupStatus?.exists || restoring}
+                  onClick={restoreBackup}
+                >
+                  {restoring ? "Восстановление..." : "Восстановить бэкап"}
+                </button>
+              </div>
 
-        {restoreMessage && (
-          <div
-            className={`backup-message${restoreMessage.type === "error" ? " error" : ""}`}
-          >
-            {restoreMessage.text}
+              {restoreMessage && (
+                <div
+                  className={`backup-message${restoreMessage.type === "error" ? " error" : ""}`}
+                >
+                  {restoreMessage.text}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

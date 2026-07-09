@@ -66,13 +66,16 @@
   animation: spin 1.2s linear infinite;
 }
 
-.backup-card {
+.backup-body {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
 .backup-description {
   max-width: 620px;
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--text-dim);
   font-size: 13px;
   line-height: 1.55;
@@ -88,22 +91,22 @@
   padding: 0 15px;
   border: 1px solid transparent;
   border-radius: 8px;
-  background: #3b82f6;
-  color: #fff;
+  background: var(--row);
+  color: var(--text-dim);
   font-family: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-restore-backup:hover {
-  filter: brightness(1.1);
+  background: #222228;
+  color: var(--text);
 }
 
 .btn-restore-backup:disabled {
   cursor: not-allowed;
-  filter: none;
   opacity: 0.5;
 }
 
@@ -115,4 +118,47 @@
 
 .backup-message.error {
   color: #f87171;
+}
+
+.accordion-section {
+  background: var(--panel);
+  border-radius: 12px;
+}
+
+.accordion-section + .accordion-section {
+  margin-top: 12px;
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 18px 24px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+}
+
+.accordion-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.accordion-arrow {
+  display: flex;
+  color: var(--text-dim);
+  transition: transform 0.2s ease;
+}
+
+.accordion-arrow.open {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  overflow: hidden;
+  transition: height 0.25s ease;
+  will-change: height;
 }
