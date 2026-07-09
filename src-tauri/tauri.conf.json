@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "RustTemper",
-        "width": 1400,
-        "height": 820,
+        "width": 1600,
+        "height": 900,
         "decorations": false,
         "dragDropEnabled": false
       }
@@ -26,12 +26,35 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "RustTemper",
+    "category": "Utility",
+    "shortDescription": "Rust config patcher",
+    "longDescription": "RustTemper helps edit Rust game configs from a desktop UI.",
+    "licenseFile": "../LICENSE",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "allowDowngrades": false,
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "headerImage": "installer/nsis-header.bmp",
+        "sidebarImage": "installer/nsis-sidebar.bmp",
+        "installMode": "currentUser",
+        "languages": ["Russian", "English"],
+        "compression": "lzma",
+        "startMenuFolder": "RustTemper"
+      },
+      "wix": {
+        "language": "ru-RU",
+        "bannerPath": "installer/wix-banner.bmp",
+        "dialogImagePath": "installer/wix-dialog.bmp"
+      }
+    }
   }
 }

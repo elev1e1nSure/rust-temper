@@ -1,8 +1,8 @@
 .sidebar {
   width: var(--sidebar-width, 236px);
   flex-shrink: 0;
-  border-right: 2px solid #111113;
-  background: #0a0a0c;
+  border-right: none;
+  background: var(--panel);
   padding: 8px 14px 0;
   display: flex;
   flex-direction: column;
@@ -16,7 +16,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #0a0a0c;
+  background: var(--panel);
 }
 
 .sidebar-resizer {
@@ -42,12 +42,12 @@
   left: 0;
   right: 0;
   height: var(--nav-item-height, 46px);
-  background: linear-gradient(180deg, #222227 0%, #18181d 100%);
-  border-radius: 12px;
+  background: var(--sidebar-active);
+  border-radius: var(--radius-panel);
   pointer-events: none;
   z-index: 0;
   transform: translateY(var(--nav-y, 0px));
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 231ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .nav-item {
@@ -56,7 +56,7 @@
   align-items: center;
   gap: 12px;
   padding: 0 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
   color: var(--text-dim);
   font-size: 16px;
   font-weight: 700;
@@ -72,7 +72,7 @@
   width: 100%;
   position: relative;
   z-index: 1;
-  transition: color 0.25s ease;
+  transition: color 192ms ease;
 }
 
 .nav-item svg {

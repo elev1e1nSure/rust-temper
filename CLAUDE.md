@@ -54,3 +54,14 @@ There is no frontend test suite — don't add one unless asked.
 - Error strings returned from Rust commands are user-facing Russian text (e.g. `"Недопустимый уровень {tier}"`) — keep new error messages in Russian and consistent in tone with existing ones.
 - Rust log messages (`log::info!`/`log::warn!`/`log::error!`) are in English with `key=value` style fields — keep this split (Russian user errors, English logs).
 - Every new `client.cfg`/`keys.cfg` mutation must go through `client_cfg::write_atomic` + the shared `operation_lock()`, never raw `std::fs::write`.
+
+## UI Design System
+
+- Keep the UI quiet, dense, and utility-first. This is a config editor, not a landing page: no decorative neon, glow, heavy shadows, glass panels, or ornamental outlines.
+- Global visual tokens live in `src/App.css` under `:root`. Reuse `--row`, `--row-hover`, `--row-active`, `--key-bg`, `--accent`, `--accent-hover`, `--accent-muted`, `--danger`, `--success`, radius, and motion tokens instead of inventing near-identical local colors.
+- Default hover for neutral controls is `background: var(--row-hover)` plus `color: var(--text)` when text needs emphasis. Active/selected neutral states use `var(--row-active)`.
+- Accent controls use `var(--accent)` at rest and `var(--accent-hover)` on hover. Muted accent surfaces use `var(--accent-muted)` or `var(--accent-soft)` only for secondary chips, badges, and inactive preview states.
+- Danger actions use `var(--danger)` for text or `var(--danger-strong)` for destructive filled buttons. Avoid adding new red shades per component.
+- Prefer surface changes over borders and shadows. Decorative `box-shadow`, glow, gradient borders, and one-off `filter: brightness(...)` hovers are not part of the system. Structural separators are allowed only when spacing and surface contrast are not enough.
+- Keep radius predictable: `--radius-control` for buttons/inputs/keys and `--radius-panel` for panels/cards. Do not introduce a new radius unless the component shape truly needs it, like a circular icon or pill switch.
+- Motion should be short and functional. Use `--motion-fast` for hover/color changes and `--motion-medium` for toggles or small state movement. Do not use motion to add visual noise.

@@ -127,7 +127,7 @@ const QUICK_PRESETS: {
       lighting: 0,
       water: 0,
       grass: 0,
-      trees: 0,
+      trees: 1,
       clouds: 0,
       smoothing: 0,
     },
@@ -364,7 +364,7 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
                     {row.tiers.map((_, i) => (
                       <div
                         key={i}
-                        className="graphics-slider-tick"
+                        className={`graphics-slider-tick${i <= value ? " active" : ""}`}
                         style={
                           {
                             "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 97 + 1.5 : 50}%`,
@@ -378,8 +378,8 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
                         {
                           "--slider-pct": `${pct}%`,
                           transition: interacted
-                            ? "left 0.12s ease-out, background 0.15s ease, box-shadow 0.15s ease"
-                            : "background 0.15s ease, box-shadow 0.15s ease",
+                            ? "left 0.12s ease-out, background 0.15s ease"
+                            : "background 0.15s ease",
                         } as React.CSSProperties
                       }
                     />

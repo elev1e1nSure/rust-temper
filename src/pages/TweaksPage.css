@@ -21,11 +21,11 @@
 
 .setting-row-clickable {
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background var(--motion-fast);
 }
 
 .setting-row-clickable:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+  background: var(--row-hover);
 }
 
 .settings-card-compact {
@@ -86,17 +86,19 @@
   background: var(--row);
   cursor: pointer;
   padding: 0;
-  transition:
-    background 0.2s ease,
-    filter 0.2s ease;
+  transition: background var(--motion-medium);
 }
 
 .toggle-switch.on {
-  background: #ce3f27;
+  background: var(--accent);
 }
 
 .setting-row-clickable:hover .toggle-switch {
-  filter: brightness(1.12);
+  background: var(--row-active);
+}
+
+.setting-row-clickable:hover .toggle-switch.on {
+  background: var(--accent-hover);
 }
 
 .toggle-switch-knob {
@@ -106,8 +108,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
-  transition: transform 0.2s ease;
+  background: var(--text);
+  transition: transform var(--motion-medium);
 }
 
 .toggle-switch.on .toggle-switch-knob {
@@ -116,7 +118,7 @@
 
 .accordion-section {
   background: var(--panel);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
 }
 
 .accordion-section + .accordion-section {
@@ -162,8 +164,8 @@
   margin-left: 8px;
   font-size: 12px;
   font-weight: 700;
-  color: #ce3f27;
-  background: rgba(206, 63, 39, 0.12);
+  color: var(--accent);
+  background: var(--accent-soft);
   border-radius: 999px;
   padding: 2px 8px;
   vertical-align: middle;
@@ -185,7 +187,7 @@
 
 .tweak-slider {
   width: 100%;
-  accent-color: #ce3f27;
+  accent-color: var(--accent);
   cursor: pointer;
 }
 
@@ -205,21 +207,19 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--overlay);
 }
 
 .tweak-confirm-modal {
   width: min(440px, 100%);
   padding: 24px;
-  border: 1px solid #29292e;
   border-radius: 14px;
-  background: #111113;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+  background: var(--panel);
 }
 
 .tweak-confirm-kicker {
   margin-bottom: 8px;
-  color: #f87171;
+  color: var(--danger);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -235,7 +235,7 @@
 
 .tweak-confirm-modal p {
   margin: 12px 0 0;
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--text-soft);
   font-size: 15px;
   font-weight: 500;
   line-height: 1.6;
@@ -252,7 +252,7 @@
   min-height: 38px;
   padding: 0 14px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--text);
   font: inherit;
   font-size: 15px;
@@ -261,20 +261,19 @@
 }
 
 .tweak-confirm-button.secondary {
-  border-color: #29292e;
   background: var(--row);
 }
 
 .tweak-confirm-button.secondary:hover {
-  background: #222228;
+  background: var(--row-hover);
 }
 
 .tweak-confirm-button.danger {
-  background: #b4232f;
+  background: var(--danger-strong);
 }
 
 .tweak-confirm-button.danger:hover {
-  background: #c92a38;
+  background: var(--danger);
 }
 
 .tweak-confirm-button:disabled {

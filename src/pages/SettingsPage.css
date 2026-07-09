@@ -1,6 +1,6 @@
 .settings-card {
   background: var(--panel);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -28,7 +28,7 @@
 .setting-input {
   background: var(--row);
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 12px 14px;
   color: var(--text);
   font-size: 15px;
@@ -47,13 +47,15 @@
   background: var(--row);
   color: var(--text-dim);
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 10px 15px;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.05px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
   font-family: inherit;
   display: inline-flex;
   align-items: center;
@@ -61,7 +63,7 @@
 }
 
 .btn-path:hover {
-  background: #222228;
+  background: var(--row-hover);
   color: var(--text);
   border-color: transparent;
 }
@@ -80,7 +82,7 @@
 .backup-description {
   max-width: 700px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--text-soft);
   font-size: 15px;
   font-weight: 500;
   line-height: 1.65;
@@ -95,7 +97,7 @@
   min-height: 42px;
   padding: 0 15px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--row);
   color: var(--text-dim);
   font-family: inherit;
@@ -103,11 +105,13 @@
   font-weight: 700;
   letter-spacing: 0.05px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
 }
 
 .btn-restore-backup:hover {
-  background: #222228;
+  background: var(--row-hover);
   color: var(--text);
 }
 
@@ -117,19 +121,19 @@
 }
 
 .backup-message {
-  color: #86efac;
+  color: var(--success);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.5;
 }
 
 .backup-message.error {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .accordion-section {
   background: var(--panel);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
 }
 
 .accordion-section + .accordion-section {

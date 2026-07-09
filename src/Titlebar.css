@@ -3,10 +3,10 @@
   align-items: center;
   justify-content: space-between;
   height: 32px;
-  background: #0a0a0c;
+  background: var(--panel);
   user-select: none;
   flex-shrink: 0;
-  border-bottom: 2px solid #111113;
+  border-bottom: none;
   /* Stay above the Rust-running gate (z-index 4000) so window controls remain
      usable while editing is blocked. */
   position: relative;
@@ -33,17 +33,17 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: #6e6e78;
+  color: var(--text-dim);
   cursor: pointer;
   padding: 0;
 }
 
 .titlebar-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #c0c0c8;
+  background: var(--row-hover);
+  color: var(--text);
 }
 
 .titlebar-btn.close:hover {
-  background: #c42b1c;
-  color: #fff;
+  background: var(--danger-strong);
+  color: var(--text);
 }

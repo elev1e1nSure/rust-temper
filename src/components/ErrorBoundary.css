@@ -20,12 +20,12 @@
   background: var(--key-bg);
   color: var(--text);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   font-size: 14px;
   font-family: inherit;
 }
 
 .error-boundary-btn:hover {
-  filter: brightness(1.2);
+  background: var(--row-hover);
 }
