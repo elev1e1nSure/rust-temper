@@ -225,7 +225,7 @@ pub fn toggle_tweak(
             .configs
             .get_mut(&ck)
             .ok_or_else(|| format!("Твик {0} не включён", tweak.key))?;
-        let changes = compute_disable_changes(&tweak.key, config)?;
+        let changes = compute_disable_changes(&tweak, config)?;
 
         log::info!(
             "Disabling tweak: path={}, tweak={}, restoring={:?}",
@@ -453,24 +453,21 @@ pub(crate) fn compute_enable_changes(
     current_values: &BTreeMap<String, String>,
 ) -> BTreeMap<String, Option<String>> {
     let desired_values = desired_values(tweak);
-    let captured_values: BTreeMap<_, _> = desired_values
-        .keys()
-        .map(|bk| {
-            (
-                bk.clone(),
-                StoredValue {
-                    value: current_values.get(bk).cloned(),
-                },
-            )
-        })
-        .collect();
+    let is_slider = tweak.advanced_slider.is_some();
 
     if let Some(active) = config.active_tweaks.get(&tweak.key) {
         let dv = active.desired_values.clone();
         config.activation_order.retain(|k| k != &tweak.key);
         config.activation_order.push(tweak.key.clone());
-        dv.into_iter().map(|(k, v)| (k, Some(v))).collect()
-    } else {
+        return dv.into_iter().map(|(k, v)| (k, Some(v))).collect();
+    }
+
+    // Slider tweaks still restore to whatever value the user had before
+    // enabling (their "off" state is arbitrary, not a fixed default), so they
+    // keep the baseline-capture path. Plain on/off tweaks instead delete their
+    // keys on disable (see compute_disable_changes) and let the game apply its
+    // own default / Steam Cloud value, so nothing needs to be remembered here.
+    if is_slider {
         for backend_key in desired_values.keys() {
             let already_owned = config
                 .active_tweaks
@@ -485,33 +482,39 @@ pub(crate) fn compute_enable_changes(
                 );
             }
         }
-        config.active_tweaks.insert(
-            tweak.key.clone(),
-            ActiveTweak {
-                captured_values,
-                desired_values: desired_values.clone(),
-            },
-        );
-        config.activation_order.push(tweak.key.clone());
-        desired_values
-            .into_iter()
-            .map(|(k, v)| (k, Some(v)))
-            .collect()
     }
+
+    config.active_tweaks.insert(
+        tweak.key.clone(),
+        ActiveTweak {
+            captured_values: BTreeMap::new(),
+            desired_values: desired_values.clone(),
+        },
+    );
+    config.activation_order.push(tweak.key.clone());
+    desired_values
+        .into_iter()
+        .map(|(k, v)| (k, Some(v)))
+        .collect()
 }
 
 pub(crate) fn compute_disable_changes(
-    tweak_key: &str,
+    tweak: &TweakDef,
     config: &mut ConfigState,
 ) -> Result<BTreeMap<String, Option<String>>, String> {
-    let removed = config
+    config
         .active_tweaks
-        .remove(tweak_key)
-        .ok_or_else(|| format!("Твик {0} не включён", tweak_key))?;
-    config.activation_order.retain(|k| k != tweak_key);
+        .remove(&tweak.key)
+        .ok_or_else(|| format!("Твик {0} не включён", tweak.key))?;
+    config.activation_order.retain(|k| k != &tweak.key);
 
+    let is_slider = tweak.advanced_slider.is_some();
     let mut changes = BTreeMap::new();
-    for backend_key in removed.desired_values.keys() {
+
+    // Re-derive the key list from the current tweak definition rather than the
+    // stored ActiveTweak snapshot, so keys added to a tweak after it was last
+    // enabled (e.g. via a catalogue update) still get cleaned up on disable.
+    for backend_key in tweak.backend_keys.iter().map(|bk| &bk.key) {
         let remaining = config.activation_order.iter().rev().find_map(|active_key| {
             config
                 .active_tweaks
@@ -520,14 +523,17 @@ pub(crate) fn compute_disable_changes(
                 .get(backend_key)
                 .cloned()
         });
-        if let Some(value) = remaining {
-            changes.insert(backend_key.clone(), Some(value));
-        } else {
+
+        if remaining.is_some() {
+            changes.insert(backend_key.clone(), remaining);
+        } else if is_slider {
             let baseline = config
                 .baselines
                 .remove(backend_key)
                 .ok_or_else(|| format!("Нет сохранённого значения для {backend_key}"))?;
             changes.insert(backend_key.clone(), baseline.value);
+        } else {
+            changes.insert(backend_key.clone(), None);
         }
     }
     Ok(changes)
@@ -910,7 +916,9 @@ mod tests {
     // ── compute_enable_changes ────────────────────────────────────────────────
 
     #[test]
-    fn enable_changes_new_tweak_sets_baselines_and_inserts_active() {
+    fn enable_changes_new_tweak_no_baseline_for_plain_toggle() {
+        // Plain on/off tweaks don't capture a baseline anymore: disabling them
+        // deletes the key instead of restoring a remembered value.
         let tw = single_key_tweak();
         let mut config = ConfigState::default();
         let mut current = BTreeMap::new();
@@ -924,11 +932,8 @@ mod tests {
             changes.get(&tw.backend_keys[0].key).unwrap(),
             &Some(tw.backend_keys[0].on.clone())
         );
-        // Baseline should be captured
-        assert_eq!(
-            config.baselines.get(&tw.backend_keys[0].key).unwrap().value,
-            Some("0".into())
-        );
+        // No baseline captured for plain toggles
+        assert!(config.baselines.is_empty());
         // Active tweak should be set
         assert!(config
             .active_tweaks
@@ -985,8 +990,13 @@ mod tests {
     // ── compute_disable_changes ───────────────────────────────────────────────
 
     #[test]
-    fn disable_changes_restores_baseline() {
-        let tw = single_key_tweak();
+    fn disable_changes_slider_tweak_restores_baseline() {
+        // Only slider tweaks still use the baseline-restore path; plain on/off
+        // tweaks delete their key instead (see disable_changes_removes_key_without_baseline).
+        let tw = known_tweaks()
+            .into_iter()
+            .find(|t| t.key == "input.holdtime")
+            .unwrap();
         let mut config = ConfigState::default();
         config.baselines.insert(
             tw.backend_keys[0].key.clone(),
@@ -997,13 +1007,7 @@ mod tests {
         config.active_tweaks.insert(
             tw.key.clone(),
             ActiveTweak {
-                captured_values: [(
-                    tw.backend_keys[0].key.clone(),
-                    StoredValue {
-                        value: Some("original".into()),
-                    },
-                )]
-                .into(),
+                captured_values: BTreeMap::new(),
                 desired_values: [(
                     tw.backend_keys[0].key.clone(),
                     tw.backend_keys[0].on.clone(),
@@ -1013,7 +1017,7 @@ mod tests {
         );
         config.activation_order.push(tw.key.clone());
 
-        let changes = compute_disable_changes(&tw.key, &mut config).unwrap();
+        let changes = compute_disable_changes(&tw, &mut config).unwrap();
 
         assert_eq!(changes.len(), 1);
         assert_eq!(
@@ -1021,6 +1025,61 @@ mod tests {
             &Some("original".into())
         );
         assert!(!config.active_tweaks.contains_key(&tw.key));
+    }
+
+    #[test]
+    fn disable_changes_removes_key_without_baseline() {
+        // Plain on/off tweaks have no remembered baseline: disabling them just
+        // deletes the key so the game (or Steam Cloud) applies its own default.
+        let tw = single_key_tweak();
+        let mut config = ConfigState::default();
+        config.active_tweaks.insert(
+            tw.key.clone(),
+            ActiveTweak {
+                captured_values: BTreeMap::new(),
+                desired_values: [(
+                    tw.backend_keys[0].key.clone(),
+                    tw.backend_keys[0].on.clone(),
+                )]
+                .into(),
+            },
+        );
+        config.activation_order.push(tw.key.clone());
+
+        let changes = compute_disable_changes(&tw, &mut config).unwrap();
+
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes.get(&tw.backend_keys[0].key).unwrap(), &None);
+        assert!(config.baselines.is_empty());
+        assert!(!config.active_tweaks.contains_key(&tw.key));
+    }
+
+    #[test]
+    fn disable_changes_picks_up_keys_added_after_activation() {
+        // A key added to the tweak's backend_keys after it was last enabled
+        // (stale ActiveTweak snapshot) must still be cleaned up on disable.
+        let tw = multi_key_tweak();
+        let mut config = ConfigState::default();
+        config.active_tweaks.insert(
+            tw.key.clone(),
+            ActiveTweak {
+                captured_values: BTreeMap::new(),
+                // Snapshot only knows about the first backend key.
+                desired_values: [(
+                    tw.backend_keys[0].key.clone(),
+                    tw.backend_keys[0].on.clone(),
+                )]
+                .into(),
+            },
+        );
+        config.activation_order.push(tw.key.clone());
+
+        let changes = compute_disable_changes(&tw, &mut config).unwrap();
+
+        assert_eq!(changes.len(), tw.backend_keys.len());
+        for bk in &tw.backend_keys {
+            assert_eq!(changes.get(&bk.key).unwrap(), &None);
+        }
     }
 
     #[test]
@@ -1047,7 +1106,7 @@ mod tests {
         config.activation_order.push("other".into());
         config.activation_order.push(tw.key.clone());
 
-        let changes = compute_disable_changes(&tw.key, &mut config).unwrap();
+        let changes = compute_disable_changes(&tw, &mut config).unwrap();
 
         // Should restore to the previous tweak's desired value
         assert_eq!(changes.get(bk_key).unwrap(), &Some("from_other".into()));
@@ -1057,8 +1116,9 @@ mod tests {
 
     #[test]
     fn disable_changes_nonexistent_tweak_returns_error() {
+        let tw = single_key_tweak();
         let mut config = ConfigState::default();
-        let result = compute_disable_changes("nonexistent", &mut config);
+        let result = compute_disable_changes(&tw, &mut config);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("не включён"));
     }
