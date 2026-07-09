@@ -225,19 +225,18 @@
 /* Command-list modal ("Создать вручную" / click a bind's action) --------- */
 .manual-modal-backdrop {
   --manual-modal-edge-gap: clamp(12px, 4dvh, 24px);
-  --manual-modal-titlebar-offset: 0px;
+  --manual-modal-bottom-gap: clamp(28px, 5dvh, 40px);
+  --manual-modal-titlebar-height: 32px;
 
   position: fixed;
-  inset: 0;
+  inset: var(--manual-modal-titlebar-height) 0 0;
   z-index: 2000;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   overflow-y: auto;
-  padding: calc(
-      var(--manual-modal-titlebar-offset) + var(--manual-modal-edge-gap)
-    )
-    var(--manual-modal-edge-gap) var(--manual-modal-edge-gap);
+  padding: var(--manual-modal-edge-gap) var(--manual-modal-edge-gap)
+    var(--manual-modal-bottom-gap);
   background: var(--overlay);
   overscroll-behavior: contain;
   user-select: auto;
@@ -273,11 +272,11 @@
   max-height: min(
     720px,
     calc(
-      100dvh - var(--manual-modal-titlebar-offset) -
-        var(--manual-modal-edge-gap) * 2
+      100dvh - var(--manual-modal-titlebar-height) -
+        var(--manual-modal-edge-gap) - var(--manual-modal-bottom-gap)
     )
   );
-  margin: auto 0;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -407,7 +406,6 @@
 @media (max-height: 640px) {
   .manual-modal-backdrop {
     --manual-modal-edge-gap: 16px;
-    --manual-modal-titlebar-offset: 32px;
   }
 
   .manual-modal {
