@@ -100,7 +100,7 @@ const QUICK_PRESETS: {
     label: "Производительность",
     values: {
       shadows: 0,
-      textures: 3,
+      textures: 0,
       lighting: 0,
       water: 0,
       grass: 0,
@@ -112,7 +112,7 @@ const QUICK_PRESETS: {
     label: "Комбат",
     values: {
       shadows: 0,
-      textures: 2,
+      textures: 1,
       lighting: 0,
       water: 0,
       grass: 0,
@@ -124,7 +124,7 @@ const QUICK_PRESETS: {
     label: "Баланс",
     values: {
       shadows: 1,
-      textures: 1,
+      textures: 2,
       lighting: 1,
       water: 2,
       grass: 2,

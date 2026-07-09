@@ -119,21 +119,12 @@ const TEXTURES: Quality = Quality {
     log_name: "Texture quality",
     tiers: &[
         &[
-            ("graphicssettings.globaltexturemipmaplimit", "0"),
-            ("graphics.af", "8"),
-            ("graphics.lodbias", "1"),
-            ("graphics.shaderlod", "5"),
+            ("graphicssettings.globaltexturemipmaplimit", "3"),
+            ("graphics.af", "1"),
+            ("graphics.lodbias", "0.5"),
+            ("graphics.shaderlod", "1"),
             ("graphicssettings.anisotropicfiltering", "0"),
-            ("mesh.quality", "150"),
-            ("terrain.quality", "100"),
-        ],
-        &[
-            ("graphicssettings.globaltexturemipmaplimit", "1"),
-            ("graphics.af", "8"),
-            ("graphics.lodbias", "1"),
-            ("graphics.shaderlod", "3"),
-            ("graphicssettings.anisotropicfiltering", "1"),
-            ("mesh.quality", "150"),
+            ("mesh.quality", "0"),
             ("terrain.quality", "100"),
         ],
         &[
@@ -146,18 +137,27 @@ const TEXTURES: Quality = Quality {
             ("terrain.quality", "100"),
         ],
         &[
-            ("graphicssettings.globaltexturemipmaplimit", "3"),
-            ("graphics.af", "1"),
-            ("graphics.lodbias", "0.5"),
-            ("graphics.shaderlod", "1"),
+            ("graphicssettings.globaltexturemipmaplimit", "1"),
+            ("graphics.af", "8"),
+            ("graphics.lodbias", "1"),
+            ("graphics.shaderlod", "3"),
+            ("graphicssettings.anisotropicfiltering", "1"),
+            ("mesh.quality", "150"),
+            ("terrain.quality", "100"),
+        ],
+        &[
+            ("graphicssettings.globaltexturemipmaplimit", "0"),
+            ("graphics.af", "8"),
+            ("graphics.lodbias", "1"),
+            ("graphics.shaderlod", "5"),
             ("graphicssettings.anisotropicfiltering", "0"),
-            ("mesh.quality", "0"),
+            ("mesh.quality", "150"),
             ("terrain.quality", "100"),
         ],
     ],
     read: ReadSpec::Lookup {
         key: "graphicssettings.globaltexturemipmaplimit",
-        map: &[("0", 0), ("1", 1), ("2", 2), ("3", 3)],
+        map: &[("3", 0), ("2", 1), ("1", 2), ("0", 3)],
         default: 0,
     },
 };
@@ -709,7 +709,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("graphics_allt_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("client.cfg");
-        for (tier, value) in &[("0", 0), ("1", 1), ("2", 2), ("3", 3)] {
+        for (tier, value) in &[("3", 0), ("2", 1), ("1", 2), ("0", 3)] {
             std::fs::write(
                 &path,
                 format!("graphicssettings.globaltexturemipmaplimit \"{tier}\"\n"),
