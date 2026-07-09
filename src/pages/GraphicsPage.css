@@ -205,7 +205,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.25);
   transform: translate(-50%, -50%);
   pointer-events: none;
   left: var(--tick-left, 0%);
