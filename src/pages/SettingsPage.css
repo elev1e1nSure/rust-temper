@@ -160,6 +160,6 @@
 
 .accordion-content {
   overflow: hidden;
-  transition: height 0.25s ease;
+  transition: height 0.18s ease;
   will-change: height;
 }
