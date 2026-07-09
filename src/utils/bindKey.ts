@@ -39,8 +39,8 @@ const RUST_KEY_ALIASES: Record<string, string> = {
   sysreq: "printscreen",
 };
 
-export function normalizeRustKey(token: string): string {
-  const t = token.trim().toLowerCase();
+export function normalizeRustKey(token: string | null | undefined): string {
+  const t = (token ?? "").trim().toLowerCase();
   if (RUST_KEY_ALIASES[t]) return RUST_KEY_ALIASES[t];
   const kp = t.match(/^keypad([0-9])$/);
   if (kp) return `kp${kp[1]}`;
