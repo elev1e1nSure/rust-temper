@@ -56,12 +56,12 @@ fn parse_library_paths(vdf: &str) -> Vec<PathBuf> {
 }
 
 #[cfg(target_os = "windows")]
-fn steam_install_paths() -> Vec<PathBuf> {
+pub(crate) fn steam_install_paths() -> Vec<PathBuf> {
     rust_locator_windows::steam_install_paths()
 }
 
 #[cfg(not(target_os = "windows"))]
-fn steam_install_paths() -> Vec<PathBuf> {
+pub(crate) fn steam_install_paths() -> Vec<PathBuf> {
     Vec::new()
 }
 
