@@ -1,6 +1,28 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Bind, CommandPreset } from "../types";
 import { parseCombo, normalizeRustKey } from "../utils/bindKey";
+
+function commandWithoutMode(command: string): string {
+  return command.replace(/^[+~]/, "");
+}
+
+function commandDisplay(command: string): string {
+  return command.split(";").map(commandWithoutMode).join(";");
+}
+
+function presetKey(
+  command: string,
+  mode: CommandPreset["defaultMode"],
+): string {
+  if (command.includes(";")) return command;
+  return `${commandWithoutMode(command)}:${mode}`;
+}
+
+function commandKey(command: string): string {
+  if (command.includes(";")) return command;
+  const mode = command.startsWith("~") ? "toggle" : "hold";
+  return presetKey(command, mode);
+}
 
 export function useBindEditor(commandPresets: CommandPreset[]) {
   const [binds, setBinds] = useState<Bind[]>([]);
@@ -12,12 +34,18 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   const [exitingBindIndex, setExitingBindIndex] = useState<number | null>(null);
 
   const presetByCommand = useMemo(
-    () => new Map(commandPresets.map((p) => [p.command, p])),
+    () =>
+      new Map(
+        commandPresets.map((p) => [presetKey(p.command, p.defaultMode), p]),
+      ),
     [commandPresets],
   );
 
-  const nameFor = (command: string) =>
-    presetByCommand.get(command)?.name ?? command;
+  const nameFor = useCallback(
+    (command: string) =>
+      presetByCommand.get(commandKey(command))?.name ?? commandDisplay(command),
+    [presetByCommand],
+  );
 
   const keyConflicts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -53,7 +81,7 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
           bind.command.toLowerCase().includes(query)
         );
       });
-  }, [binds, search, selectedKeys, presetByCommand]);
+  }, [binds, search, selectedKeys, nameFor]);
 
   const scrollListToTop = () => {
     requestAnimationFrame(() => {

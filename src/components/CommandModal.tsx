@@ -53,6 +53,19 @@ function commandWithoutMode(command: string): string {
   return command.replace(/^[+~]/, "");
 }
 
+function commandDisplay(command: string): string {
+  return command.split(";").map(commandWithoutMode).join(";");
+}
+
+function modePrefixedCommand(action: DraftAction): string {
+  const prefix = action.mode === "toggle" ? "~" : "+";
+  return `${prefix}${commandWithoutMode(action.command)}`;
+}
+
+function modeFromCommand(command: string): ActionMode {
+  return command.startsWith("~") ? "toggle" : "hold";
+}
+
 function getCssZoomFactor(): number {
   const zoom = parseFloat(getComputedStyle(document.documentElement).zoom);
   return Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
@@ -194,13 +207,19 @@ export function CommandModal({
     [],
   );
 
-  const selectCommand = (command: string) => {
+  const selectCommand = (
+    command: string,
+    defaultMode: ActionMode = modeFromCommand(command),
+  ) => {
     setDraftActions((actions) => [
       ...actions,
       {
         id: ++nextDraftActionId.current,
-        command,
-        mode: command.startsWith("~") ? "toggle" : "hold",
+        command:
+          commandModal.kind === "single"
+            ? commandWithoutMode(command)
+            : command,
+        mode: defaultMode,
       },
     ]);
     setCommandModal((modal) => ({ ...modal, step: "configure" }));
@@ -464,12 +483,16 @@ export function CommandModal({
                   </div>
                   <div className="manual-modal-row-text">
                     <div className="manual-modal-row-name">{preset.name}</div>
-                    <div className="manual-modal-row-id">{preset.command}</div>
+                    <div className="manual-modal-row-id">
+                      {commandDisplay(preset.command)}
+                    </div>
                   </div>
                   <button
                     className="manual-modal-add-btn"
                     type="button"
-                    onClick={() => selectCommand(preset.command)}
+                    onClick={() =>
+                      selectCommand(preset.command, preset.defaultMode)
+                    }
                   >
                     Добавить
                   </button>
@@ -554,12 +577,16 @@ export function CommandModal({
                         )}
                       <div className="bind-config-action-copy">
                         <div className="manual-modal-row-name">
-                          {nameFor(action.command)}
+                          {nameFor(
+                            commandModal.kind === "single"
+                              ? modePrefixedCommand(action)
+                              : action.command,
+                          )}
                         </div>
                         <div className="manual-modal-row-id">
                           {commandModal.kind === "single"
-                            ? `${action.mode === "toggle" ? "~" : "+"}${commandWithoutMode(action.command)}`
-                            : action.command}
+                            ? commandWithoutMode(action.command)
+                            : commandDisplay(action.command)}
                         </div>
                       </div>
                       {commandModal.kind === "single" && (
@@ -647,12 +674,16 @@ export function CommandModal({
           </div>
           <div className="bind-config-action-copy">
             <div className="manual-modal-row-name">
-              {nameFor(draggedAction.command)}
+              {nameFor(
+                commandModal?.kind === "single"
+                  ? modePrefixedCommand(draggedAction)
+                  : draggedAction.command,
+              )}
             </div>
             <div className="manual-modal-row-id">
               {commandModal?.kind === "single"
-                ? `${draggedAction.mode === "toggle" ? "~" : "+"}${commandWithoutMode(draggedAction.command)}`
-                : draggedAction.command}
+                ? commandWithoutMode(draggedAction.command)
+                : commandDisplay(draggedAction.command)}
             </div>
           </div>
         </div>

@@ -7,6 +7,13 @@ pub enum CommandKind {
     Combination,
 }
 
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum CommandMode {
+    Hold,
+    Toggle,
+}
+
 /// Human-readable dictionary of Rust bind commands — the command picker only
 /// ever selects from this list, no raw command typing. Built from Rust's
 /// common movement/UI commands plus every distinct command found in a real
@@ -17,6 +24,8 @@ pub struct CommandPreset {
     pub name: String,
     pub command: String,
     pub kind: CommandKind,
+    #[serde(rename = "defaultMode")]
+    pub default_mode: CommandMode,
 }
 
 fn preset(name: &str, command: &str) -> CommandPreset {
@@ -25,10 +34,22 @@ fn preset(name: &str, command: &str) -> CommandPreset {
     } else {
         CommandKind::Single
     };
+    let default_mode = if command.starts_with('~') {
+        CommandMode::Toggle
+    } else {
+        CommandMode::Hold
+    };
+    let command = if matches!(kind, CommandKind::Single) {
+        command.trim_start_matches(['+', '~']).to_string()
+    } else {
+        command.to_string()
+    };
+
     CommandPreset {
         name: name.to_string(),
-        command: command.to_string(),
+        command,
         kind,
+        default_mode,
     }
 }
 
@@ -330,8 +351,9 @@ mod tests {
     fn preset_single_command() {
         let cp = preset("Тест", "+forward");
         assert_eq!(cp.name, "Тест");
-        assert_eq!(cp.command, "+forward");
+        assert_eq!(cp.command, "forward");
         assert!(matches!(cp.kind, CommandKind::Single));
+        assert!(matches!(cp.default_mode, CommandMode::Hold));
     }
 
     #[test]
@@ -349,7 +371,9 @@ mod tests {
     #[test]
     fn preset_untoggleable_attack() {
         let cp = preset("Автоатака", "~attack");
+        assert_eq!(cp.command, "attack");
         assert!(matches!(cp.kind, CommandKind::Single));
+        assert!(matches!(cp.default_mode, CommandMode::Toggle));
     }
 
     #[test]

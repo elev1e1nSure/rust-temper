@@ -52,7 +52,6 @@ impl<'a> TweakTx<'a> {
     }
 }
 
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientCfgState {
@@ -555,7 +554,9 @@ fn operation_lock() -> Result<std::sync::MutexGuard<'static, ()>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tweak_defs::{group, rule, AdvancedSlider, BackendKeyRule, BindTweak, TweakBadge, TweakSection};
+    use crate::tweak_defs::{
+        group, rule, AdvancedSlider, BackendKeyRule, BindTweak, TweakBadge, TweakSection,
+    };
 
     // ── rule ──────────────────────────────────────────────────────────────────
 

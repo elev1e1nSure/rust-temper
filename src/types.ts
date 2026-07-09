@@ -25,6 +25,7 @@ export interface CommandPreset {
   name: string;
   command: string;
   kind: "single" | "combination";
+  defaultMode: "hold" | "toggle";
 }
 
 export interface BackendKeyRule {
