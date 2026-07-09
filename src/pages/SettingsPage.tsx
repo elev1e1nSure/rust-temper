@@ -24,7 +24,6 @@ export function SettingsPage({
   onConfigRestored,
 }: SettingsPageProps) {
   const [backupStatus, setBackupStatus] = useState<BackupStatus | null>(null);
-  const [backupLoading, setBackupLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<{
     type: "success" | "error";
@@ -34,7 +33,6 @@ export function SettingsPage({
   useEffect(() => {
     if (!gamePath) return;
     let cancelled = false;
-    setBackupLoading(true);
 
     invoke<BackupStatus>("get_game_settings_backup_status", { gamePath })
       .then((status) => {
@@ -48,11 +46,6 @@ export function SettingsPage({
             type: "error",
             text: `Не удалось проверить бэкап: ${err}`,
           });
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setBackupLoading(false);
         }
       });
 
@@ -89,16 +82,6 @@ export function SettingsPage({
     }
   };
 
-  const backedUpFiles =
-    backupStatus?.files
-      .filter((file) => file.backedUp)
-      .map((file) => file.name) ?? [];
-  const backupDate = backupStatus?.createdAtEpochSeconds
-    ? new Date(backupStatus.createdAtEpochSeconds * 1000).toLocaleString(
-        "ru-RU",
-      )
-    : null;
-
   return (
     <div className="settings-container page-container">
       <div className="settings-card">
@@ -132,38 +115,14 @@ export function SettingsPage({
       </div>
 
       <div className="settings-card backup-card">
-        <div className="backup-card-header">
-          <div>
-            <div className="setting-label">Первичный бэкап настроек</div>
-            <p className="backup-description">
-              Этот бэкап создаётся один раз при первом запуске программы с
-              найденной папкой Rust. Он хранит исходные keys.cfg и client.cfg,
-              если они уже есть в папке игры, чтобы можно было откатиться, если
-              изменения пошли не так.
-            </p>
-          </div>
-          <div
-            className={`backup-status-pill${backupStatus?.exists ? " ready" : ""}`}
-          >
-            {backupLoading
-              ? "Проверка"
-              : backupStatus?.exists
-                ? "Сохранён"
-                : "Нет бэкапа"}
-          </div>
-        </div>
-
-        <div className="backup-meta">
-          <div className="backup-meta-row">
-            <span>Файлы</span>
-            <strong>
-              {backedUpFiles.length > 0 ? backedUpFiles.join(" + ") : "—"}
-            </strong>
-          </div>
-          <div className="backup-meta-row">
-            <span>Дата</span>
-            <strong>{backupDate ?? "—"}</strong>
-          </div>
+        <div>
+          <div className="setting-label">Первичный бэкап настроек</div>
+          <p className="backup-description">
+            Этот бэкап создаётся один раз при первом запуске программы с
+            найденной папкой Rust. Он хранит исходные keys.cfg и client.cfg,
+            если они уже есть в папке игры, чтобы можно было откатиться, если
+            изменения пошли не так.
+          </p>
         </div>
 
         <div className="backup-actions">
