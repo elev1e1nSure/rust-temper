@@ -41,6 +41,7 @@ pub fn run() {
             settings_backup::ensure_initial_game_settings_backup,
             settings_backup::get_game_settings_backup_status,
             settings_backup::restore_game_settings_backup,
+            steam::is_rust_running,
             steam_launch_options::read_rust_launch_options,
             steam_launch_options::set_rust_launch_options,
             steam_launch_options::clear_rust_launch_options,

@@ -12,6 +12,8 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { GraphicsPage } from "./pages/GraphicsPage";
 import { TweaksPage } from "./pages/TweaksPage";
 import { Titlebar } from "./Titlebar";
+import { RustRunningGate } from "./components/RustRunningGate";
+import { useRustRunning } from "./hooks/useRustRunning";
 import type { PageId } from "./navigation";
 import "./App.css";
 import "./binds.css";
@@ -27,6 +29,7 @@ function App() {
   const configFile = useConfigFile();
   const bindEditor = useBindEditor(commandPresets);
   const { sidebarWidth, startResizing } = useSidebarResize();
+  const rustRunning = useRustRunning();
 
   // Load command dictionary
   useEffect(() => {
@@ -229,6 +232,7 @@ function App() {
           )}
         </div>
       </div>
+      <RustRunningGate running={rustRunning} />
     </>
   );
 }

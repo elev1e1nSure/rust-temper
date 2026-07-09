@@ -80,3 +80,36 @@ pub(crate) fn unload_before_config_write() -> Result<(), String> {
 pub(crate) fn unload_before_config_write() -> Result<(), String> {
     Ok(())
 }
+
+/// Whether the Rust game client is currently running. The UI polls this to gate
+/// all config editing behind a blocking overlay: while Rust is open it would
+/// flush its in-memory settings over any client.cfg/keys.cfg edit on exit, so we
+/// refuse to work until the player closes the game.
+#[cfg(all(windows, not(test)))]
+#[tauri::command]
+pub fn is_rust_running() -> bool {
+    use std::os::windows::process::CommandExt;
+    // Suppress the console window tasklist would otherwise flash on each poll.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    match Command::new("tasklist")
+        .args(["/FI", "IMAGENAME eq RustClient.exe", "/NH", "/FO", "CSV"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+    {
+        Ok(output) => String::from_utf8_lossy(&output.stdout)
+            .to_ascii_lowercase()
+            .contains("rustclient.exe"),
+        Err(error) => {
+            // Fail open: a broken probe must not permanently lock the UI.
+            log::warn!("is_rust_running: tasklist failed: {error}");
+            false
+        }
+    }
+}
+
+#[cfg(any(not(windows), test))]
+#[tauri::command]
+pub fn is_rust_running() -> bool {
+    false
+}

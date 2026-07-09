@@ -7,6 +7,10 @@
   user-select: none;
   flex-shrink: 0;
   border-bottom: 2px solid #111113;
+  /* Stay above the Rust-running gate (z-index 4000) so window controls remain
+     usable while editing is blocked. */
+  position: relative;
+  z-index: 5000;
 }
 
 .titlebar-drag {
