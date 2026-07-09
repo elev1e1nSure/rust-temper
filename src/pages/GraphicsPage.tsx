@@ -180,9 +180,6 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
   const presetMenuRef = useRef<HTMLDivElement>(null);
   const syncRequestRef = useRef(0);
   const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0]!.key);
-  const [applyStatus, setApplyStatus] = useState<
-    { type: "success" | "error"; message: string } | undefined
-  >();
   const [applying, setApplying] = useState(false);
   const [syncing, setSyncing] = useState(false);
   // Slider transitions are only ever declared inline, and only once the
@@ -228,14 +225,10 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
 
   useEffect(() => {
     if (!clientCfgPath) return;
-    let cancelled = false;
 
-    syncFromClientCfg().then(() => {
-      if (!cancelled) setApplyStatus(undefined);
-    });
+    syncFromClientCfg();
 
     return () => {
-      cancelled = true;
       syncRequestRef.current += 1;
     };
   }, [clientCfgPath, syncFromClientCfg]);
@@ -266,16 +259,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
   };
 
   const handleApply = useCallback(async () => {
-    if (!clientCfgPath) {
-      setApplyStatus({
-        type: "error",
-        message: "Не указан путь к файлам конфигурации",
-      });
-      return;
-    }
+    if (!clientCfgPath) return;
 
     setApplying(true);
-    setApplyStatus(undefined);
 
     try {
       for (const row of QUALITY_ROWS) {
@@ -284,15 +270,6 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
           tier: values[row.key] ?? 0,
         });
       }
-      setApplyStatus({
-        type: "success",
-        message: "Настройки графики применены",
-      });
-    } catch (err) {
-      setApplyStatus({
-        type: "error",
-        message: `Не удалось применить настройки: ${err}`,
-      });
     } finally {
       setApplying(false);
     }
@@ -438,13 +415,6 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
             {applying ? "Применение..." : "Применить"}
           </button>
         </div>
-        {applyStatus && (
-          <p
-            className={`status-message graphics-preview-status${applyStatus.type === "error" ? " status-error" : ""}`}
-          >
-            {applyStatus.message}
-          </p>
-        )}
       </div>
     </div>
   );
