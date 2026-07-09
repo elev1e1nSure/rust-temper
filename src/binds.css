@@ -888,7 +888,7 @@ body:has(.bind-config-action.dragging) {
 }
 
 .bind-config-submit {
-  background: var(--accent-muted);
+  background: var(--row);
 }
 
 .bind-config-submit:hover:not(:disabled) {
