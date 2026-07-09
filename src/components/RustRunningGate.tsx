@@ -48,14 +48,6 @@ export function RustRunningGate({ running }: RustRunningGateProps) {
           Закройте игру, чтобы продолжить редактирование конфигов. Пока Rust
           открыт, он перезапишет любые изменения при выходе.
         </p>
-        <div className="rust-gate-status">
-          <span className="rust-gate-dots" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-          Ожидание закрытия игры…
-        </div>
       </div>
     </div>,
     document.body,
