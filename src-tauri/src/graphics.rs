@@ -6,7 +6,6 @@
 //! `lib.rs`. The read/write mechanics are shared and never duplicated per key.
 
 use crate::client_cfg;
-use crate::steam;
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -44,7 +43,6 @@ impl Quality {
         // Graphics tiers share the same client.cfg that tweaks mutate, so they
         // must take the same process-wide lock to avoid lost-update races.
         let _guard = client_cfg::operation_lock()?;
-        steam::unload_before_config_write()?;
         let config = self.tiers.get(tier as usize).ok_or_else(|| {
             format!(
                 "Недопустимый уровень {}: {tier}. Допустимый диапазон: 0..{}",

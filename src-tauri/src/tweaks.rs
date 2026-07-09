@@ -1,6 +1,5 @@
 use crate::client_cfg;
 use crate::keys_cfg;
-use crate::steam;
 use crate::tweak_defs::{self as defs, BindTweak, TweakDef};
 use crate::tweak_state::{self, ActiveTweak, ConfigState, StoredValue};
 use serde::Serialize;
@@ -163,7 +162,6 @@ pub fn toggle_tweak(
     keys_cfg_path: Option<String>,
 ) -> Result<(), String> {
     let _guard = client_cfg::operation_lock()?;
-    steam::unload_before_config_write()?;
     let tweak = known_tweaks_ref()
         .iter()
         .find(|t| t.key == key)
@@ -386,7 +384,6 @@ pub fn set_tweak_slider(
     value: f64,
 ) -> Result<(), String> {
     let _guard = operation_lock()?;
-    steam::unload_before_config_write()?;
     let tweak = known_tweaks()
         .into_iter()
         .find(|t| t.key == key)
