@@ -11,6 +11,7 @@ import { BindsPage } from "./pages/BindsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { GraphicsPage } from "./pages/GraphicsPage";
 import { TweaksPage } from "./pages/TweaksPage";
+import { OptimizationPage } from "./pages/OptimizationPage";
 import { Titlebar } from "./Titlebar";
 import { RustRunningGate } from "./components/RustRunningGate";
 import { useRustRunning } from "./hooks/useRustRunning";
@@ -239,6 +240,12 @@ function App() {
           {activePage === "tweaks" && (
             <ErrorBoundary>
               <TweaksPage gamePath={configFile.gamePath} />
+            </ErrorBoundary>
+          )}
+
+          {activePage === "optimization" && (
+            <ErrorBoundary>
+              <OptimizationPage />
             </ErrorBoundary>
           )}
 
