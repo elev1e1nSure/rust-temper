@@ -30,6 +30,7 @@ interface CommandModalState {
 
 type ActionMode = "toggle" | "hold";
 const KEY_EXIT_MS = 120;
+const MODAL_KIND_ORDER: CommandModalKind[] = ["single", "combination"];
 
 interface DraftAction {
   id: number;
@@ -68,12 +69,9 @@ function modeFromCommand(command: string): ActionMode {
 }
 
 function presetListKey(preset: CommandPreset): string {
-  return [
-    preset.kind,
-    preset.command,
-    preset.defaultMode,
-    preset.name,
-  ].join(":");
+  return [preset.kind, preset.command, preset.defaultMode, preset.name].join(
+    ":",
+  );
 }
 
 function getCssZoomFactor(): number {
@@ -99,6 +97,9 @@ export function CommandModal({
     step: "select",
   });
   const [manualModalClosing, setManualModalClosing] = useState(false);
+  const [kindSlideDirection, setKindSlideDirection] = useState<
+    "left" | "right"
+  >("right");
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
@@ -176,9 +177,16 @@ export function CommandModal({
   }, [manualModalClosing]);
 
   const setModalKind = useCallback((nextKind: CommandModalKind) => {
-    setCommandModal((modal) =>
-      modal.kind === nextKind ? modal : { ...modal, kind: nextKind },
-    );
+    setCommandModal((modal) => {
+      if (modal.kind === nextKind) return modal;
+      setKindSlideDirection(
+        MODAL_KIND_ORDER.indexOf(nextKind) >
+          MODAL_KIND_ORDER.indexOf(modal.kind)
+          ? "right"
+          : "left",
+      );
+      return { ...modal, kind: nextKind };
+    });
     setManualSearch("");
     setManualCustomMode(false);
     setManualCustomCommand("");
@@ -522,32 +530,37 @@ export function CommandModal({
               </div>
             )}
 
-            <div className="manual-modal-list">
-              {manualPresets.map((preset) => (
-                <div className="manual-modal-row" key={presetListKey(preset)}>
-                  <div className="manual-modal-row-icon">
-                    <CommandIcon />
-                  </div>
-                  <div className="manual-modal-row-text">
-                    <div className="manual-modal-row-name">{preset.name}</div>
-                    <div className="manual-modal-row-id">
-                      {commandDisplay(preset.command)}
+            <div
+              className={`manual-modal-list-wrap slide-${kindSlideDirection}`}
+              key={commandModal.kind}
+            >
+              <div className="manual-modal-list">
+                {manualPresets.map((preset) => (
+                  <div className="manual-modal-row" key={presetListKey(preset)}>
+                    <div className="manual-modal-row-icon">
+                      <CommandIcon />
                     </div>
+                    <div className="manual-modal-row-text">
+                      <div className="manual-modal-row-name">{preset.name}</div>
+                      <div className="manual-modal-row-id">
+                        {commandDisplay(preset.command)}
+                      </div>
+                    </div>
+                    <button
+                      className="manual-modal-add-btn"
+                      type="button"
+                      onClick={() =>
+                        selectCommand(preset.command, preset.defaultMode)
+                      }
+                    >
+                      Добавить
+                    </button>
                   </div>
-                  <button
-                    className="manual-modal-add-btn"
-                    type="button"
-                    onClick={() =>
-                      selectCommand(preset.command, preset.defaultMode)
-                    }
-                  >
-                    Добавить
-                  </button>
-                </div>
-              ))}
-              {manualPresets.length === 0 && (
-                <div className="manual-modal-empty">Ничего не найдено</div>
-              )}
+                ))}
+                {manualPresets.length === 0 && (
+                  <div className="manual-modal-empty">Ничего не найдено</div>
+                )}
+              </div>
             </div>
           </>
         ) : (
