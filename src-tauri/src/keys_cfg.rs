@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::path::Path;
 
 use crate::client_cfg;
+use crate::steam;
 
 pub fn load_binds(path: &Path) -> Result<Vec<KeyBind>, String> {
     let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
@@ -446,6 +447,7 @@ pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
     // Share the global lock so a bind tweak running concurrently with a full
     // editor save cannot interleave and drop either side's binds.
     let _guard = client_cfg::operation_lock()?;
+    steam::unload_before_config_write()?;
     let p = Path::new(&path);
     let existing = if p.exists() {
         std::fs::read_to_string(p).unwrap_or_default()

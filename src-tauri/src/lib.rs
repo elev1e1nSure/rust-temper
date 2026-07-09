@@ -4,6 +4,7 @@ mod keys_cfg;
 mod known_commands;
 mod rust_locator;
 mod settings_backup;
+mod steam;
 mod tweak_defs;
 mod tweak_state;
 mod tweaks;

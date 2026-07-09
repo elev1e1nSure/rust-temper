@@ -1,4 +1,5 @@
 use crate::client_cfg;
+use crate::steam;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -81,6 +82,7 @@ pub fn restore_game_settings_backup(
     let manifest = read_manifest(&paths)?;
 
     let _guard = client_cfg::operation_lock()?;
+    steam::unload_before_config_write()?;
     std::fs::create_dir_all(&paths.config_dir).map_err(|error| error.to_string())?;
 
     for file_name in manifest.files {
