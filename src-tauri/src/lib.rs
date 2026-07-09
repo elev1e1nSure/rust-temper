@@ -3,6 +3,7 @@ mod graphics;
 mod keys_cfg;
 mod known_commands;
 mod rust_locator;
+mod settings_backup;
 mod tweak_defs;
 mod tweak_state;
 mod tweaks;
@@ -35,6 +36,9 @@ pub fn run() {
             graphics::read_clouds_quality,
             graphics::apply_smoothing_quality,
             graphics::read_smoothing_quality,
+            settings_backup::ensure_initial_game_settings_backup,
+            settings_backup::get_game_settings_backup_status,
+            settings_backup::restore_game_settings_backup,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

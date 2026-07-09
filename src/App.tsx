@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { CommandPreset } from "./types";
+import type { BackupStatus, CommandPreset } from "./types";
 import { useConfigFile } from "./hooks/useConfigFile";
 import { keysCfgPathFor } from "./utils/paths";
 import { useBindEditor } from "./hooks/useBindEditor";
@@ -23,6 +23,7 @@ function App() {
     text: string;
   } | null>(null);
   const [commandPresets, setCommandPresets] = useState<CommandPreset[]>([]);
+  const [backupRefreshKey, setBackupRefreshKey] = useState(0);
   const configFile = useConfigFile();
   const bindEditor = useBindEditor(commandPresets);
   const { sidebarWidth, startResizing } = useSidebarResize();
@@ -86,6 +87,34 @@ function App() {
         });
       });
   }, []);
+
+  const reloadBindsFromCurrentPath = useCallback(async () => {
+    const loaded = await configFile.loadFromPath(configFile.gamePath);
+    if (loaded) {
+      bindEditor.setBinds(loaded);
+    }
+  }, [bindEditor, configFile]);
+
+  useEffect(() => {
+    if (!configFile.gamePath) return;
+    let cancelled = false;
+
+    invoke<BackupStatus>("ensure_initial_game_settings_backup", {
+      gamePath: configFile.gamePath,
+    })
+      .then(() => {
+        if (!cancelled) {
+          setBackupRefreshKey((key) => key + 1);
+        }
+      })
+      .catch((err) => {
+        console.error("Не удалось создать первичный бэкап настроек:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [configFile.gamePath]);
 
   // User-triggered auto-detection
   const handleAutoDetect = useCallback(() => {
@@ -193,6 +222,8 @@ function App() {
                 detecting={configFile.detecting}
                 handleAutoDetect={handleAutoDetect}
                 handleSelectFile={configFile.handleSelectFile}
+                backupRefreshKey={backupRefreshKey}
+                onConfigRestored={reloadBindsFromCurrentPath}
               />
             </ErrorBoundary>
           )}

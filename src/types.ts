@@ -3,6 +3,19 @@ export interface Bind {
   command: string;
 }
 
+export interface BackupFileStatus {
+  name: string;
+  backedUp: boolean;
+  sourceExists: boolean;
+}
+
+export interface BackupStatus {
+  exists: boolean;
+  createdAtEpochSeconds: number | null;
+  backupDir: string;
+  files: BackupFileStatus[];
+}
+
 export interface FilteredBind {
   bind: Bind;
   sourceIndex: number;
