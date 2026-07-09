@@ -164,11 +164,13 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
   const presetLabel = matchPreset(values);
   const [presetMenuOpen, setPresetMenuOpen] = useState(false);
   const presetMenuRef = useRef<HTMLDivElement>(null);
+  const syncRequestRef = useRef(0);
   const [previewKey, setPreviewKey] = useState(QUALITY_ROWS[0]!.key);
   const [applyStatus, setApplyStatus] = useState<
     { type: "success" | "error"; message: string } | undefined
   >();
   const [applying, setApplying] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   // Slider transitions are only ever declared inline, and only once the
   // user has actually touched a control. This keeps the initial load
   // from client.cfg (which lands asynchronously, after the default-value
@@ -177,21 +179,25 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
 
   const clientCfgPath = gamePath ? clientCfgPathFor(gamePath) : "";
 
-  useEffect(() => {
+  const syncFromClientCfg = useCallback(async () => {
     if (!clientCfgPath) return;
-    let cancelled = false;
 
-    Promise.all(
-      QUALITY_ROWS.map((row) =>
-        invoke<number>(row.readCmd, { path: clientCfgPath })
-          .then((tier) => [row.key, tier] as const)
-          .catch((err) => {
-            console.error(`Не удалось прочитать «${row.label}»:`, err);
-            return null;
-          }),
-      ),
-    ).then((results) => {
-      if (cancelled) return;
+    const requestId = syncRequestRef.current + 1;
+    syncRequestRef.current = requestId;
+    setSyncing(true);
+    try {
+      const results = await Promise.all(
+        QUALITY_ROWS.map((row) =>
+          invoke<number>(row.readCmd, { path: clientCfgPath })
+            .then((tier) => [row.key, tier] as const)
+            .catch((err) => {
+              console.error(`Не удалось прочитать «${row.label}»:`, err);
+              return null;
+            }),
+        ),
+      );
+
+      if (syncRequestRef.current !== requestId) return;
       setValues((prev) => {
         const next = { ...prev };
         for (const result of results) {
@@ -199,12 +205,26 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
         }
         return next;
       });
+    } finally {
+      if (syncRequestRef.current === requestId) {
+        setSyncing(false);
+      }
+    }
+  }, [clientCfgPath]);
+
+  useEffect(() => {
+    if (!clientCfgPath) return;
+    let cancelled = false;
+
+    syncFromClientCfg().then(() => {
+      if (!cancelled) setApplyStatus(undefined);
     });
 
     return () => {
       cancelled = true;
+      syncRequestRef.current += 1;
     };
-  }, [clientCfgPath]);
+  }, [clientCfgPath, syncFromClientCfg]);
 
   useEffect(() => {
     if (!presetMenuOpen) return;
@@ -229,11 +249,6 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
     setValues(preset.values);
     setInteracted(true);
     setPresetMenuOpen(false);
-  };
-
-  const resetToDefaults = () => {
-    setValues(DEFAULT_VALUES);
-    setInteracted(true);
   };
 
   const handleApply = useCallback(async () => {
@@ -393,8 +408,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
           <button
             type="button"
             className="graphics-refresh-btn"
-            onClick={resetToDefaults}
-            aria-label="Сбросить настройки"
+            onClick={syncFromClientCfg}
+            disabled={syncing || !gamePath}
+            aria-label="Синхронизировать с client.cfg"
           >
             <Refresh1Line size={16} />
           </button>
