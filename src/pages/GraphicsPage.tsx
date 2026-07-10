@@ -341,7 +341,7 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
                         className={`graphics-slider-tick${i <= value ? " active" : ""}`}
                         style={
                           {
-                            "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 100 : 50}%`,
+                            "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 97 + 1.5 : 50}%`,
                           } as React.CSSProperties
                         }
                       />
