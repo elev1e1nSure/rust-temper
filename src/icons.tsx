@@ -1,94 +1,94 @@
 import {
-  ArrowLeftLine,
-  CheckLine,
-  DownLine,
-  Delete2Line,
-  DisplayLine,
-  FolderOpenLine,
-  ListCheck3Line,
-  Magic3Line,
-  Refresh1Line,
-  RestoreLine,
-  SearchLine,
-  Search2Line,
-  Settings6Line,
-  SaveLine,
-  SafeShieldLine,
-  CloseLine,
-  CommandLine,
-  KeyboardLine,
+  ArrowLeftFill,
+  CheckFill,
+  DownFill,
+  Delete2Fill,
+  DisplayFill,
+  FolderOpenFill,
+  ListCheck3Fill,
+  Magic3Fill,
+  Refresh1Fill,
+  RestoreFill,
+  SearchFill,
+  Search2Fill,
+  Settings6Fill,
+  SaveFill,
+  SafeShieldFill,
+  CloseFill,
+  CommandFill,
+  KeyboardFill,
 } from "@mingcute/react";
 
 export function ChevronIcon() {
-  return <DownLine size={15} />;
+  return <DownFill size={15} />;
 }
 
 export function TrashIcon() {
-  return <Delete2Line size={15} />;
+  return <Delete2Fill size={15} />;
 }
 
 export function SearchIcon() {
-  return <SearchLine size={15} />;
+  return <SearchFill size={15} />;
 }
 
 export function CloseIcon({ size = 16 }: { size?: number }) {
-  return <CloseLine size={size} />;
+  return <CloseFill size={size} />;
 }
 
 export function CommandIcon({ size = 16 }: { size?: number }) {
-  return <CommandLine size={size} />;
+  return <CommandFill size={size} />;
 }
 
 export function KeyboardIcon({ size = 16 }: { size?: number }) {
-  return <KeyboardLine size={size} />;
+  return <KeyboardFill size={size} />;
 }
 
 export function BackIcon({ size = 16 }: { size?: number }) {
-  return <ArrowLeftLine size={size} />;
+  return <ArrowLeftFill size={size} />;
 }
 
 export function CheckIcon({ size = 16 }: { size?: number }) {
-  return <CheckLine size={size} />;
+  return <CheckFill size={size} />;
 }
 
 export function AutoDetectIcon({ size = 16 }: { size?: number }) {
-  return <Search2Line size={size} />;
+  return <Search2Fill size={size} />;
 }
 
 export function FolderOpenIcon({ size = 16 }: { size?: number }) {
-  return <FolderOpenLine size={size} />;
+  return <FolderOpenFill size={size} />;
 }
 
 export function RestoreBackupIcon({ size = 16 }: { size?: number }) {
-  return <RestoreLine size={size} />;
+  return <RestoreFill size={size} />;
 }
 
 export function ShieldIcon({ size = 16 }: { size?: number }) {
-  return <SafeShieldLine size={size} />;
+  return <SafeShieldFill size={size} />;
 }
 
 export function TweakIcon({ size = 16 }: { size?: number }) {
-  return <Magic3Line size={size} />;
+  return <Magic3Fill size={size} />;
 }
 
 export function GraphicsIcon({ size = 16 }: { size?: number }) {
-  return <DisplayLine size={size} />;
+  return <DisplayFill size={size} />;
 }
 
 export function ListCheckIcon({ size = 16 }: { size?: number }) {
-  return <ListCheck3Line size={size} />;
+  return <ListCheck3Fill size={size} />;
 }
 
 export function InterfaceIcon({ size = 16 }: { size?: number }) {
-  return <Settings6Line size={size} />;
+  return <Settings6Fill size={size} />;
 }
 
 export function RefreshIcon({ size = 16 }: { size?: number }) {
-  return <Refresh1Line size={size} />;
+  return <Refresh1Fill size={size} />;
 }
 
 export function SaveIcon({ size = 16 }: { size?: number }) {
-  return <SaveLine size={size} />;
+  return <SaveFill size={size} />;
 }
 
 export function PlusIcon() {
