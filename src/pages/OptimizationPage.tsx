@@ -50,10 +50,7 @@ export function OptimizationPage() {
         </div>
 
         <div className="opt-lock-overlay">
-          <button type="button" className="opt-btn opt-btn-accent opt-lock-btn">
-            Запустить проверку
-            <PlayIcon />
-          </button>
+          <span className="opt-lock-label">В разработке</span>
         </div>
       </div>
     </div>
