@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::vdf;
+
 const RUST_INSTALL_RELATIVE: &str = "steamapps/common/Rust";
 /// Sentinel file used to confirm a candidate directory is actually a Rust install.
 const RUST_CFG_MARKER: &str = "cfg/keys.cfg";
@@ -47,10 +49,23 @@ fn steam_library_folders() -> Vec<PathBuf> {
     folders
 }
 
-fn parse_library_paths(vdf: &str) -> Vec<PathBuf> {
-    vdf.lines()
-        .filter(|line| line.trim_start().starts_with("\"path\""))
-        .filter_map(|line| line.split('"').nth(3))
+fn parse_library_paths(vdf_content: &str) -> Vec<PathBuf> {
+    let tree = match vdf::parse(vdf_content) {
+        Ok(tree) => tree,
+        Err(error) => {
+            log::warn!("Не удалось разобрать libraryfolders.vdf: {error}");
+            return Vec::new();
+        }
+    };
+    let Some(libraries) = vdf::get_obj(&tree, "libraryfolders") else {
+        return Vec::new();
+    };
+    libraries
+        .iter()
+        .filter_map(|(_, node)| match node {
+            vdf::Node::Obj(members) => vdf::get_str(members, "path").map(|s| s.to_string()),
+            _ => None,
+        })
         .map(|raw| PathBuf::from(raw.replace("\\\\", "\\")))
         .collect()
 }

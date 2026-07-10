@@ -15,6 +15,7 @@ use std::path::PathBuf;
 
 use crate::client_cfg;
 use crate::steam;
+use crate::vdf::{self, Member};
 
 /// Rust's Steam application id.
 const RUST_APP_ID: &str = "252490";
@@ -30,9 +31,9 @@ const LAST_PLAYED_KEY: &str = "LastPlayed";
 #[tauri::command]
 pub fn read_rust_launch_options() -> Result<Option<String>, String> {
     let path = locate_localconfig()?;
-    let tree = parse(&client_cfg::read(&path)?)?;
+    let tree = vdf::parse(&client_cfg::read(&path)?)?;
     Ok(app_object(&tree, RUST_APP_ID)
-        .and_then(|app| get_str(app, LAUNCH_OPTIONS_KEY))
+        .and_then(|app| vdf::get_str(app, LAUNCH_OPTIONS_KEY))
         .map(str::to_string))
 }
 
@@ -40,7 +41,7 @@ pub fn read_rust_launch_options() -> Result<Option<String>, String> {
 #[tauri::command]
 pub fn set_rust_launch_options(options: String) -> Result<(), String> {
     mutate(|app| {
-        set_str(app, LAUNCH_OPTIONS_KEY, &options);
+        vdf::set_str(app, LAUNCH_OPTIONS_KEY, &options);
     })
 }
 
@@ -48,7 +49,7 @@ pub fn set_rust_launch_options(options: String) -> Result<(), String> {
 #[tauri::command]
 pub fn clear_rust_launch_options() -> Result<(), String> {
     mutate(|app| {
-        remove_key(app, LAUNCH_OPTIONS_KEY);
+        vdf::remove_key(app, LAUNCH_OPTIONS_KEY);
     })
 }
 
@@ -56,8 +57,8 @@ pub fn clear_rust_launch_options() -> Result<(), String> {
 /// user-provided launch options.
 pub fn set_rust_gc_buffer(buffer_mb: u32) -> Result<(), String> {
     mutate(|app| {
-        let current = get_str(app, LAUNCH_OPTIONS_KEY).unwrap_or_default();
-        set_str(app, LAUNCH_OPTIONS_KEY, &with_gc_buffer(current, buffer_mb));
+        let current = vdf::get_str(app, LAUNCH_OPTIONS_KEY).unwrap_or_default();
+        vdf::set_str(app, LAUNCH_OPTIONS_KEY, &with_gc_buffer(current, buffer_mb));
     })
 }
 
@@ -72,12 +73,12 @@ pub fn read_rust_gc_buffer() -> Result<Option<u32>, String> {
 /// launch options.
 pub fn clear_rust_gc_buffer() -> Result<(), String> {
     mutate(|app| {
-        let current = get_str(app, LAUNCH_OPTIONS_KEY).unwrap_or_default();
+        let current = vdf::get_str(app, LAUNCH_OPTIONS_KEY).unwrap_or_default();
         let stripped = without_gc_buffer(current);
         if stripped.is_empty() {
-            remove_key(app, LAUNCH_OPTIONS_KEY);
+            vdf::remove_key(app, LAUNCH_OPTIONS_KEY);
         } else {
-            set_str(app, LAUNCH_OPTIONS_KEY, &stripped);
+            vdf::set_str(app, LAUNCH_OPTIONS_KEY, &stripped);
         }
     })
 }
@@ -129,12 +130,12 @@ fn mutate(edit: impl FnOnce(&mut Vec<Member>)) -> Result<(), String> {
     steam::unload_before_config_write()?;
 
     let path = locate_localconfig()?;
-    let mut tree = parse(&client_cfg::read(&path)?)?;
+    let mut tree = vdf::parse(&client_cfg::read(&path)?)?;
     let apps = ensure_path(&mut tree, APPS_KEY_PATH);
-    let app = ensure_object(apps, RUST_APP_ID);
+    let app = vdf::ensure_object(apps, RUST_APP_ID);
     edit(app);
 
-    client_cfg::write_atomic(&path, &serialize(&tree))?;
+    client_cfg::write_atomic(&path, &vdf::serialize(&tree))?;
     log::info!(
         "launch options updated appid={RUST_APP_ID} path={}",
         path.display()
@@ -158,10 +159,10 @@ fn locate_localconfig() -> Result<PathBuf, String> {
         .map(|path| {
             let last_played = std::fs::read_to_string(&path)
                 .ok()
-                .and_then(|content| parse(&content).ok())
+                .and_then(|content| vdf::parse(&content).ok())
                 .and_then(|tree| {
                     app_object(&tree, RUST_APP_ID)
-                        .and_then(|app| get_str(app, LAST_PLAYED_KEY))
+                        .and_then(|app| vdf::get_str(app, LAST_PLAYED_KEY))
                         .and_then(|value| value.parse::<u64>().ok())
                 })
                 .unwrap_or(0);
@@ -207,260 +208,25 @@ fn localconfig_candidates() -> Vec<PathBuf> {
 
 // ── VDF tree ─────────────────────────────────────────────────────────────────
 
-type Member = (String, Node);
-
-/// A Valve KeyValues node: either a string leaf or an ordered child object.
-/// Order is preserved so re-serializing keeps the file's original layout.
-#[derive(Debug, Clone, PartialEq)]
-enum Node {
-    Str(String),
-    Obj(Vec<Member>),
-}
-
-/// Case-insensitive lookup of a child string value (Steam treats keys as
-/// case-insensitive; e.g. "Steam" vs "steam").
-fn get_str<'a>(members: &'a [Member], key: &str) -> Option<&'a str> {
-    members.iter().find_map(|(k, node)| match node {
-        Node::Str(value) if k.eq_ignore_ascii_case(key) => Some(value.as_str()),
-        _ => None,
-    })
-}
-
 /// Navigate `root > apps > <appid>` and return that app's members, if present.
 fn app_object<'a>(root: &'a [Member], appid: &str) -> Option<&'a [Member]> {
     let mut node = root;
     for key in APPS_KEY_PATH {
-        node = get_obj(node, key)?;
+        node = vdf::get_obj(node, key)?;
     }
-    get_obj(node, appid)
-}
-
-fn get_obj<'a>(members: &'a [Member], key: &str) -> Option<&'a [Member]> {
-    members.iter().find_map(|(k, node)| match node {
-        Node::Obj(children) if k.eq_ignore_ascii_case(key) => Some(children.as_slice()),
-        _ => None,
-    })
+    vdf::get_obj(node, appid)
 }
 
 /// Walk (creating missing objects) a chain of object keys, returning the deepest
 /// object's members for mutation.
 fn ensure_path<'a>(mut members: &'a mut Vec<Member>, keys: &[&str]) -> &'a mut Vec<Member> {
     for key in keys {
-        members = ensure_object(members, key);
+        members = vdf::ensure_object(members, key);
     }
     members
 }
 
-/// Return the child object under `key`, inserting an empty one if absent or if
-/// the existing child is a string leaf.
-fn ensure_object<'a>(members: &'a mut Vec<Member>, key: &str) -> &'a mut Vec<Member> {
-    let index = match members
-        .iter()
-        .position(|(k, _)| k.eq_ignore_ascii_case(key))
-    {
-        Some(index) => {
-            if !matches!(members[index].1, Node::Obj(_)) {
-                members[index].1 = Node::Obj(Vec::new());
-            }
-            index
-        }
-        None => {
-            members.push((key.to_string(), Node::Obj(Vec::new())));
-            members.len() - 1
-        }
-    };
-    match &mut members[index].1 {
-        Node::Obj(children) => children,
-        _ => unreachable!("just ensured this member is an object"),
-    }
-}
-
-fn set_str(members: &mut Vec<Member>, key: &str, value: &str) {
-    if let Some((_, node)) = members
-        .iter_mut()
-        .find(|(k, _)| k.eq_ignore_ascii_case(key))
-    {
-        *node = Node::Str(value.to_string());
-    } else {
-        members.push((key.to_string(), Node::Str(value.to_string())));
-    }
-}
-
-fn remove_key(members: &mut Vec<Member>, key: &str) {
-    members.retain(|(k, _)| !k.eq_ignore_ascii_case(key));
-}
-
-// ── VDF parse ────────────────────────────────────────────────────────────────
-
-/// Parse a Valve KeyValues document into an ordered tree.
-fn parse(input: &str) -> Result<Vec<Member>, String> {
-    let mut lexer = Lexer::new(input);
-    let members = parse_members(&mut lexer, true)?;
-    Ok(members)
-}
-
-fn parse_members(lexer: &mut Lexer, top_level: bool) -> Result<Vec<Member>, String> {
-    let mut members = Vec::new();
-    loop {
-        let key = match lexer.next_token()? {
-            Token::Str(key) => key,
-            Token::Close if !top_level => return Ok(members),
-            Token::Eof if top_level => return Ok(members),
-            Token::Close => return Err("Неожиданный '}' в localconfig.vdf".to_string()),
-            Token::Open => return Err("Неожиданный '{' в localconfig.vdf".to_string()),
-            Token::Eof => return Err("Неожиданный конец localconfig.vdf".to_string()),
-        };
-        match lexer.next_token()? {
-            Token::Str(value) => members.push((key, Node::Str(value))),
-            Token::Open => members.push((key, Node::Obj(parse_members(lexer, false)?))),
-            Token::Close | Token::Eof => {
-                return Err(format!(
-                    "Отсутствует значение для ключа '{key}' в localconfig.vdf"
-                ))
-            }
-        }
-    }
-}
-
-enum Token {
-    Str(String),
-    Open,
-    Close,
-    Eof,
-}
-
-struct Lexer {
-    chars: Vec<char>,
-    pos: usize,
-}
-
-impl Lexer {
-    fn new(input: &str) -> Self {
-        Self {
-            chars: input.chars().collect(),
-            pos: 0,
-        }
-    }
-
-    fn next_token(&mut self) -> Result<Token, String> {
-        self.skip_trivia();
-        match self.chars.get(self.pos) {
-            None => Ok(Token::Eof),
-            Some('{') => {
-                self.pos += 1;
-                Ok(Token::Open)
-            }
-            Some('}') => {
-                self.pos += 1;
-                Ok(Token::Close)
-            }
-            Some('"') => Ok(Token::Str(self.read_quoted())),
-            Some(_) => Ok(Token::Str(self.read_unquoted())),
-        }
-    }
-
-    /// Skip whitespace and `//` line comments between tokens.
-    fn skip_trivia(&mut self) {
-        while let Some(&c) = self.chars.get(self.pos) {
-            if c.is_whitespace() {
-                self.pos += 1;
-            } else if c == '/' && self.chars.get(self.pos + 1) == Some(&'/') {
-                while let Some(&c) = self.chars.get(self.pos) {
-                    self.pos += 1;
-                    if c == '\n' {
-                        break;
-                    }
-                }
-            } else {
-                break;
-            }
-        }
-    }
-
-    fn read_quoted(&mut self) -> String {
-        self.pos += 1; // opening quote
-        let mut out = String::new();
-        while let Some(&c) = self.chars.get(self.pos) {
-            self.pos += 1;
-            match c {
-                '"' => break,
-                '\\' => match self.chars.get(self.pos) {
-                    Some(&escaped) => {
-                        self.pos += 1;
-                        out.push(match escaped {
-                            'n' => '\n',
-                            't' => '\t',
-                            'r' => '\r',
-                            other => other, // covers \" and \\ , drops unknown backslash
-                        });
-                    }
-                    None => out.push('\\'),
-                },
-                _ => out.push(c),
-            }
-        }
-        out
-    }
-
-    fn read_unquoted(&mut self) -> String {
-        let mut out = String::new();
-        while let Some(&c) = self.chars.get(self.pos) {
-            if c.is_whitespace() || c == '{' || c == '}' || c == '"' {
-                break;
-            }
-            out.push(c);
-            self.pos += 1;
-        }
-        out
-    }
-}
-
-// ── VDF serialize ────────────────────────────────────────────────────────────
-
-/// Serialize the tree back to Valve KeyValues text, tab-indented in Steam's
-/// style. Steam re-reads whitespace-insensitively, so exact original spacing is
-/// not preserved — only structure and order.
-fn serialize(members: &[Member]) -> String {
-    let mut out = String::new();
-    write_members(&mut out, members, 0);
-    out
-}
-
-fn write_members(out: &mut String, members: &[Member], depth: usize) {
-    let indent = "\t".repeat(depth);
-    for (key, node) in members {
-        match node {
-            Node::Str(value) => {
-                out.push_str(&format!(
-                    "{indent}\"{}\"\t\t\"{}\"\n",
-                    escape(key),
-                    escape(value)
-                ));
-            }
-            Node::Obj(children) => {
-                out.push_str(&format!("{indent}\"{}\"\n{indent}{{\n", escape(key)));
-                write_members(out, children, depth + 1);
-                out.push_str(&format!("{indent}}}\n"));
-            }
-        }
-    }
-}
-
-fn escape(value: &str) -> String {
-    let mut out = String::with_capacity(value.len());
-    for c in value.chars() {
-        match c {
-            '\\' => out.push_str("\\\\"),
-            '"' => out.push_str("\\\""),
-            '\n' => out.push_str("\\n"),
-            '\t' => out.push_str("\\t"),
-            '\r' => out.push_str("\\r"),
-            _ => out.push(c),
-        }
-    }
-    out
-}
-
+// ── GC buffer helpers ─────────────────────────────────────────────────────────
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -498,56 +264,54 @@ mod tests {
 
     #[test]
     fn parses_and_reads_launch_options() {
-        let tree = parse(SAMPLE).unwrap();
+        let tree = vdf::parse(SAMPLE).unwrap();
         assert_eq!(
-            get_str(rust_app(&tree), LAUNCH_OPTIONS_KEY),
+            vdf::get_str(rust_app(&tree), LAUNCH_OPTIONS_KEY),
             Some("-graphics.shadowmode \"1\" -tree.quality \"500\"")
         );
     }
 
     #[test]
     fn round_trips_escaped_quotes() {
-        let tree = parse(SAMPLE).unwrap();
-        let reparsed = parse(&serialize(&tree)).unwrap();
+        let tree = vdf::parse(SAMPLE).unwrap();
+        let reparsed = vdf::parse(&vdf::serialize(&tree)).unwrap();
         assert_eq!(
-            get_str(rust_app(&reparsed), LAUNCH_OPTIONS_KEY),
+            vdf::get_str(rust_app(&reparsed), LAUNCH_OPTIONS_KEY),
             Some("-graphics.shadowmode \"1\" -tree.quality \"500\"")
         );
     }
 
     #[test]
     fn set_overwrites_existing() {
-        let mut tree = parse(SAMPLE).unwrap();
-        let app = ensure_object(ensure_path(&mut tree, APPS_KEY_PATH), RUST_APP_ID);
-        set_str(app, LAUNCH_OPTIONS_KEY, "-window-mode exclusive");
+        let mut tree = vdf::parse(SAMPLE).unwrap();
+        let app = vdf::ensure_object(ensure_path(&mut tree, APPS_KEY_PATH), RUST_APP_ID);
+        vdf::set_str(app, LAUNCH_OPTIONS_KEY, "-window-mode exclusive");
         assert_eq!(
-            get_str(rust_app(&tree), LAUNCH_OPTIONS_KEY),
+            vdf::get_str(rust_app(&tree), LAUNCH_OPTIONS_KEY),
             Some("-window-mode exclusive")
         );
     }
 
     #[test]
     fn set_creates_path_when_missing() {
-        let mut tree = parse("\"UserLocalConfigStore\"\n{\n}\n").unwrap();
-        let app = ensure_object(ensure_path(&mut tree, APPS_KEY_PATH), RUST_APP_ID);
-        set_str(app, LAUNCH_OPTIONS_KEY, "-nolog");
-        // Survives a serialize/parse round-trip in the correct nested location.
-        let reparsed = parse(&serialize(&tree)).unwrap();
+        let mut tree = vdf::parse("\"UserLocalConfigStore\"\n{\n}\n").unwrap();
+        let app = vdf::ensure_object(ensure_path(&mut tree, APPS_KEY_PATH), RUST_APP_ID);
+        vdf::set_str(app, LAUNCH_OPTIONS_KEY, "-nolog");
+        let reparsed = vdf::parse(&vdf::serialize(&tree)).unwrap();
         assert_eq!(
-            get_str(rust_app(&reparsed), LAUNCH_OPTIONS_KEY),
+            vdf::get_str(rust_app(&reparsed), LAUNCH_OPTIONS_KEY),
             Some("-nolog")
         );
     }
 
     #[test]
     fn clear_removes_key() {
-        let mut tree = parse(SAMPLE).unwrap();
-        let app = ensure_object(ensure_path(&mut tree, APPS_KEY_PATH), RUST_APP_ID);
-        remove_key(app, LAUNCH_OPTIONS_KEY);
-        assert_eq!(get_str(rust_app(&tree), LAUNCH_OPTIONS_KEY), None);
-        // LastPlayed sibling is untouched.
+        let mut tree = vdf::parse(SAMPLE).unwrap();
+        let app = vdf::ensure_object(ensure_path(&mut tree, APPS_KEY_PATH), RUST_APP_ID);
+        vdf::remove_key(app, LAUNCH_OPTIONS_KEY);
+        assert_eq!(vdf::get_str(rust_app(&tree), LAUNCH_OPTIONS_KEY), None);
         assert_eq!(
-            get_str(rust_app(&tree), LAST_PLAYED_KEY),
+            vdf::get_str(rust_app(&tree), LAST_PLAYED_KEY),
             Some("1783604587")
         );
     }
@@ -555,9 +319,9 @@ mod tests {
     #[test]
     fn preserves_windows_path_backslashes() {
         let input = "\"root\"\n{\n\t\"dir\"\t\t\"C:\\\\Games\\\\Steam\"\n}\n";
-        let tree = parse(input).unwrap();
-        let reparsed = parse(&serialize(&tree)).unwrap();
-        let root = get_obj(&reparsed, "root").unwrap();
-        assert_eq!(get_str(root, "dir"), Some("C:\\Games\\Steam"));
+        let tree = vdf::parse(input).unwrap();
+        let reparsed = vdf::parse(&vdf::serialize(&tree)).unwrap();
+        let root = vdf::get_obj(&reparsed, "root").unwrap();
+        assert_eq!(vdf::get_str(root, "dir"), Some("C:\\Games\\Steam"));
     }
 }

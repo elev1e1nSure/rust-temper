@@ -10,6 +10,7 @@ mod steam_launch_options;
 mod tweak_defs;
 mod tweak_state;
 mod tweaks;
+mod vdf;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

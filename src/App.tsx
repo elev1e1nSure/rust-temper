@@ -93,7 +93,7 @@ function App() {
         setIsLoadingBinds(false);
       }
     });
-  }, []);
+  }, [configFile, bindEditor]);
 
   // Load binds when gamePath changes (from user input or auto-detection)
   const handleGamePathChange = useCallback((path: string) => {
@@ -114,7 +114,7 @@ function App() {
         });
         setIsLoadingBinds(false);
       });
-  }, []);
+  }, [configFile, bindEditor]);
 
   const reloadBindsFromCurrentPath = useCallback(async () => {
     setIsLoadingBinds(true);
@@ -173,7 +173,7 @@ function App() {
         });
       }
     });
-  }, []);
+  }, [configFile, bindEditor]);
 
   // Autosave on bind change
   useEffect(() => {
@@ -190,7 +190,7 @@ function App() {
           text: `Не удалось сохранить keys.cfg: ${err}`,
         }),
       );
-  }, [bindEditor.binds, configFile.gamePath]);
+  }, [bindEditor.binds, configFile.gamePath, configFile._isReloadingRef]);
 
   return (
     <>

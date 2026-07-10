@@ -187,7 +187,7 @@ pub fn presets() -> Vec<CommandPreset> {
             "Переключить мод на оружии",
             "lighttoggle",
         ),
-        preset("Осмотреть предмет в руке", "inventory.examineheld"),
+        preset("Осмотреть предмет в инвентаре", "inventory.examineheld"),
         // Команда, транспорт, база
         preset(
             "Поменять место в транспорте",
