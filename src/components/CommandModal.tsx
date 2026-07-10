@@ -591,133 +591,137 @@ export function CommandModal({
             </div>
           </>
         ) : (
-          <div className="bind-config-content">
-            <div className="bind-config-section">
-              <div className="bind-config-label">Клавиша или сочетание</div>
-              <AnimatedHeight className="bind-config-key-height">
-                <div
-                  className={`bind-config-value ${draftKeys.length > 0 ? "has-keys" : ""}`}
-                >
-                  {draftKeys.length > 0 ? (
-                    draftKeys.map((key, index) => (
-                      <span
-                        className={`bind-config-key-group ${exitingDraftKeys.has(key) ? "exiting" : ""}`}
-                        key={key}
-                      >
-                        <span className="bind-config-key-card">
-                          {keyDisplayName(key)}
+          <>
+            <div className="bind-config-content">
+              <div className="bind-config-section">
+                <div className="bind-config-label">Клавиша или сочетание</div>
+                <AnimatedHeight className="bind-config-key-height">
+                  <div
+                    className={`bind-config-value ${draftKeys.length > 0 ? "has-keys" : ""}`}
+                  >
+                    {draftKeys.length > 0 ? (
+                      draftKeys.map((key, index) => (
+                        <span
+                          className={`bind-config-key-group ${exitingDraftKeys.has(key) ? "exiting" : ""}`}
+                          key={key}
+                        >
+                          <span className="bind-config-key-card">
+                            {keyDisplayName(key)}
+                          </span>
+                          {index < draftKeys.length - 1 && (
+                            <span className="bind-config-key-plus">+</span>
+                          )}
                         </span>
-                        {index < draftKeys.length - 1 && (
-                          <span className="bind-config-key-plus">+</span>
-                        )}
+                      ))
+                    ) : (
+                      <span className="bind-config-key-placeholder">
+                        Выберите клавишу на клавиатуре
                       </span>
-                    ))
-                  ) : (
-                    <span className="bind-config-key-placeholder">
-                      Выберите клавишу на клавиатуре
-                    </span>
-                  )}
+                    )}
+                  </div>
+                </AnimatedHeight>
+                <div className="bind-config-keyboard">
+                  <Keyboard
+                    selectedKeys={draftKeys}
+                    occupiedKeys={occupiedKeys}
+                    exitingKeys={exitingDraftKeys}
+                    onKeyClick={toggleDraftKey}
+                  />
                 </div>
-              </AnimatedHeight>
-              <div className="bind-config-keyboard">
-                <Keyboard
-                  selectedKeys={draftKeys}
-                  occupiedKeys={occupiedKeys}
-                  exitingKeys={exitingDraftKeys}
-                  onKeyClick={toggleDraftKey}
-                />
               </div>
-            </div>
 
-            <div className="bind-config-section">
-              <div className="bind-config-label">Действия</div>
-              <AnimatedHeight className="bind-config-actions-height">
-                <div className="bind-config-actions">
-                  {draftActions.map((action) => (
-                    <div
-                      ref={(el) => {
-                        if (el) actionRowRefs.current.set(action.id, el);
-                        else actionRowRefs.current.delete(action.id);
-                      }}
-                      className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""}`}
-                      key={action.id}
-                    >
-                      {commandModal.kind === "single" &&
-                        draftActions.length > 1 && (
-                          <div
-                            className="bind-config-drag-handle"
-                            onMouseDown={(event) =>
-                              startActionDrag(event, action.id)
-                            }
-                          >
-                            <DragIcon />
+              <div className="bind-config-section">
+                <div className="bind-config-label">Действия</div>
+                <AnimatedHeight className="bind-config-actions-height">
+                  <div className="bind-config-actions">
+                    {draftActions.map((action) => (
+                      <div
+                        ref={(el) => {
+                          if (el) actionRowRefs.current.set(action.id, el);
+                          else actionRowRefs.current.delete(action.id);
+                        }}
+                        className={`bind-config-action ${draggedActionId === action.id ? "dragging" : ""}`}
+                        key={action.id}
+                      >
+                        {commandModal.kind === "single" &&
+                          draftActions.length > 1 && (
+                            <div
+                              className="bind-config-drag-handle"
+                              onMouseDown={(event) =>
+                                startActionDrag(event, action.id)
+                              }
+                            >
+                              <DragIcon />
+                            </div>
+                          )}
+                        <div className="bind-config-action-copy">
+                          <div className="manual-modal-row-name">
+                            {nameFor(
+                              commandModal.kind === "single"
+                                ? modePrefixedCommand(action)
+                                : action.command,
+                            )}
+                          </div>
+                          <div className="manual-modal-row-id">
+                            {commandModal.kind === "single"
+                              ? commandWithoutMode(action.command)
+                              : commandDisplay(action.command)}
+                          </div>
+                        </div>
+                        {commandModal.kind === "single" && (
+                          <div className="bind-config-mode-switch">
+                            <button
+                              className={
+                                action.mode === "toggle" ? "active" : ""
+                              }
+                              type="button"
+                              onClick={() =>
+                                setDraftActionMode(action.id, "toggle")
+                              }
+                            >
+                              Переключатель
+                            </button>
+                            <button
+                              className={action.mode === "hold" ? "active" : ""}
+                              type="button"
+                              onClick={() =>
+                                setDraftActionMode(action.id, "hold")
+                              }
+                            >
+                              Удержание
+                            </button>
                           </div>
                         )}
-                      <div className="bind-config-action-copy">
-                        <div className="manual-modal-row-name">
-                          {nameFor(
-                            commandModal.kind === "single"
-                              ? modePrefixedCommand(action)
-                              : action.command,
+                        {commandModal.kind === "single" &&
+                          draftActions.length > 1 && (
+                            <button
+                              className="bind-config-remove"
+                              type="button"
+                              onClick={() => removeDraftAction(action.id)}
+                            >
+                              <span className="action-icon" aria-hidden="true">
+                                <TrashIcon />
+                              </span>
+                              Убрать
+                            </button>
                           )}
-                        </div>
-                        <div className="manual-modal-row-id">
-                          {commandModal.kind === "single"
-                            ? commandWithoutMode(action.command)
-                            : commandDisplay(action.command)}
-                        </div>
                       </div>
-                      {commandModal.kind === "single" && (
-                        <div className="bind-config-mode-switch">
-                          <button
-                            className={action.mode === "toggle" ? "active" : ""}
-                            type="button"
-                            onClick={() =>
-                              setDraftActionMode(action.id, "toggle")
-                            }
-                          >
-                            Переключатель
-                          </button>
-                          <button
-                            className={action.mode === "hold" ? "active" : ""}
-                            type="button"
-                            onClick={() =>
-                              setDraftActionMode(action.id, "hold")
-                            }
-                          >
-                            Удержание
-                          </button>
-                        </div>
-                      )}
-                      {commandModal.kind === "single" &&
-                        draftActions.length > 1 && (
-                          <button
-                            className="bind-config-remove"
-                            type="button"
-                            onClick={() => removeDraftAction(action.id)}
-                          >
-                            <span className="action-icon" aria-hidden="true">
-                              <TrashIcon />
-                            </span>
-                            Убрать
-                          </button>
-                        )}
-                    </div>
-                  ))}
-                </div>
-              </AnimatedHeight>
-              {commandModal.kind === "single" && (
-                <button
-                  className="bind-config-add-action"
-                  type="button"
-                  onClick={configureAnotherAction}
-                >
-                  <span className="action-icon" aria-hidden="true">
-                    <PlusIcon />
-                  </span>
-                  Добавить ещё действие
-                </button>
-              )}
+                    ))}
+                  </div>
+                </AnimatedHeight>
+                {commandModal.kind === "single" && (
+                  <button
+                    className="bind-config-add-action"
+                    type="button"
+                    onClick={configureAnotherAction}
+                  >
+                    <span className="action-icon" aria-hidden="true">
+                      <PlusIcon />
+                    </span>
+                    Добавить ещё действие
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="bind-config-footer">
@@ -743,7 +747,7 @@ export function CommandModal({
                 {target === "new" ? "Добавить" : "Сохранить"}
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
       {dragOverlay && draggedAction && (
