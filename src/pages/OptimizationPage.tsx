@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { RocketFill } from "@mingcute/react";
 import "./OptimizationPage.css";
 
 type OptTabId = "dashboard" | "leaderboard" | "history" | "benchmark";
@@ -50,7 +51,15 @@ export function OptimizationPage() {
         </div>
 
         <div className="opt-lock-overlay">
-          <span className="opt-lock-label">В разработке</span>
+          <div className="opt-lock-body">
+            <div className="opt-lock-icon">
+              <RocketFill size={44} />
+            </div>
+            <div className="opt-lock-title">В разработке</div>
+            <div className="opt-lock-sub">
+              Раздел оптимизации появится в одном из будущих обновлений
+            </div>
+          </div>
         </div>
       </div>
     </div>

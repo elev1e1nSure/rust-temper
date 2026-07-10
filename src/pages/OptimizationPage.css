@@ -341,16 +341,59 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 120px;
 }
 
-.opt-lock-label {
+.opt-lock-body {
   position: sticky;
-  top: 120px;
-  font-size: 18px;
+  top: 22vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+  padding: 0 24px;
+}
+
+.opt-lock-icon {
+  width: 92px;
+  height: 92px;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  animation: optLockFloat 2.6s ease-in-out infinite;
+}
+
+.opt-lock-title {
+  font-size: 32px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text);
+}
+
+.opt-lock-sub {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 360px;
+}
+
+@keyframes optLockFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opt-lock-icon {
+    animation: none;
+  }
 }
 
 /* Narrow viewport: drop the fixed 4-col placement */
