@@ -65,12 +65,15 @@ export function OptimizationPage() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [wizardSteps, setWizardSteps] = useState<OptimizationStep[]>([]);
   const [statuses, setStatuses] = useState<Record<string, StepStatus>>({});
+  const [statusLoading, setStatusLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gcBuffer, setGcBuffer] = useState<number | null>(null);
-  const completed = stepIndex >= STEPS.length;
-  const step = STEPS[stepIndex];
+  const pendingSteps = STEPS.filter((item) => statuses[item.id] !== "applied");
+  const completed = stepIndex >= wizardSteps.length;
+  const step = wizardSteps[stepIndex];
   const appliedCount = Object.values(statuses).filter(
     (status) => status === "applied",
   ).length;
@@ -88,6 +91,8 @@ export function OptimizationPage() {
       });
     } catch (reason) {
       console.error("Не удалось прочитать состояние оптимизаций:", reason);
+    } finally {
+      setStatusLoading(false);
     }
   }, []);
 
@@ -96,9 +101,10 @@ export function OptimizationPage() {
   }, [refreshStatuses]);
 
   const openWizard = () => {
+    if (!pendingSteps.length) return;
     setClosing(false);
     setStepIndex(0);
-    void refreshStatuses();
+    setWizardSteps(pendingSteps);
     setError(null);
     setGcBuffer(null);
     setOpen(true);
@@ -156,6 +162,7 @@ export function OptimizationPage() {
               type="button"
               className="opt-btn opt-btn-accent"
               onClick={openWizard}
+              disabled={statusLoading || !pendingSteps.length}
             >
               Запустить оптимизацию
             </button>
@@ -242,13 +249,13 @@ export function OptimizationPage() {
                       <div className="opt-progress-label">
                         <span>Применено</span>
                         <span>
-                          {stepIndex + 1} из {STEPS.length}
+                          {stepIndex + 1} из {wizardSteps.length}
                         </span>
                       </div>
                       <div className="opt-progress-track" aria-hidden="true">
                         <span
                           style={{
-                            width: `${((stepIndex + 1) / STEPS.length) * 100}%`,
+                            width: `${((stepIndex + 1) / wizardSteps.length) * 100}%`,
                           }}
                         />
                       </div>
