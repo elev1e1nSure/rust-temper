@@ -309,9 +309,8 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
         <div className="settings-card settings-card-compact graphics-settings-card">
           {QUALITY_ROWS.map((row) => {
             const value = values[row.key] ?? 0;
-            const rawPct =
-              row.tiers.length > 1 ? (value / (row.tiers.length - 1)) * 100 : 0;
-            const pct = row.tiers.length > 1 ? rawPct * 0.97 + 1.5 : 50;
+            const pct =
+              row.tiers.length > 1 ? (value / (row.tiers.length - 1)) * 100 : 50;
             return (
               <div
                 key={row.key}
@@ -342,7 +341,7 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
                         className={`graphics-slider-tick${i <= value ? " active" : ""}`}
                         style={
                           {
-                            "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 97 + 1.5 : 50}%`,
+                            "--tick-left": `${row.tiers.length > 1 ? (i / (row.tiers.length - 1)) * 100 : 50}%`,
                           } as React.CSSProperties
                         }
                       />
