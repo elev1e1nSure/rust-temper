@@ -527,10 +527,11 @@ export function CommandModal({
                 />
               </div>
               <button
-                className={`manual-modal-plus ${manualCustomMode ? "active" : ""} ${isSingleKind ? "" : "hidden"}`}
+                className={`manual-modal-plus ${manualCustomMode && isSingleKind ? "active" : ""} ${isSingleKind ? "" : "hidden"}`}
                 type="button"
                 title={isSingleKind ? "Ввести команду вручную" : undefined}
                 aria-hidden={!isSingleKind}
+                aria-expanded={isSingleKind ? manualCustomMode : undefined}
                 tabIndex={isSingleKind ? 0 : -1}
                 disabled={!isSingleKind}
                 onClick={() => {

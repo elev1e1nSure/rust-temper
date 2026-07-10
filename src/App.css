@@ -44,6 +44,15 @@ textarea {
   user-select: text;
 }
 
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: default !important;
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }
