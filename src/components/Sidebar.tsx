@@ -41,7 +41,9 @@ export function Sidebar({
             className={`nav-item${activePage === id ? " active" : ""}`}
             onClick={() => onNavigate(id)}
           >
-            <Icon size={22} />
+            <span className="nav-icon" aria-hidden="true">
+              <Icon size={22} />
+            </span>
             {label}
           </button>
         ))}
