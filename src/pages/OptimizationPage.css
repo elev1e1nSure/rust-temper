@@ -52,7 +52,9 @@
   min-height: 38px;
   padding: 0 14px;
   color: var(--text);
-  font: 700 15px inherit;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   transition:
     background var(--motion-fast),
