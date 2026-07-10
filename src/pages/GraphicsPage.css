@@ -206,6 +206,8 @@
 }
 
 .graphics-slider-wrap {
+  --slider-thumb-size: 24px;
+  --slider-edge-inset: calc(var(--slider-thumb-size) / 2);
   position: relative;
   height: 32px;
   display: flex;
@@ -219,6 +221,11 @@
   border-radius: 999px;
   background: var(--key-bg);
   transition: background var(--motion-fast);
+}
+
+.graphics-slider-scale {
+  position: absolute;
+  inset: 0 var(--slider-edge-inset);
 }
 
 .graphics-slider-fill {
@@ -254,8 +261,8 @@
 .graphics-slider-thumb {
   position: absolute;
   top: 50%;
-  width: 24px;
-  height: 24px;
+  width: var(--slider-thumb-size);
+  height: var(--slider-thumb-size);
   border-radius: 50%;
   background: var(--text);
   transform: translate(-50%, -50%);
@@ -286,8 +293,7 @@
 
 .graphics-slider-input {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  inset: 0 var(--slider-edge-inset);
   height: 100%;
   margin: 0;
   opacity: 0;
