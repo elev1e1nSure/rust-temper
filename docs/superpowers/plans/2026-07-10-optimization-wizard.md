@@ -20,10 +20,12 @@
 ### Task 1: System optimization backend
 
 **Files:**
+
 - Create: `src-tauri/src/optimization.rs`
 - Modify: `src-tauri/src/lib.rs`
 
 **Interfaces:**
+
 - Produces `disable_pcie_lpm() -> Result<(), String>`.
 - Produces `disable_hvci() -> Result<(), String>`.
 - Produces `disable_xbox_game_bar() -> Result<(), String>`.
@@ -52,9 +54,11 @@ Add the new module and all four commands to Tauri's invoke handler in `src-tauri
 ### Task 2: Preserve Rust launch options while setting GC Buffer
 
 **Files:**
+
 - Modify: `src-tauri/src/steam_launch_options.rs`
 
 **Interfaces:**
+
 - Produces `pub fn set_rust_gc_buffer(buffer_mb: u32) -> Result<(), String>`.
 
 - [ ] **Step 1: Add token replacement helper**
@@ -68,10 +72,12 @@ Read current launch options inside the existing Steam-safe mutation closure, rew
 ### Task 3: Optimization wizard interface
 
 **Files:**
+
 - Modify: `src/pages/OptimizationPage.tsx`
 - Modify: `src/pages/OptimizationPage.css`
 
 **Interfaces:**
+
 - Consumes Tauri commands `disable_pcie_lpm`, `disable_hvci`, `disable_xbox_game_bar`, and `apply_recommended_gc_buffer`.
 - Produces an accessible modal wizard with `Apply`, `Skip`, and `Close` controls.
 
@@ -94,6 +100,7 @@ Use the project panel, text, accent, and radius variables. Add a dimmed backdrop
 ### Task 4: Verify and commit
 
 **Files:**
+
 - Modify: `src-tauri/src/optimization.rs`
 - Modify: `src-tauri/src/steam_launch_options.rs`
 - Modify: `src-tauri/src/lib.rs`

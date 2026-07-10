@@ -310,7 +310,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
           {QUALITY_ROWS.map((row) => {
             const value = values[row.key] ?? 0;
             const pct =
-              row.tiers.length > 1 ? (value / (row.tiers.length - 1)) * 100 : 50;
+              row.tiers.length > 1
+                ? (value / (row.tiers.length - 1)) * 100
+                : 50;
             return (
               <div
                 key={row.key}
