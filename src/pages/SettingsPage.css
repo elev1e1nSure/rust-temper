@@ -105,6 +105,9 @@
   font-weight: 700;
   letter-spacing: 0.05px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition:
     background var(--motion-fast),
     color var(--motion-fast);
@@ -154,6 +157,9 @@
 }
 
 .accordion-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.05px;

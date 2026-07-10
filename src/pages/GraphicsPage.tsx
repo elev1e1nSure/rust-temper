@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mountain2Line, Refresh1Line } from "@mingcute/react";
+import { Mountain2Line } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
 import { clientCfgPathFor } from "../utils/paths";
-import { ChevronIcon } from "../icons";
+import { CheckIcon, ChevronIcon, GraphicsIcon, RefreshIcon, SaveIcon } from "../icons";
 import "./GraphicsPage.css";
 
 interface QualityRow {
@@ -264,7 +264,12 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
       <div className="graphics-main">
         <div className="settings-card graphics-preset-card">
           <div className="setting-row graphics-preset-header">
-            <span className="setting-name">Пресет</span>
+            <span className="setting-name">
+              <span className="action-icon setting-name-icon" aria-hidden="true">
+                <GraphicsIcon />
+              </span>
+              Пресет
+            </span>
             <div className="graphics-preset-menu" ref={presetMenuRef}>
               <button
                 type="button"
@@ -284,6 +289,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
                     className={`graphics-preset-option${presetLabel === preset.label ? " active" : ""}`}
                     onClick={() => applyQuickPreset(preset)}
                   >
+                    <span className="action-icon graphics-preset-option-icon" aria-hidden="true">
+                      {presetLabel === preset.label && <CheckIcon />}
+                    </span>
                     {preset.label}
                   </button>
                 ))}
@@ -388,7 +396,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
             disabled={syncing || !gamePath}
             aria-label="Синхронизировать с client.cfg"
           >
-            <Refresh1Line size={16} />
+            <span className="action-icon" aria-hidden="true">
+              <RefreshIcon />
+            </span>
           </button>
           <button
             type="button"
@@ -396,6 +406,9 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
             onClick={handleApply}
             disabled={applying || !gamePath}
           >
+            <span className="action-icon" aria-hidden="true">
+              <SaveIcon />
+            </span>
             {applying ? "Применение..." : "Применить"}
           </button>
         </div>

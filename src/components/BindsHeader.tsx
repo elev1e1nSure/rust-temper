@@ -46,7 +46,9 @@ export function BindsHeader({
           type="button"
           onClick={() => onOpenCommandModal("single", "new")}
         >
-          <PlusIcon />
+          <span className="action-icon" aria-hidden="true">
+            <PlusIcon />
+          </span>
           Создать вручную
         </button>
         <button
@@ -55,7 +57,9 @@ export function BindsHeader({
           onClick={() => onOpenCommandModal("combination", "new")}
         >
           Выбрать из списка
-          <ChevronIcon />
+          <span className="action-icon" aria-hidden="true">
+            <ChevronIcon />
+          </span>
         </button>
       </div>
     </div>

@@ -8,7 +8,14 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTweaks } from "../hooks/useTweaks";
-import { ChevronIcon } from "../icons";
+import {
+  BackIcon,
+  ChevronIcon,
+  GraphicsIcon,
+  InterfaceIcon,
+  ListCheckIcon,
+  TrashIcon,
+} from "../icons";
 import type { AdvancedSlider, TweakDef, TweakSection } from "../types";
 import "./TweaksPage.css";
 
@@ -16,10 +23,14 @@ interface TweaksPageProps {
   gamePath: string;
 }
 
-const SECTIONS: { key: TweakSection; title: string }[] = [
-  { key: "qol", title: "Качество жизни" },
-  { key: "graphics", title: "Графика" },
-  { key: "interface", title: "Интерфейс" },
+const SECTIONS: {
+  key: TweakSection;
+  title: string;
+  icon: (props: { size?: number }) => ReactNode;
+}[] = [
+  { key: "qol", title: "Качество жизни", icon: ListCheckIcon },
+  { key: "graphics", title: "Графика", icon: GraphicsIcon },
+  { key: "interface", title: "Интерфейс", icon: InterfaceIcon },
 ];
 
 function formatSliderValue(slider: AdvancedSlider, value: number) {
@@ -147,6 +158,9 @@ function UnmanagedTweakModal({
             disabled={pending}
             onClick={onBack}
           >
+            <span className="action-icon" aria-hidden="true">
+              <BackIcon />
+            </span>
             Назад
           </button>
           <button
@@ -155,6 +169,9 @@ function UnmanagedTweakModal({
             disabled={pending}
             onClick={onConfirm}
           >
+            <span className="action-icon" aria-hidden="true">
+              <TrashIcon />
+            </span>
             {pending ? "Выключение…" : "Всё равно выключить"}
           </button>
         </div>
@@ -166,11 +183,13 @@ function UnmanagedTweakModal({
 
 function AccordionSection({
   title,
+  icon: Icon,
   isExpanded,
   onToggle,
   children,
 }: {
   title: string;
+  icon: (props: { size?: number }) => ReactNode;
   isExpanded: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -202,7 +221,12 @@ function AccordionSection({
         }}
         aria-expanded={isExpanded}
       >
-        <span className="accordion-title">{title}</span>
+        <span className="accordion-title">
+          <span className="action-icon accordion-title-icon" aria-hidden="true">
+            <Icon />
+          </span>
+          {title}
+        </span>
         <span className={`accordion-arrow${isExpanded ? " open" : ""}`}>
           <ChevronIcon />
         </span>
@@ -274,6 +298,7 @@ export function TweaksPage({ gamePath }: TweaksPageProps) {
             <AccordionSection
               key={section.key}
               title={section.title}
+              icon={section.icon}
               isExpanded={isExpanded}
               onToggle={() => toggleSection(section.key)}
             >

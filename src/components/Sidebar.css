@@ -77,14 +77,11 @@
 
 .nav-icon {
   --nav-icon-scale: 1;
-  --nav-key-down-scale: 0.94;
-  --nav-key-up-scale: 1.04;
+  --nav-key-scale: 1.04;
   --nav-twinkle-scale: 1.12;
   --nav-rocket-scale: 1.06;
   --nav-signal-wide-scale: 1.12;
   --nav-signal-flat-scale: 0.94;
-  --nav-signal-narrow-scale: 0.96;
-  --nav-signal-tall-scale: 1.08;
   --nav-cog-scale: 1.06;
   width: 22px;
   height: 22px;
@@ -127,14 +124,11 @@
 
 .nav-item.active .nav-icon {
   --nav-icon-scale: 1.06;
-  --nav-key-down-scale: 1;
-  --nav-key-up-scale: 1.1;
+  --nav-key-scale: 1.1;
   --nav-twinkle-scale: 1.16;
   --nav-rocket-scale: 1.12;
   --nav-signal-wide-scale: 1.16;
   --nav-signal-flat-scale: 1;
-  --nav-signal-narrow-scale: 1.02;
-  --nav-signal-tall-scale: 1.12;
   --nav-cog-scale: 1.12;
 }
 
@@ -148,11 +142,13 @@
 }
 
 .nav-item:nth-of-type(1):hover .nav-icon {
-  animation: navKeyPress 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  filter: brightness(1.12);
+  transform: translateY(1px) rotate(-4deg) scale(var(--nav-key-scale));
 }
 
 .nav-item:nth-of-type(2):hover .nav-icon {
-  animation: navTwinkle 520ms ease both;
+  filter: brightness(1.18);
+  transform: rotate(-8deg) scale(var(--nav-twinkle-scale));
 }
 
 .nav-item:nth-of-type(3):hover .nav-icon {
@@ -161,84 +157,13 @@
 }
 
 .nav-item:nth-of-type(4):hover .nav-icon {
-  animation: navSignal 480ms ease both;
+  filter: brightness(1.14);
+  transform: scaleX(var(--nav-signal-wide-scale))
+    scaleY(var(--nav-signal-flat-scale));
 }
 
 .nav-item:nth-of-type(5):hover .nav-icon {
-  animation: navCogTurn 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes navKeyPress {
-  0%,
-  100% {
-    transform: translateY(0) scale(var(--nav-icon-scale, 1));
-  }
-
-  24% {
-    transform: translateY(1px) rotate(-3deg) scale(var(--nav-key-down-scale));
-  }
-
-  52% {
-    transform: translateY(-2px) rotate(5deg) scale(var(--nav-key-up-scale));
-  }
-
-  76% {
-    transform: translateY(0) rotate(-2deg) scale(var(--nav-icon-scale, 1));
-  }
-}
-
-@keyframes navTwinkle {
-  0% {
-    filter: brightness(1);
-    transform: rotate(0deg) scale(var(--nav-icon-scale, 1));
-  }
-
-  45% {
-    filter: brightness(1.45);
-    transform: rotate(-14deg) scale(var(--nav-twinkle-scale));
-  }
-
-  100% {
-    filter: brightness(1.18);
-    transform: rotate(-8deg) scale(var(--nav-icon-scale, 1));
-  }
-}
-
-@keyframes navSignal {
-  0% {
-    filter: brightness(1);
-    transform: scale(var(--nav-icon-scale, 1));
-  }
-
-  38% {
-    filter: brightness(1.35);
-    transform: scaleX(var(--nav-signal-wide-scale))
-      scaleY(var(--nav-signal-flat-scale));
-  }
-
-  66% {
-    transform: scaleX(var(--nav-signal-narrow-scale))
-      scaleY(var(--nav-signal-tall-scale));
-  }
-
-  100% {
-    filter: brightness(1.14);
-    transform: scaleX(1.06) scaleY(0.98);
-  }
-}
-
-@keyframes navCogTurn {
-  0% {
-    transform: rotate(0deg) scale(var(--nav-icon-scale, 1));
-  }
-
-  62% {
-    transform: rotate(68deg) scale(var(--nav-cog-scale));
-  }
-
-  100% {
-    transform: rotate(52deg) scale(var(--nav-icon-scale, 1));
-  }
+  transform: rotate(52deg) scale(var(--nav-cog-scale));
 }
 
 @media (prefers-reduced-motion: reduce) {

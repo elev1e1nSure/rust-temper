@@ -1,7 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { LoadingLine } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
-import { ChevronIcon } from "../icons";
+import {
+  AutoDetectIcon,
+  ChevronIcon,
+  FolderOpenIcon,
+  RestoreBackupIcon,
+  ShieldIcon,
+} from "../icons";
 import type { BackupStatus } from "../types";
 import "./SettingsPage.css";
 
@@ -117,7 +123,9 @@ export function SettingsPage({
               onClick={handleAutoDetect}
               disabled={detecting}
             >
-              {detecting && <LoadingLine size={14} />}
+              <span className="action-icon" aria-hidden="true">
+                {detecting ? <LoadingLine size={14} /> : <AutoDetectIcon />}
+              </span>
               {detecting ? "Поиск..." : "Автоопределение"}
             </button>
             <button
@@ -125,6 +133,9 @@ export function SettingsPage({
               className="btn-path"
               onClick={handleSelectFile}
             >
+              <span className="action-icon" aria-hidden="true">
+                <FolderOpenIcon />
+              </span>
               Выбрать папку
             </button>
           </div>
@@ -141,7 +152,12 @@ export function SettingsPage({
           }}
           aria-expanded={backupExpanded}
         >
-          <span className="accordion-title">Первичный бэкап настроек</span>
+          <span className="accordion-title">
+            <span className="action-icon accordion-title-icon" aria-hidden="true">
+              <ShieldIcon />
+            </span>
+            Первичный бэкап настроек
+          </span>
           <span className={`accordion-arrow${backupExpanded ? " open" : ""}`}>
             <ChevronIcon />
           </span>
@@ -169,6 +185,9 @@ export function SettingsPage({
                   disabled={!backupStatus?.exists || restoring}
                   onClick={restoreBackup}
                 >
+                  <span className="action-icon" aria-hidden="true">
+                    <RestoreBackupIcon />
+                  </span>
                   {restoring ? "Восстановление..." : "Восстановить бэкап"}
                 </button>
               </div>

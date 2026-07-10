@@ -1,7 +1,19 @@
 import {
+  ArrowLeftLine,
+  CheckLine,
   DownLine,
   Delete2Line,
+  DisplayLine,
+  FolderOpenLine,
+  ListCheck3Line,
+  Magic3Line,
+  Refresh1Line,
+  RestoreLine,
   SearchLine,
+  Search2Line,
+  Settings6Line,
+  SaveLine,
+  SafeShieldLine,
   CloseLine,
   CommandLine,
   KeyboardLine,
@@ -29,6 +41,54 @@ export function CommandIcon({ size = 16 }: { size?: number }) {
 
 export function KeyboardIcon({ size = 16 }: { size?: number }) {
   return <KeyboardLine size={size} />;
+}
+
+export function BackIcon({ size = 16 }: { size?: number }) {
+  return <ArrowLeftLine size={size} />;
+}
+
+export function CheckIcon({ size = 16 }: { size?: number }) {
+  return <CheckLine size={size} />;
+}
+
+export function AutoDetectIcon({ size = 16 }: { size?: number }) {
+  return <Search2Line size={size} />;
+}
+
+export function FolderOpenIcon({ size = 16 }: { size?: number }) {
+  return <FolderOpenLine size={size} />;
+}
+
+export function RestoreBackupIcon({ size = 16 }: { size?: number }) {
+  return <RestoreLine size={size} />;
+}
+
+export function ShieldIcon({ size = 16 }: { size?: number }) {
+  return <SafeShieldLine size={size} />;
+}
+
+export function TweakIcon({ size = 16 }: { size?: number }) {
+  return <Magic3Line size={size} />;
+}
+
+export function GraphicsIcon({ size = 16 }: { size?: number }) {
+  return <DisplayLine size={size} />;
+}
+
+export function ListCheckIcon({ size = 16 }: { size?: number }) {
+  return <ListCheck3Line size={size} />;
+}
+
+export function InterfaceIcon({ size = 16 }: { size?: number }) {
+  return <Settings6Line size={size} />;
+}
+
+export function RefreshIcon({ size = 16 }: { size?: number }) {
+  return <Refresh1Line size={size} />;
+}
+
+export function SaveIcon({ size = 16 }: { size?: number }) {
+  return <SaveLine size={size} />;
 }
 
 export function PlusIcon() {

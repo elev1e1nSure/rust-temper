@@ -139,6 +139,9 @@
 }
 
 .accordion-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0;
@@ -258,6 +261,10 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .tweak-confirm-button.secondary {
