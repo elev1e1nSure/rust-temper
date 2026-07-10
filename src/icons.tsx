@@ -9,7 +9,7 @@ import {
   Magic3Fill,
   Refresh1Fill,
   RestoreFill,
-  SearchFill,
+  SearchLine,
   Search2Fill,
   Settings6Fill,
   SaveFill,
@@ -28,7 +28,7 @@ export function TrashIcon() {
 }
 
 export function SearchIcon() {
-  return <SearchFill size={15} />;
+  return <SearchLine size={15} />;
 }
 
 export function CloseIcon({ size = 16 }: { size?: number }) {
