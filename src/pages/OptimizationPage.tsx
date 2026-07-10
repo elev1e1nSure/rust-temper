@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { CloseFill, RocketFill } from "@mingcute/react";
+import { CloseFill } from "@mingcute/react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import "./OptimizationPage.css";
@@ -152,9 +152,6 @@ export function OptimizationPage() {
     <div className="optimization-page page-container">
       <div className="opt-dashboard">
         <section className="opt-card opt-hero">
-          <div className="opt-hero-icon" aria-hidden="true">
-            <RocketFill size={36} />
-          </div>
           <div className="opt-hero-info">
             <h1>Оптимизация системы</h1>
             <p>Четыре настройки Windows и Rust для более стабильной игры.</p>
