@@ -25,7 +25,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "nsis",
     "publisher": "RustTemper",
     "category": "Utility",
     "shortDescription": "Rust config patcher",
