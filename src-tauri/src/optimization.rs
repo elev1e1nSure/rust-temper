@@ -16,6 +16,7 @@ pub struct OptimizationStatus {
     pcie_lpm: bool,
     hvci: bool,
     xbox_game_bar: bool,
+    game_mode: bool,
     gc_buffer: bool,
 }
 
@@ -25,6 +26,7 @@ pub fn get_optimization_status() -> OptimizationStatus {
         pcie_lpm: is_pcie_lpm_disabled().unwrap_or(false),
         hvci: is_hvci_disabled(),
         xbox_game_bar: is_xbox_game_bar_disabled(),
+        game_mode: is_game_mode_enabled(),
         gc_buffer: steam_launch_options::read_rust_gc_buffer()
             .ok()
             .flatten()
@@ -95,7 +97,6 @@ pub fn disable_xbox_game_bar() -> Result<(), String> {
         .map_err(|err| format!("Не удалось открыть настройки Xbox Game Bar: {err}"))?;
     game_bar
         .set_value("ShowStartupPanel", &0_u32)
-        .and_then(|_| game_bar.set_value("AutoGameModeEnabled", &0_u32))
         .map_err(|err| format!("Не удалось отключить Xbox Game Bar: {err}"))
 }
 
@@ -114,8 +115,17 @@ pub fn enable_xbox_game_bar() -> Result<(), String> {
         .map_err(|err| format!("Не удалось открыть настройки Xbox Game Bar: {err}"))?;
     game_bar
         .set_value("ShowStartupPanel", &1_u32)
-        .and_then(|_| game_bar.set_value("AutoGameModeEnabled", &1_u32))
         .map_err(|err| format!("Не удалось включить Xbox Game Bar: {err}"))
+}
+
+#[tauri::command]
+pub fn enable_game_mode() -> Result<(), String> {
+    set_game_mode(true)
+}
+
+#[tauri::command]
+pub fn disable_game_mode() -> Result<(), String> {
+    set_game_mode(false)
 }
 
 #[tauri::command]
@@ -194,6 +204,23 @@ fn is_xbox_game_bar_disabled() -> bool {
         .is_ok_and(|value| value == 0);
 
     game_dvr_disabled && game_bar_disabled
+}
+
+fn is_game_mode_enabled() -> bool {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    hkcu.open_subkey_with_flags("SOFTWARE\\Microsoft\\GameBar", KEY_READ)
+        .and_then(|key| key.get_value::<u32, _>("AutoGameModeEnabled"))
+        .is_ok_and(|value| value == 1)
+}
+
+fn set_game_mode(enabled: bool) -> Result<(), String> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let (game_bar, _) = hkcu
+        .create_subkey_with_flags("SOFTWARE\\Microsoft\\GameBar", KEY_WRITE)
+        .map_err(|err| format!("Не удалось открыть настройки игрового режима: {err}"))?;
+    game_bar
+        .set_value("AutoGameModeEnabled", &(u32::from(enabled)))
+        .map_err(|err| format!("Не удалось изменить состояние игрового режима: {err}"))
 }
 
 fn powershell_output(script: &str) -> Result<String, String> {

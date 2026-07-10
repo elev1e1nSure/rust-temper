@@ -10,6 +10,7 @@ type OptimizationStatus = {
   pcieLpm: boolean;
   hvci: boolean;
   xboxGameBar: boolean;
+  gameMode: boolean;
   gcBuffer: boolean;
 };
 
@@ -49,6 +50,15 @@ const STEPS: OptimizationStep[] = [
       "Game DVR постоянно готов записывать геймплей в фоне, а оверлей Game Bar перехватывает системные хоткеи и может конфликтовать со сторонним софтом (RGB-утилиты, оверлеи Discord и т.п.). Отключение убирает эту фоновую активность, хотя влияние на FPS обычно небольшое.",
     command: "disable_xbox_game_bar",
     revertCommand: "enable_xbox_game_bar",
+  },
+  {
+    id: "game-mode",
+    title: "Включить игровой режим Windows",
+    summary: "Приоритизирует ресурсы системы для запущенной игры",
+    details:
+      "Игровой режим снижает приоритет фоновых задач во время игры, чтобы Windows стабильнее выделяла процессорное время и системные ресурсы Rust. Настройка безопасна, обратима и не отключает защиту Windows.",
+    command: "enable_game_mode",
+    revertCommand: "disable_game_mode",
   },
   {
     id: "gc-buffer",
@@ -95,6 +105,7 @@ export function OptimizationPage() {
         "pcie-lpm": status.pcieLpm ? "applied" : "available",
         hvci: status.hvci ? "applied" : "available",
         "xbox-game-bar": status.xboxGameBar ? "applied" : "available",
+        "game-mode": status.gameMode ? "applied" : "available",
         "gc-buffer": status.gcBuffer ? "applied" : "available",
       });
     } catch (reason) {

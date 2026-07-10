@@ -2,12 +2,13 @@
 
 ## Scope
 
-Replace the locked Optimization tab with a four-step modal wizard:
+Replace the locked Optimization tab with a five-step modal wizard:
 
 1. Disable PCIe Link State Power Management.
 2. Disable Hypervisor-protected Code Integrity (HVCI).
 3. Disable Xbox Game Bar and Game DVR.
-4. Calculate and set Rust's `-gc.buffer` launch option in Steam.
+4. Enable Windows Game Mode.
+5. Calculate and set Rust's `-gc.buffer` launch option in Steam.
 
 ## User flow
 
@@ -27,6 +28,8 @@ restart is needed for it to take effect.
   scheme.
 - HVCI: set the Device Guard HVCI registry value to disabled.
 - Xbox Game Bar: disable current-user Game DVR and Game Bar values.
+- Game Mode: enable the current-user Windows Game Mode setting without changing
+  Xbox Game Bar or Game DVR state.
 - GC Buffer: read existing Rust Steam launch options, replace any existing
   `-gc.buffer` value or append one, preserving every unrelated option.
 

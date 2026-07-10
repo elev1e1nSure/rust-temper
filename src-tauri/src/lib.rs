@@ -40,6 +40,8 @@ pub fn run() {
             optimization::enable_hvci,
             optimization::disable_xbox_game_bar,
             optimization::enable_xbox_game_bar,
+            optimization::enable_game_mode,
+            optimization::disable_game_mode,
             optimization::apply_recommended_gc_buffer,
             optimization::clear_rust_gc_buffer,
             optimization::get_optimization_status,
