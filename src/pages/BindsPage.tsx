@@ -36,7 +36,6 @@ interface CommandModalTarget {
 
 interface BindFilterLayout {
   surfaceHeight: number;
-  wasEmpty: boolean;
   rowTops: Map<string, number>;
 }
 
@@ -61,20 +60,33 @@ export function BindsPage({
 }: BindsPageProps) {
   const [commandModalState, setCommandModalState] =
     useState<CommandModalTarget | null>(null);
+  const [renderedBinds, setRenderedBinds] =
+    useState<FilteredBind[]>(filteredBinds);
+  const [isFadingToEmpty, setIsFadingToEmpty] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-  const emptyRef = useRef<HTMLDivElement>(null);
+  const rowsRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const pendingFilterLayout = useRef<BindFilterLayout | null>(null);
   const filterAnimations = useRef<Animation[]>([]);
   const selectedKeysSignature = selectedKeys.join("+");
 
   useLayoutEffect(() => {
+    if (filteredBinds.length > 0 && renderedBinds !== filteredBinds) {
+      setRenderedBinds(filteredBinds);
+      setIsFadingToEmpty(false);
+      return;
+    }
+
+    if (filteredBinds.length === 0 && renderedBinds.length > 0) {
+      if (!isFadingToEmpty) setIsFadingToEmpty(true);
+      return;
+    }
+
     const previous = pendingFilterLayout.current;
     const list = listRef.current;
-    const empty = emptyRef.current;
     pendingFilterLayout.current = null;
 
-    if (!previous || (!list && !empty)) return;
+    if (!previous || !list) return;
 
     const options: KeyframeAnimationOptions = {
       duration: 260,
@@ -82,82 +94,61 @@ export function BindsPage({
     };
     const animations: Animation[] = [];
 
-    if (list) {
-      const nextListHeight = list.getBoundingClientRect().height;
-      const rows = [...rowRefs.current];
-      const hasNewRows = rows.some(([id]) => !previous.rowTops.has(id));
+    const nextListHeight = list.getBoundingClientRect().height;
+    const rows = [...rowRefs.current];
+    const hasNewRows = rows.some(([id]) => !previous.rowTops.has(id));
 
-      if (Math.abs(previous.surfaceHeight - nextListHeight) > 0.5) {
-        animations.push(
-          list.animate(
-            [
-              { height: `${previous.surfaceHeight}px` },
-              { height: `${nextListHeight}px` },
-            ],
-            options,
-          ),
-        );
-      }
-
-      if (hasNewRows) {
-        animations.push(
-          list.animate(
-            [
-              {
-                clipPath: "inset(0 0 100% 0)",
-                transform: "translateY(-6px)",
-              },
-              { clipPath: "inset(0)", transform: "none" },
-            ],
-            options,
-          ),
-        );
-      } else {
-        for (const [id, row] of rows) {
-          const previousTop = previous.rowTops.get(id);
-          if (previousTop === undefined) continue;
-
-          const offset = previousTop - row.getBoundingClientRect().top;
-          if (Math.abs(offset) < 0.5) continue;
-
-          animations.push(
-            row.animate(
-              [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
-              options,
-            ),
-          );
-        }
-      }
-    } else if (empty && !previous.wasEmpty) {
+    if (Math.abs(previous.surfaceHeight - nextListHeight) > 0.5) {
       animations.push(
-        empty.animate(
+        list.animate(
           [
-            {
-              clipPath: "inset(0 0 100% 0)",
-              transform: "translateY(-8px)",
-            },
-            {
-              clipPath: "inset(0)",
-              transform: "none",
-            },
+            { height: `${previous.surfaceHeight}px` },
+            { height: `${nextListHeight}px` },
           ],
           options,
         ),
       );
     }
 
+    if (hasNewRows && rowsRef.current) {
+      animations.push(
+        rowsRef.current.animate(
+          [
+            {
+              clipPath: "inset(0 0 100% 0)",
+              transform: "translateY(-6px)",
+            },
+            { clipPath: "inset(0)", transform: "none" },
+          ],
+          options,
+        ),
+      );
+    } else {
+      for (const [id, row] of rows) {
+        const previousTop = previous.rowTops.get(id);
+        if (previousTop === undefined) continue;
+
+        const offset = previousTop - row.getBoundingClientRect().top;
+        if (Math.abs(offset) < 0.5) continue;
+
+        animations.push(
+          row.animate(
+            [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
+            options,
+          ),
+        );
+      }
+    }
+
     filterAnimations.current = animations;
-  }, [filteredBinds, selectedKeysSignature]);
+  }, [filteredBinds, isFadingToEmpty, renderedBinds, selectedKeysSignature]);
 
   const handleAnimatedKeyboardKey = (rustKey: string) => {
     const list = listRef.current;
-    const empty = emptyRef.current;
-    const surface = list ?? empty;
 
-    if (surface) {
+    if (list) {
       pendingFilterLayout.current = {
-        surfaceHeight: surface.getBoundingClientRect().height,
-        wasEmpty: empty !== null,
+        surfaceHeight: list.getBoundingClientRect().height,
         rowTops: new Map(
           [...rowRefs.current].map(([id, row]) => [
             id,
@@ -170,6 +161,21 @@ export function BindsPage({
     for (const animation of filterAnimations.current) animation.cancel();
     filterAnimations.current = [];
     handleKeyboardKey(rustKey);
+  };
+
+  const finishFadeToEmpty = () => {
+    if (filteredBinds.length > 0) return;
+
+    const list = listRef.current;
+    if (list) {
+      pendingFilterLayout.current = {
+        surfaceHeight: list.getBoundingClientRect().height,
+        rowTops: new Map(),
+      };
+    }
+
+    setRenderedBinds([]);
+    setIsFadingToEmpty(false);
   };
 
   const openCommandModal = (kind: CommandModalKind, target: number | "new") => {
@@ -186,9 +192,6 @@ export function BindsPage({
       "single";
     openCommandModal(kind, index);
   };
-
-  const showEmptyState = !isLoading && filteredBinds.length === 0;
-  const showList = !isLoading && filteredBinds.length > 0;
 
   return (
     <div className="page-container binds-page">
@@ -256,81 +259,96 @@ export function BindsPage({
             </div>
           ))}
         </div>
-      ) : showEmptyState ? (
-        <div className="binds-empty" ref={emptyRef}>
-          <div className="binds-empty-icon binds-empty-icon-soft">
-            <KeyboardIcon size={32} />
-          </div>
-          <p>Здесь пока пусто</p>
-          <span className="binds-empty-copy">
-            Выбери команду из списка или создай свой бинд вручную.
-          </span>
-          <button
-            className="btn-add"
-            type="button"
-            onClick={() => openCommandModal("single", "new")}
-          >
-            <span className="action-icon" aria-hidden="true">
-              <PlusIcon />
-            </span>
-            Создать бинд
-          </button>
-        </div>
-      ) : showList ? (
-        <div className="binds-list-wrap" ref={listRef}>
-          {filteredBinds.map(({ bind, sourceIndex }) => {
-            const hasConflict =
-              bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
-            const id = `${sourceIndex}:${bind.key}:${bind.command}`;
-            return (
-              <div
-                className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
-                key={id}
-                ref={(element) => {
-                  if (element) rowRefs.current.set(id, element);
-                  else rowRefs.current.delete(id);
-                }}
-                onAnimationEnd={() => {
-                  if (exitingBindIndex === sourceIndex) {
-                    confirmRemoveBind(sourceIndex);
-                  }
-                  if (newBindIndex === sourceIndex) {
-                    setNewBindIndex(null);
-                  }
-                }}
-              >
-                <button
-                  className="action-cell"
-                  type="button"
-                  onClick={() =>
-                    openBindCommandModal(sourceIndex, bind.command)
-                  }
-                >
-                  {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                  <span className="action-icon" aria-hidden="true">
-                    <ChevronIcon />
-                  </span>
-                </button>
-
-                <div
-                  className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
-                >
-                  {bind.key ? keyDisplayName(bind.key) : "—"}
-                </div>
-
-                <div
-                  className="delete-btn"
-                  onClick={() => removeBind(sourceIndex)}
-                >
-                  <span className="action-icon" aria-hidden="true">
-                    <TrashIcon />
-                  </span>
-                </div>
+      ) : (
+        <div
+          className={`binds-list-wrap ${renderedBinds.length === 0 ? "binds-list-empty" : ""}`}
+          ref={listRef}
+        >
+          {renderedBinds.length === 0 ? (
+            <div className="binds-empty">
+              <div className="binds-empty-icon binds-empty-icon-soft">
+                <KeyboardIcon size={32} />
               </div>
-            );
-          })}
+              <p>Здесь пока пусто</p>
+              <span className="binds-empty-copy">
+                Выбери команду из списка или создай свой бинд вручную.
+              </span>
+              <button
+                className="btn-add"
+                type="button"
+                onClick={() => openCommandModal("single", "new")}
+              >
+                <span className="action-icon" aria-hidden="true">
+                  <PlusIcon />
+                </span>
+                Создать бинд
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`binds-rows ${isFadingToEmpty ? "binds-rows-to-empty" : ""}`}
+              ref={rowsRef}
+              onAnimationEnd={(event) => {
+                if (event.currentTarget === event.target) finishFadeToEmpty();
+              }}
+            >
+              {renderedBinds.map(({ bind, sourceIndex }) => {
+                const hasConflict =
+                  bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+                const id = `${sourceIndex}:${bind.key}:${bind.command}`;
+                return (
+                  <div
+                    className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
+                    key={id}
+                    ref={(element) => {
+                      if (element) rowRefs.current.set(id, element);
+                      else rowRefs.current.delete(id);
+                    }}
+                    onAnimationEnd={() => {
+                      if (exitingBindIndex === sourceIndex) {
+                        confirmRemoveBind(sourceIndex);
+                      }
+                      if (newBindIndex === sourceIndex) {
+                        setNewBindIndex(null);
+                      }
+                    }}
+                  >
+                    <button
+                      className="action-cell"
+                      type="button"
+                      onClick={() =>
+                        openBindCommandModal(sourceIndex, bind.command)
+                      }
+                    >
+                      {bind.command
+                        ? nameFor(bind.command)
+                        : "Выберите действие"}
+                      <span className="action-icon" aria-hidden="true">
+                        <ChevronIcon />
+                      </span>
+                    </button>
+
+                    <div
+                      className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                    >
+                      {bind.key ? keyDisplayName(bind.key) : "—"}
+                    </div>
+
+                    <div
+                      className="delete-btn"
+                      onClick={() => removeBind(sourceIndex)}
+                    >
+                      <span className="action-icon" aria-hidden="true">
+                        <TrashIcon />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      ) : null}
+      )}
 
       {commandModalState !== null && (
         <CommandModal
