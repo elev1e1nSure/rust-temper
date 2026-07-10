@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Mountain2Line } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
 import { clientCfgPathFor } from "../utils/paths";
-import { CheckIcon, ChevronIcon, GraphicsIcon, RefreshIcon, SaveIcon } from "../icons";
+import {
+  CheckIcon,
+  ChevronIcon,
+  GraphicsIcon,
+  RefreshIcon,
+  SaveIcon,
+} from "../icons";
 import "./GraphicsPage.css";
 
 interface QualityRow {
@@ -265,7 +271,10 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
         <div className="settings-card graphics-preset-card">
           <div className="setting-row graphics-preset-header">
             <span className="setting-name">
-              <span className="action-icon setting-name-icon" aria-hidden="true">
+              <span
+                className="action-icon setting-name-icon"
+                aria-hidden="true"
+              >
                 <GraphicsIcon />
               </span>
               Пресет
@@ -289,7 +298,10 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
                     className={`graphics-preset-option${presetLabel === preset.label ? " active" : ""}`}
                     onClick={() => applyQuickPreset(preset)}
                   >
-                    <span className="action-icon graphics-preset-option-icon" aria-hidden="true">
+                    <span
+                      className="action-icon graphics-preset-option-icon"
+                      aria-hidden="true"
+                    >
                       {presetLabel === preset.label && <CheckIcon />}
                     </span>
                     {preset.label}

@@ -153,7 +153,10 @@ export function SettingsPage({
           aria-expanded={backupExpanded}
         >
           <span className="accordion-title">
-            <span className="action-icon accordion-title-icon" aria-hidden="true">
+            <span
+              className="action-icon accordion-title-icon"
+              aria-hidden="true"
+            >
               <ShieldIcon />
             </span>
             Первичный бэкап настроек
@@ -174,8 +177,8 @@ export function SettingsPage({
               <p className="backup-description">
                 Этот бэкап создаётся один раз при первом запуске программы с
                 найденной папкой Rust. Он хранит исходные keys.cfg и client.cfg,
-                если они уже есть в папке игры, чтобы можно было откатиться, если
-                изменения пошли не так.
+                если они уже есть в папке игры, чтобы можно было откатиться,
+                если изменения пошли не так.
               </p>
 
               <div className="backup-actions">

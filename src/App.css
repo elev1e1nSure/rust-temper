@@ -70,6 +70,17 @@ button:hover:not(:disabled) .action-icon,
   transform: translateY(-1px) rotate(-5deg) scale(1.08);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .action-icon {
+    transition: none;
+  }
+
+  button:hover:not(:disabled) .action-icon,
+  .accordion-header:hover .action-icon {
+    transform: none;
+  }
+}
+
 html {
   zoom: 1.1;
 }
