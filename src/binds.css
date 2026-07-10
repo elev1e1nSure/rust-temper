@@ -409,6 +409,12 @@
   cursor: pointer;
 }
 
+.manual-modal-close .action-icon {
+  width: 22px;
+  height: 22px;
+  place-items: center;
+}
+
 .manual-modal-close:hover {
   color: var(--text);
   background: var(--row-hover);

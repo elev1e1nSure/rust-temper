@@ -250,6 +250,9 @@
   background: var(--row-hover);
   color: var(--text);
 }
+.opt-wizard-close svg {
+  display: block;
+}
 .opt-wizard-details {
   padding: 0;
 }
