@@ -35,7 +35,8 @@ interface CommandModalTarget {
 }
 
 interface BindFilterLayout {
-  listHeight: number;
+  surfaceHeight: number;
+  wasEmpty: boolean;
   rowTops: Map<string, number>;
 }
 
@@ -61,6 +62,7 @@ export function BindsPage({
   const [commandModalState, setCommandModalState] =
     useState<CommandModalTarget | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const emptyRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const pendingFilterLayout = useRef<BindFilterLayout | null>(null);
   const filterAnimations = useRef<Animation[]>([]);
@@ -69,39 +71,74 @@ export function BindsPage({
   useLayoutEffect(() => {
     const previous = pendingFilterLayout.current;
     const list = listRef.current;
+    const empty = emptyRef.current;
     pendingFilterLayout.current = null;
 
-    if (!previous || !list) return;
+    if (!previous || (!list && !empty)) return;
 
     const options: KeyframeAnimationOptions = {
       duration: 220,
       easing: "cubic-bezier(0.2, 0.75, 0.25, 1)",
     };
     const animations: Animation[] = [];
-    const nextListHeight = list.getBoundingClientRect().height;
 
-    if (Math.abs(previous.listHeight - nextListHeight) > 0.5) {
+    if (list) {
+      const nextListHeight = list.getBoundingClientRect().height;
+
+      if (Math.abs(previous.surfaceHeight - nextListHeight) > 0.5) {
+        animations.push(
+          list.animate(
+            [
+              { height: `${previous.surfaceHeight}px` },
+              { height: `${nextListHeight}px` },
+            ],
+            options,
+          ),
+        );
+      }
+
+      for (const [id, row] of rowRefs.current) {
+        const previousTop = previous.rowTops.get(id);
+
+        if (previousTop === undefined) {
+          animations.push(
+            row.animate(
+              [
+                {
+                  clipPath: "inset(0 0 100% 0)",
+                  transform: "translateY(-6px)",
+                },
+                { clipPath: "inset(0)", transform: "none" },
+              ],
+              options,
+            ),
+          );
+          continue;
+        }
+
+        const offset = previousTop - row.getBoundingClientRect().top;
+        if (Math.abs(offset) < 0.5) continue;
+
+        animations.push(
+          row.animate(
+            [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
+            options,
+          ),
+        );
+      }
+    } else if (empty && !previous.wasEmpty) {
       animations.push(
-        list.animate(
+        empty.animate(
           [
-            { height: `${previous.listHeight}px` },
-            { height: `${nextListHeight}px` },
+            {
+              clipPath: "inset(0 0 100% 0)",
+              transform: "translateY(-8px)",
+            },
+            {
+              clipPath: "inset(0)",
+              transform: "none",
+            },
           ],
-          options,
-        ),
-      );
-    }
-
-    for (const [id, row] of rowRefs.current) {
-      const previousTop = previous.rowTops.get(id);
-      if (previousTop === undefined) continue;
-
-      const offset = previousTop - row.getBoundingClientRect().top;
-      if (Math.abs(offset) < 0.5) continue;
-
-      animations.push(
-        row.animate(
-          [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
           options,
         ),
       );
@@ -112,10 +149,13 @@ export function BindsPage({
 
   const handleAnimatedKeyboardKey = (rustKey: string) => {
     const list = listRef.current;
+    const empty = emptyRef.current;
+    const surface = list ?? empty;
 
-    if (list) {
+    if (surface) {
       pendingFilterLayout.current = {
-        listHeight: list.getBoundingClientRect().height,
+        surfaceHeight: surface.getBoundingClientRect().height,
+        wasEmpty: empty !== null,
         rowTops: new Map(
           [...rowRefs.current].map(([id, row]) => [
             id,
@@ -215,7 +255,7 @@ export function BindsPage({
           ))}
         </div>
       ) : showEmptyState ? (
-        <div className="binds-empty">
+        <div className="binds-empty" ref={emptyRef}>
           <div className="binds-empty-icon binds-empty-icon-soft">
             <KeyboardIcon size={32} />
           </div>
