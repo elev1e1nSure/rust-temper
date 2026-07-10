@@ -670,6 +670,10 @@
   animation: bindConfigModalDirectIn 0.15s ease forwards;
 }
 
+.bind-config-modal-direct .bind-config-content {
+  animation: none;
+}
+
 .bind-config-modal-direct.is-opening * {
   animation: none !important;
   transition: none !important;
