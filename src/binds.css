@@ -10,6 +10,60 @@
   margin-top: 16px;
 }
 
+/* Keep the list's layout in motion while the keyboard filter changes. */
+.bind-list-item {
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+}
+
+.bind-list-item > .bind-row {
+  min-height: 0;
+}
+
+.bind-list-item-entering {
+  animation: bindFilterExpand 0.24s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+.bind-list-item-exiting {
+  pointer-events: none;
+  animation: bindFilterCollapse 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes bindFilterExpand {
+  from {
+    grid-template-rows: 0fr;
+  }
+
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes bindFilterCollapse {
+  from {
+    grid-template-rows: 1fr;
+  }
+
+  to {
+    grid-template-rows: 0fr;
+  }
+}
+
+.bind-list-item-entering > .bind-row {
+  animation: bindFilterSettle 0.24s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+@keyframes bindFilterSettle {
+  from {
+    transform: translateY(-7px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
 .binds-empty {
   margin-top: 16px;
   padding: 44px 28px 40px;

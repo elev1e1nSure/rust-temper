@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { CommandPreset, FilteredBind } from "../types";
 import { ChevronIcon, KeyboardIcon, PlusIcon, TrashIcon } from "../icons";
 import { Keyboard } from "../components/Keyboard";
@@ -34,6 +34,16 @@ interface CommandModalTarget {
   target: number | "new";
 }
 
+type BindFilterPhase = "entering" | "exiting" | "steady";
+
+interface TransitionedBind extends FilteredBind {
+  phase: BindFilterPhase;
+}
+
+function bindId({ bind, sourceIndex }: FilteredBind): string {
+  return `${sourceIndex}:${bind.key}:${bind.command}`;
+}
+
 export function BindsPage({
   filteredBinds,
   commandPresets,
@@ -55,6 +65,51 @@ export function BindsPage({
 }: BindsPageProps) {
   const [commandModalState, setCommandModalState] =
     useState<CommandModalTarget | null>(null);
+  const [renderedBinds, setRenderedBinds] = useState<TransitionedBind[]>(() =>
+    filteredBinds.map<TransitionedBind>((item) => ({
+      ...item,
+      phase: "steady",
+    })),
+  );
+  const selectedKeysSignature = selectedKeys.join("+");
+  const previousSelectedKeysSignature = useRef(selectedKeysSignature);
+
+  useLayoutEffect(() => {
+    const isKeyboardFilterChange =
+      previousSelectedKeysSignature.current !== selectedKeysSignature;
+    previousSelectedKeysSignature.current = selectedKeysSignature;
+
+    setRenderedBinds((previous) => {
+      if (!isKeyboardFilterChange) {
+        return filteredBinds.map<TransitionedBind>((item) => ({
+          ...item,
+          phase: "steady",
+        }));
+      }
+
+      const nextById = new Map(
+        filteredBinds.map((item) => [bindId(item), item]),
+      );
+      const previousById = new Map(
+        previous.map((item) => [bindId(item), item]),
+      );
+      const ids = new Set([...previousById.keys(), ...nextById.keys()]);
+
+      return [...ids]
+        .map((id): TransitionedBind => {
+          const next = nextById.get(id);
+          const current = previousById.get(id);
+
+          if (!next && current) return { ...current, phase: "exiting" };
+          if (next && !current) return { ...next, phase: "entering" };
+          return {
+            ...next!,
+            phase: current!.phase === "exiting" ? "steady" : current!.phase,
+          };
+        })
+        .sort((a, b) => a.sourceIndex - b.sourceIndex);
+    });
+  }, [filteredBinds, selectedKeysSignature]);
 
   const openCommandModal = (kind: CommandModalKind, target: number | "new") => {
     setCommandModalState({ kind, target });
@@ -71,8 +126,22 @@ export function BindsPage({
     openCommandModal(kind, index);
   };
 
-  const showEmptyState = !isLoading && filteredBinds.length === 0;
-  const showList = !isLoading && filteredBinds.length > 0;
+  const showEmptyState =
+    !isLoading && filteredBinds.length === 0 && renderedBinds.length === 0;
+  const showList =
+    !isLoading && (filteredBinds.length > 0 || renderedBinds.length > 0);
+
+  const settleBindFilterTransition = (id: string) => {
+    setRenderedBinds((previous) =>
+      previous
+        .filter((item) => !(bindId(item) === id && item.phase === "exiting"))
+        .map((item) =>
+          bindId(item) === id && item.phase === "entering"
+            ? { ...item, phase: "steady" }
+            : item,
+        ),
+    );
+  };
 
   return (
     <div className="page-container binds-page">
@@ -162,48 +231,58 @@ export function BindsPage({
         </div>
       ) : showList ? (
         <div className="binds-list-wrap">
-          {filteredBinds.map(({ bind, sourceIndex }) => {
+          {renderedBinds.map(({ bind, sourceIndex, phase }) => {
             const hasConflict =
               bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
+            const id = `${sourceIndex}:${bind.key}:${bind.command}`;
             return (
               <div
-                className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
-                key={`${bind.key}-${bind.command}-${sourceIndex}`}
-                onAnimationEnd={() => {
-                  if (exitingBindIndex === sourceIndex) {
-                    confirmRemoveBind(sourceIndex);
-                  }
-                  if (newBindIndex === sourceIndex) {
-                    setNewBindIndex(null);
+                className={`bind-list-item bind-list-item-${phase}`}
+                key={id}
+                onAnimationEnd={(event) => {
+                  if (event.currentTarget === event.target) {
+                    settleBindFilterTransition(id);
                   }
                 }}
               >
-                <button
-                  className="action-cell"
-                  type="button"
-                  onClick={() =>
-                    openBindCommandModal(sourceIndex, bind.command)
-                  }
-                >
-                  {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                  <span className="action-icon" aria-hidden="true">
-                    <ChevronIcon />
-                  </span>
-                </button>
-
                 <div
-                  className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                  className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
+                  onAnimationEnd={() => {
+                    if (exitingBindIndex === sourceIndex) {
+                      confirmRemoveBind(sourceIndex);
+                    }
+                    if (newBindIndex === sourceIndex) {
+                      setNewBindIndex(null);
+                    }
+                  }}
                 >
-                  {bind.key ? keyDisplayName(bind.key) : "—"}
-                </div>
+                  <button
+                    className="action-cell"
+                    type="button"
+                    onClick={() =>
+                      openBindCommandModal(sourceIndex, bind.command)
+                    }
+                  >
+                    {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                    <span className="action-icon" aria-hidden="true">
+                      <ChevronIcon />
+                    </span>
+                  </button>
 
-                <div
-                  className="delete-btn"
-                  onClick={() => removeBind(sourceIndex)}
-                >
-                  <span className="action-icon" aria-hidden="true">
-                    <TrashIcon />
-                  </span>
+                  <div
+                    className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                  >
+                    {bind.key ? keyDisplayName(bind.key) : "—"}
+                  </div>
+
+                  <div
+                    className="delete-btn"
+                    onClick={() => removeBind(sourceIndex)}
+                  >
+                    <span className="action-icon" aria-hidden="true">
+                      <TrashIcon />
+                    </span>
+                  </div>
                 </div>
               </div>
             );
