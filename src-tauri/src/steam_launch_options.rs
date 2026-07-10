@@ -150,7 +150,7 @@ fn mutate(edit: impl FnOnce(&mut Vec<Member>)) -> Result<(), String> {
 fn locate_localconfig() -> Result<PathBuf, String> {
     let candidates = localconfig_candidates();
     if candidates.is_empty() {
-        return Err("Не найден файл localconfig.vdf Steam. Убедитесь, что Steam установлен и вы входили в аккаунт".to_string());
+        return Err("Не найден файл localconfig.vdf Steam. Проверь, что Steam установлен и ты заходил в аккаунт".to_string());
     }
 
     let best = candidates

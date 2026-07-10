@@ -188,10 +188,7 @@ export function OptimizationPage() {
         <section className="opt-card opt-hero">
           <div className="opt-hero-info">
             <h1>Оптимизация ПК</h1>
-            <p>
-              Параметры вашего ПК и Rust, что могут помочь увеличить
-              производительность
-            </p>
+            <p>Параметры ПК и Rust, которые могут поднять производительность</p>
             <button
               type="button"
               className="opt-btn opt-btn-accent"
