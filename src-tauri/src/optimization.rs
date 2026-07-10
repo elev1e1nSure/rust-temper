@@ -43,11 +43,35 @@ pub fn disable_pcie_lpm() -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn enable_pcie_lpm() -> Result<(), String> {
+    run_elevated_powershell(
+        r#"
+        & powercfg.exe /setacvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 1
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & powercfg.exe /setdcvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 1
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & powercfg.exe /setactive SCHEME_CURRENT
+        exit $LASTEXITCODE
+        "#,
+    )
+}
+
+#[tauri::command]
 pub fn disable_hvci() -> Result<(), String> {
     run_elevated_powershell(
         r#"
         New-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity' -Force | Out-Null
         New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity' -Name 'Enabled' -PropertyType DWord -Value 0 -Force | Out-Null
+        "#,
+    )
+}
+
+#[tauri::command]
+pub fn enable_hvci() -> Result<(), String> {
+    run_elevated_powershell(
+        r#"
+        New-Item -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity' -Force | Out-Null
+        New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity' -Name 'Enabled' -PropertyType DWord -Value 1 -Force | Out-Null
         "#,
     )
 }
@@ -72,6 +96,25 @@ pub fn disable_xbox_game_bar() -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn enable_xbox_game_bar() -> Result<(), String> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let (game_dvr, _) = hkcu
+        .create_subkey_with_flags("System\\GameConfigStore", KEY_WRITE)
+        .map_err(|err| format!("Не удалось открыть настройки Game DVR: {err}"))?;
+    game_dvr
+        .set_value("GameDVR_Enabled", &1_u32)
+        .map_err(|err| format!("Не удалось включить Game DVR: {err}"))?;
+
+    let (game_bar, _) = hkcu
+        .create_subkey_with_flags("SOFTWARE\\Microsoft\\GameBar", KEY_WRITE)
+        .map_err(|err| format!("Не удалось открыть настройки Xbox Game Bar: {err}"))?;
+    game_bar
+        .set_value("ShowStartupPanel", &1_u32)
+        .and_then(|_| game_bar.set_value("AutoGameModeEnabled", &1_u32))
+        .map_err(|err| format!("Не удалось включить Xbox Game Bar: {err}"))
+}
+
+#[tauri::command]
 pub fn apply_recommended_gc_buffer() -> Result<u32, String> {
     let total_memory_bytes =
         powershell_output("(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory")?
@@ -88,6 +131,11 @@ pub fn apply_recommended_gc_buffer() -> Result<u32, String> {
 
     steam_launch_options::set_rust_gc_buffer(buffer_mb)?;
     Ok(buffer_mb)
+}
+
+#[tauri::command]
+pub fn clear_rust_gc_buffer() -> Result<(), String> {
+    steam_launch_options::clear_rust_gc_buffer()
 }
 
 fn run_elevated_powershell(script: &str) -> Result<(), String> {

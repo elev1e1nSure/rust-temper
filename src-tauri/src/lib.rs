@@ -35,9 +35,13 @@ pub fn run() {
             steam_launch_options::set_rust_launch_options,
             steam_launch_options::clear_rust_launch_options,
             optimization::disable_pcie_lpm,
+            optimization::enable_pcie_lpm,
             optimization::disable_hvci,
+            optimization::enable_hvci,
             optimization::disable_xbox_game_bar,
+            optimization::enable_xbox_game_bar,
             optimization::apply_recommended_gc_buffer,
+            optimization::clear_rust_gc_buffer,
             optimization::get_optimization_status,
         ])
         .run(tauri::generate_context!())

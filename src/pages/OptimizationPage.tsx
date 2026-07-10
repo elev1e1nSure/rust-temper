@@ -19,6 +19,7 @@ type OptimizationStep = {
   summary: string;
   details: string;
   command: string;
+  revertCommand: string;
 };
 
 const STEPS: OptimizationStep[] = [
@@ -29,6 +30,7 @@ const STEPS: OptimizationStep[] = [
     details:
       "PCIe Link Power Management управляет энергосбережением устройств PCI Express. Отключение убирает задержки при выходе устройств из режима экономии энергии.",
     command: "disable_pcie_lpm",
+    revertCommand: "enable_pcie_lpm",
   },
   {
     id: "hvci",
@@ -37,6 +39,7 @@ const STEPS: OptimizationStep[] = [
     details:
       "Hypervisor-protected Code Integrity защищает ядро Windows от вредоносного кода. Отключение снижает защиту системы, зато высвобождает ресурсы CPU. Для применения нужна перезагрузка.",
     command: "disable_hvci",
+    revertCommand: "enable_hvci",
   },
   {
     id: "xbox-game-bar",
@@ -45,6 +48,7 @@ const STEPS: OptimizationStep[] = [
     details:
       "Xbox Game Bar и Game DVR собирают данные об игре и производительности, используют память и могут конфликтовать с драйверами или оверлеями.",
     command: "disable_xbox_game_bar",
+    revertCommand: "enable_xbox_game_bar",
   },
   {
     id: "gc-buffer",
@@ -53,11 +57,12 @@ const STEPS: OptimizationStep[] = [
     details:
       "Garbage Collection Buffer хранит неиспользуемые объекты Rust. Мастер определит подходящий размер по объёму ОЗУ и добавит параметр в Steam, не затрагивая остальные launch options.",
     command: "apply_recommended_gc_buffer",
+    revertCommand: "clear_rust_gc_buffer",
   },
 ];
 
 const STATUS_LABEL: Record<StepStatus, string> = {
-  available: "Доступно",
+  available: "Выключено",
   applied: "Применено",
 };
 
@@ -71,6 +76,8 @@ export function OptimizationPage() {
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gcBuffer, setGcBuffer] = useState<number | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const pendingSteps = STEPS.filter((item) => statuses[item.id] !== "applied");
   const completed = stepIndex >= wizardSteps.length;
   const step = wizardSteps[stepIndex];
@@ -130,6 +137,32 @@ export function OptimizationPage() {
     setStepIndex((current) => current + 1);
   };
 
+  const toggleItem = useCallback(
+    async (item: OptimizationStep) => {
+      if (togglingId) return;
+      const status = statuses[item.id] ?? "available";
+      setTogglingId(item.id);
+      setListError(null);
+      try {
+        if (status === "applied") {
+          await invoke(item.revertCommand);
+          if (item.id === "gc-buffer") setGcBuffer(null);
+        } else {
+          const result = await invoke<number | null>(item.command);
+          if (item.id === "gc-buffer" && typeof result === "number") {
+            setGcBuffer(result);
+          }
+        }
+        await refreshStatuses();
+      } catch (reason) {
+        setListError(String(reason));
+      } finally {
+        setTogglingId(null);
+      }
+    },
+    [togglingId, statuses, refreshStatuses],
+  );
+
   const applyStep = async () => {
     if (!step) return;
     setApplying(true);
@@ -169,18 +202,29 @@ export function OptimizationPage() {
         <section className="opt-card opt-list" aria-label="Шаги оптимизации">
           {STEPS.map((item) => {
             const status = statuses[item.id] ?? "available";
+            const isToggling = togglingId === item.id;
             return (
-              <div key={item.id} className="opt-item">
+              <button
+                key={item.id}
+                type="button"
+                className="opt-item"
+                onClick={() => toggleItem(item)}
+                disabled={statusLoading || togglingId !== null}
+                aria-pressed={status === "applied"}
+              >
                 <div className="opt-item-text">
                   <div className="opt-item-name">{item.title}</div>
                   <div className="opt-item-desc">{item.summary}</div>
                 </div>
                 <span className={`opt-chip opt-chip-${status}`}>
-                  {STATUS_LABEL[status]}
+                  {isToggling ? "..." : STATUS_LABEL[status]}
                 </span>
-              </div>
+              </button>
             );
           })}
+          {listError && (
+            <p className="opt-wizard-error opt-list-error">{listError}</p>
+          )}
         </section>
       </div>
 
@@ -217,7 +261,6 @@ export function OptimizationPage() {
 
               {completed ? (
                 <div className="opt-wizard-complete">
-                  <div className="opt-wizard-kicker">Готово</div>
                   <h2>Оптимизация завершена</h2>
                   <p>
                     Применено настроек: {appliedCount} из {STEPS.length}.

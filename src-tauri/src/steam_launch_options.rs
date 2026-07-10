@@ -68,6 +68,20 @@ pub fn read_rust_gc_buffer() -> Result<Option<u32>, String> {
         .and_then(gc_buffer_from_options))
 }
 
+/// Remove the `-gc.buffer` flag while preserving all other user-provided
+/// launch options.
+pub fn clear_rust_gc_buffer() -> Result<(), String> {
+    mutate(|app| {
+        let current = get_str(app, LAUNCH_OPTIONS_KEY).unwrap_or_default();
+        let stripped = without_gc_buffer(current);
+        if stripped.is_empty() {
+            remove_key(app, LAUNCH_OPTIONS_KEY);
+        } else {
+            set_str(app, LAUNCH_OPTIONS_KEY, &stripped);
+        }
+    })
+}
+
 fn gc_buffer_from_options(options: &str) -> Option<u32> {
     let tokens: Vec<&str> = options.split_whitespace().collect();
     tokens
@@ -76,9 +90,9 @@ fn gc_buffer_from_options(options: &str) -> Option<u32> {
         .and_then(|pair| pair[1].parse::<u32>().ok())
 }
 
-fn with_gc_buffer(options: &str, buffer_mb: u32) -> String {
+fn without_gc_buffer(options: &str) -> String {
     let tokens: Vec<&str> = options.split_whitespace().collect();
-    let mut retained = Vec::with_capacity(tokens.len() + 2);
+    let mut retained = Vec::with_capacity(tokens.len());
     let mut index = 0;
 
     while index < tokens.len() {
@@ -93,9 +107,17 @@ fn with_gc_buffer(options: &str, buffer_mb: u32) -> String {
         index += 1;
     }
 
-    retained.push("-gc.buffer".to_string());
-    retained.push(buffer_mb.to_string());
     retained.join(" ")
+}
+
+fn with_gc_buffer(options: &str, buffer_mb: u32) -> String {
+    let mut retained = without_gc_buffer(options);
+    if !retained.is_empty() {
+        retained.push(' ');
+    }
+    retained.push_str("-gc.buffer ");
+    retained.push_str(&buffer_mb.to_string());
+    retained
 }
 
 /// Shared read-modify-write skeleton: stop Steam, load the file, mutate the Rust
