@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mountain2Line } from "@mingcute/react";
+import { Mountain2Fill } from "@mingcute/react";
 import { invoke } from "@tauri-apps/api/core";
 import { clientCfgPathFor } from "../utils/paths";
-import {
-  CheckIcon,
-  ChevronIcon,
-  GraphicsIcon,
-  RefreshIcon,
-} from "../icons";
+import { CheckIcon, ChevronIcon, GraphicsIcon, RefreshIcon } from "../icons";
 import "./GraphicsPage.css";
 
 interface QualityRow {
@@ -391,7 +386,7 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
 
           <div className="graphics-preview-art-body">
             <div className="graphics-preview-art-icon">
-              <Mountain2Line size={40} />
+              <Mountain2Fill size={40} />
             </div>
             <span className="graphics-preview-art-text">
               Предпросмотр скоро появится
