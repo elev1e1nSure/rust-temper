@@ -1,6 +1,10 @@
+use std::os::windows::process::CommandExt;
 use std::process::Command;
 
 use serde::Serialize;
+
+/// Prevents a console window from flashing up when spawning powershell.exe.
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WRITE};
 use winreg::RegKey;
 
@@ -141,7 +145,7 @@ pub fn clear_rust_gc_buffer() -> Result<(), String> {
 fn run_elevated_powershell(script: &str) -> Result<(), String> {
     let encoded = encode_powershell(script);
     let launcher = format!(
-        "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', '{encoded}'); exit $process.ExitCode"
+        "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -Wait -PassThru -ArgumentList @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', '{encoded}'); exit $process.ExitCode"
     );
     run_powershell(&launcher).map(|_| ())
 }
@@ -149,6 +153,7 @@ fn run_elevated_powershell(script: &str) -> Result<(), String> {
 fn is_pcie_lpm_disabled() -> Result<bool, String> {
     let output = Command::new("powercfg.exe")
         .args(["/query", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM"])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|err| format!("Не удалось прочитать настройки PCIe LPM: {err}"))?;
     if !output.status.success() {
@@ -205,6 +210,7 @@ fn run_powershell(script: &str) -> Result<String, String> {
             "-Command",
             script,
         ])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|err| format!("Не удалось запустить PowerShell: {err}"))?;
 

@@ -45,6 +45,10 @@ pub(crate) fn unload_before_config_write() -> Result<(), String> {
          }}"
     );
 
+    use std::os::windows::process::CommandExt;
+    // Suppress the console window powershell.exe would otherwise flash.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
     let output = Command::new("powershell.exe")
         .args([
             "-NoProfile",
@@ -54,6 +58,7 @@ pub(crate) fn unload_before_config_write() -> Result<(), String> {
             "-Command",
             &script,
         ])
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|error| format!("Не удалось выгрузить Steam перед записью конфига: {error}"))?;
 
