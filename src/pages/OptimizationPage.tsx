@@ -1,134 +1,227 @@
-import { RocketFill } from "@mingcute/react";
+import { invoke } from "@tauri-apps/api/core";
+import { CloseFill, RocketFill } from "@mingcute/react";
+import { useState } from "react";
 import "./OptimizationPage.css";
 
-// Static placeholder figures — this whole tab is a locked stub for now.
-const RING_R = 46;
-const RING_C = 2 * Math.PI * RING_R;
-const RING_FILL = 0.62;
+type StepStatus = "available" | "applied" | "skipped";
 
-type ItemStatus = "applied" | "available" | "skipped";
-
-const STATUS_LABEL: Record<ItemStatus, string> = {
-  applied: "Применено",
-  available: "Доступно",
-  skipped: "Пропущено",
+type OptimizationStep = {
+  id: string;
+  title: string;
+  summary: string;
+  details: string;
+  command: string;
 };
 
-const ITEMS: { name: string; desc: string; status: ItemStatus }[] = [
+const STEPS: OptimizationStep[] = [
   {
-    name: "Кэш шейдеров",
-    desc: "Очистка устаревших скомпилированных шейдеров",
-    status: "applied",
+    id: "pcie-lpm",
+    title: "Отключить PCIe LPM",
+    summary: "Снижает задержки и повышает общую производительность системы",
+    details:
+      "PCIe Link Power Management управляет энергосбережением устройств PCI Express. Отключение убирает задержки при выходе устройств из режима экономии энергии.",
+    command: "disable_pcie_lpm",
   },
   {
-    name: "Приоритет процесса",
-    desc: "Высокий приоритет для rust.exe во время игры",
-    status: "applied",
+    id: "hvci",
+    title: "Отключить HVCI",
+    summary: "Снижает нагрузку на CPU и может повысить стабильность FPS",
+    details:
+      "Hypervisor-protected Code Integrity защищает ядро Windows от вредоносного кода. Отключение снижает защиту системы, зато высвобождает ресурсы CPU. Для применения нужна перезагрузка.",
+    command: "disable_hvci",
   },
   {
-    name: "Параметры запуска",
-    desc: "Оптимальные ключи в Steam launch options",
-    status: "available",
+    id: "xbox-game-bar",
+    title: "Отключить Xbox Game Bar",
+    summary: "Убирает фоновую нагрузку на CPU и RAM, снижает задержки",
+    details:
+      "Xbox Game Bar и Game DVR собирают данные об игре и производительности, используют память и могут конфликтовать с драйверами или оверлеями.",
+    command: "disable_xbox_game_bar",
   },
   {
-    name: "Фоновые службы",
-    desc: "Пауза лишних служб на время сессии",
-    status: "available",
-  },
-  {
-    name: "Резерв памяти",
-    desc: "Выделение ОЗУ под игровой процесс",
-    status: "skipped",
+    id: "gc-buffer",
+    title: "Автоопределение GC Buffer",
+    summary: "Уменьшает длительные фризы и частоту очистки GC Buffer",
+    details:
+      "Garbage Collection Buffer хранит неиспользуемые объекты Rust. Мастер определит подходящий размер по объёму ОЗУ и добавит параметр в Steam, не затрагивая остальные launch options.",
+    command: "apply_recommended_gc_buffer",
   },
 ];
 
+const STATUS_LABEL: Record<StepStatus, string> = {
+  available: "Доступно",
+  applied: "Применено",
+  skipped: "Пропущено",
+};
+
 export function OptimizationPage() {
-  // The whole panel is a locked preview for now: rendered blurred and
-  // non-interactive as a backdrop, with a single "В разработке" state on top.
+  const [open, setOpen] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [statuses, setStatuses] = useState<Record<string, StepStatus>>({});
+  const [applying, setApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [gcBuffer, setGcBuffer] = useState<number | null>(null);
+  const completed = stepIndex >= STEPS.length;
+  const step = STEPS[stepIndex];
+  const appliedCount = Object.values(statuses).filter(
+    (status) => status === "applied",
+  ).length;
+
+  const openWizard = () => {
+    setStepIndex(0);
+    setStatuses({});
+    setError(null);
+    setGcBuffer(null);
+    setOpen(true);
+  };
+
+  const advance = (status: StepStatus) => {
+    if (!step) return;
+    setStatuses((current) => ({ ...current, [step.id]: status }));
+    setError(null);
+    setStepIndex((current) => current + 1);
+  };
+
+  const applyStep = async () => {
+    if (!step) return;
+    setApplying(true);
+    setError(null);
+    try {
+      const result = await invoke<number | null>(step.command);
+      if (step.id === "gc-buffer" && typeof result === "number") {
+        setGcBuffer(result);
+      }
+      advance("applied");
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setApplying(false);
+    }
+  };
+
   return (
     <div className="optimization-page page-container">
-      <div className="opt-locked">
-        <div className="opt-locked-content" aria-hidden="true">
-          <Backdrop />
-        </div>
-
-        <div className="opt-lock-overlay">
-          <div className="opt-lock-body">
-            <div className="opt-lock-icon">
-              <RocketFill size={44} />
-            </div>
-            <div className="opt-lock-title">В разработке</div>
-            <div className="opt-lock-sub">
-              Раздел оптимизации появится в одном из будущих обновлений
-            </div>
+      <div className="opt-dashboard">
+        <section className="opt-card opt-hero">
+          <div className="opt-hero-icon" aria-hidden="true">
+            <RocketFill size={36} />
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Backdrop() {
-  return (
-    <div className="opt-dashboard">
-      <div className="opt-card opt-hero">
-        <Ring />
-        <div className="opt-hero-info">
-          <div className="opt-hero-title">Оптимизация системы</div>
-          <div className="opt-hero-sub">
-            Профиль «Баланс» · 12 активных настроек
+          <div className="opt-hero-info">
+            <h1>Оптимизация системы</h1>
+            <p>Четыре настройки Windows и Rust для более стабильной игры.</p>
+            <button
+              type="button"
+              className="opt-btn opt-btn-accent"
+              onClick={openWizard}
+            >
+              Запустить оптимизацию
+            </button>
           </div>
-          <button type="button" className="opt-btn opt-btn-accent">
-            Оптимизировать
-          </button>
+        </section>
+
+        <section className="opt-card opt-list" aria-label="Шаги оптимизации">
+          {STEPS.map((item) => {
+            const status = statuses[item.id] ?? "available";
+            return (
+              <div key={item.id} className="opt-item">
+                <div className="opt-item-text">
+                  <div className="opt-item-name">{item.title}</div>
+                  <div className="opt-item-desc">{item.summary}</div>
+                </div>
+                <span className={`opt-chip opt-chip-${status}`}>
+                  {STATUS_LABEL[status]}
+                </span>
+              </div>
+            );
+          })}
+        </section>
+      </div>
+
+      {open && (
+        <div className="opt-wizard-backdrop" role="presentation">
+          <section
+            className="opt-wizard"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Мастер оптимизации"
+          >
+            <button
+              type="button"
+              className="opt-wizard-close"
+              onClick={() => setOpen(false)}
+              disabled={applying}
+              aria-label="Закрыть мастер"
+            >
+              <CloseFill size={18} />
+            </button>
+
+            {completed ? (
+              <div className="opt-wizard-complete">
+                <div className="opt-wizard-kicker">Готово</div>
+                <h2>Оптимизация завершена</h2>
+                <p>
+                  Применено настроек: {appliedCount} из {STEPS.length}.
+                  {gcBuffer ? ` GC Buffer: ${gcBuffer} МБ.` : ""}
+                </p>
+                <button
+                  type="button"
+                  className="opt-btn opt-btn-accent"
+                  onClick={() => setOpen(false)}
+                >
+                  Закрыть
+                </button>
+              </div>
+            ) : (
+              <>
+                <header className="opt-wizard-header">
+                  <h2>{step?.title}</h2>
+                  <p>{step?.summary}</p>
+                </header>
+                <div className="opt-wizard-details">
+                  <h3>Подробнее</h3>
+                  <p>{step?.details}</p>
+                </div>
+                <footer className="opt-wizard-footer">
+                  <div className="opt-progress">
+                    <div className="opt-progress-label">
+                      <span>Применено</span>
+                      <span>
+                        {stepIndex + 1} из {STEPS.length}
+                      </span>
+                    </div>
+                    <div className="opt-progress-track" aria-hidden="true">
+                      <span
+                        style={{
+                          width: `${((stepIndex + 1) / STEPS.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {error && <p className="opt-wizard-error">{error}</p>}
+                  <div className="opt-wizard-actions">
+                    <button
+                      type="button"
+                      className="opt-btn opt-btn-muted"
+                      onClick={() => advance("skipped")}
+                      disabled={applying}
+                    >
+                      Пропустить
+                    </button>
+                    <button
+                      type="button"
+                      className="opt-btn opt-btn-accent"
+                      onClick={applyStep}
+                      disabled={applying}
+                    >
+                      {applying ? "Применение..." : "Применить"}
+                    </button>
+                  </div>
+                </footer>
+              </>
+            )}
+          </section>
         </div>
-      </div>
-
-      <div className="opt-card opt-list">
-        {ITEMS.map((item) => (
-          <div key={item.name} className="opt-item">
-            <div className="opt-item-text">
-              <div className="opt-item-name">{item.name}</div>
-              <div className="opt-item-desc">{item.desc}</div>
-            </div>
-            <span className={`opt-chip opt-chip-${item.status}`}>
-              {STATUS_LABEL[item.status]}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Ring() {
-  return (
-    <div className="opt-ring">
-      <svg viewBox="0 0 120 120" className="opt-ring-svg" aria-hidden="true">
-        <circle
-          className="opt-ring-track"
-          cx="60"
-          cy="60"
-          r={RING_R}
-          fill="none"
-          strokeWidth="8"
-        />
-        <circle
-          className="opt-ring-arc"
-          cx="60"
-          cy="60"
-          r={RING_R}
-          fill="none"
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={`${RING_C * RING_FILL} ${RING_C}`}
-          transform="rotate(-90 60 60)"
-        />
-      </svg>
-      <div className="opt-ring-center">
-        <span className="opt-ring-value">+24%</span>
-        <span className="opt-ring-unit">к FPS</span>
-      </div>
+      )}
     </div>
   );
 }

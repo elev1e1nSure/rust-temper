@@ -2,6 +2,7 @@ mod client_cfg;
 mod graphics;
 mod keys_cfg;
 mod known_commands;
+mod optimization;
 mod rust_locator;
 mod settings_backup;
 mod steam;
@@ -33,6 +34,10 @@ pub fn run() {
             steam_launch_options::read_rust_launch_options,
             steam_launch_options::set_rust_launch_options,
             steam_launch_options::clear_rust_launch_options,
+            optimization::disable_pcie_lpm,
+            optimization::disable_hvci,
+            optimization::disable_xbox_game_bar,
+            optimization::apply_recommended_gc_buffer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

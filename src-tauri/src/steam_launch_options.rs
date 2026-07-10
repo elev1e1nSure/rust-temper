@@ -52,6 +52,37 @@ pub fn clear_rust_launch_options() -> Result<(), String> {
     })
 }
 
+/// Add or replace Rust's garbage-collection buffer while preserving all other
+/// user-provided launch options.
+pub fn set_rust_gc_buffer(buffer_mb: u32) -> Result<(), String> {
+    mutate(|app| {
+        let current = get_str(app, LAUNCH_OPTIONS_KEY).unwrap_or_default();
+        set_str(app, LAUNCH_OPTIONS_KEY, &with_gc_buffer(current, buffer_mb));
+    })
+}
+
+fn with_gc_buffer(options: &str, buffer_mb: u32) -> String {
+    let tokens: Vec<&str> = options.split_whitespace().collect();
+    let mut retained = Vec::with_capacity(tokens.len() + 2);
+    let mut index = 0;
+
+    while index < tokens.len() {
+        if tokens[index].eq_ignore_ascii_case("-gc.buffer") {
+            index += 1;
+            if index < tokens.len() && tokens[index].parse::<u32>().is_ok() {
+                index += 1;
+            }
+            continue;
+        }
+        retained.push(tokens[index].to_string());
+        index += 1;
+    }
+
+    retained.push("-gc.buffer".to_string());
+    retained.push(buffer_mb.to_string());
+    retained.join(" ")
+}
+
 /// Shared read-modify-write skeleton: stop Steam, load the file, mutate the Rust
 /// app object (creating the key path if the account has never launched Rust),
 /// then write atomically. Serialized against tweak/graphics writes via the same
