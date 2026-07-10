@@ -595,13 +595,6 @@
   background: var(--key-bg);
   border-radius: var(--radius-control);
   color: var(--text-dim);
-  transition:
-    color var(--motion-fast),
-    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.manual-modal-row:hover .manual-modal-row-icon {
-  color: var(--text);
 }
 
 .manual-modal-row-text {
