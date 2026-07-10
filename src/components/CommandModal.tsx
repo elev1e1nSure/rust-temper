@@ -9,11 +9,14 @@ import {
 import { createPortal } from "react-dom";
 import type { CommandPreset, FilteredBind } from "../types";
 import {
+  BackIcon,
+  CheckIcon,
   SearchIcon,
   PlusIcon,
   CloseIcon,
   CommandIcon,
   DragIcon,
+  TrashIcon,
 } from "../icons";
 import { Keyboard } from "./Keyboard";
 import { keyDisplayName } from "../keyboardLayout";
@@ -456,7 +459,9 @@ export function CommandModal({
             type="button"
             onClick={closeManualModal}
           >
-            <CloseIcon />
+            <span className="action-icon" aria-hidden="true">
+              <CloseIcon />
+            </span>
           </button>
         </div>
 
@@ -480,7 +485,9 @@ export function CommandModal({
                   title="Ввести команду вручную"
                   onClick={() => setManualCustomMode((v) => !v)}
                 >
-                  <PlusIcon />
+                  <span className="action-icon" aria-hidden="true">
+                    <PlusIcon />
+                  </span>
                 </button>
               )}
             </div>
@@ -528,6 +535,9 @@ export function CommandModal({
                   disabled={!manualCustomCommand.trim()}
                   onClick={submitManualCustomCommand}
                 >
+                  <span className="action-icon" aria-hidden="true">
+                    <PlusIcon />
+                  </span>
                   Добавить
                 </button>
               </div>
@@ -560,6 +570,9 @@ export function CommandModal({
                         selectCommand(preset.command, preset.defaultMode)
                       }
                     >
+                      <span className="action-icon" aria-hidden="true">
+                        <PlusIcon />
+                      </span>
                       Добавить
                     </button>
                   </div>
@@ -676,6 +689,9 @@ export function CommandModal({
                             type="button"
                             onClick={() => removeDraftAction(action.id)}
                           >
+                            <span className="action-icon" aria-hidden="true">
+                              <TrashIcon />
+                            </span>
                             Убрать
                           </button>
                         )}
@@ -689,7 +705,9 @@ export function CommandModal({
                   type="button"
                   onClick={configureAnotherAction}
                 >
-                  <PlusIcon />
+                  <span className="action-icon" aria-hidden="true">
+                    <PlusIcon />
+                  </span>
                   Добавить ещё действие
                 </button>
               )}
@@ -701,6 +719,9 @@ export function CommandModal({
                 type="button"
                 onClick={closeManualModal}
               >
+                <span className="action-icon" aria-hidden="true">
+                  <BackIcon />
+                </span>
                 Отмена
               </button>
               <button
@@ -709,6 +730,9 @@ export function CommandModal({
                 disabled={draftKeys.length === 0 || draftActions.length === 0}
                 onClick={submitBind}
               >
+                <span className="action-icon" aria-hidden="true">
+                  <CheckIcon />
+                </span>
                 {target === "new" ? "Добавить" : "Сохранить"}
               </button>
             </div>

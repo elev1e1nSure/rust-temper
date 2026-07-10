@@ -154,7 +154,9 @@ export function BindsPage({
             type="button"
             onClick={() => openCommandModal("single", "new")}
           >
-            <PlusIcon />
+            <span className="action-icon" aria-hidden="true">
+              <PlusIcon />
+            </span>
             Создать бинд
           </button>
         </div>
@@ -184,7 +186,9 @@ export function BindsPage({
                   }
                 >
                   {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                  <ChevronIcon />
+                  <span className="action-icon" aria-hidden="true">
+                    <ChevronIcon />
+                  </span>
                 </button>
 
                 <div
@@ -197,7 +201,9 @@ export function BindsPage({
                   className="delete-btn"
                   onClick={() => removeBind(sourceIndex)}
                 >
-                  <TrashIcon />
+                  <span className="action-icon" aria-hidden="true">
+                    <TrashIcon />
+                  </span>
                 </div>
               </div>
             );
