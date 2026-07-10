@@ -101,7 +101,6 @@ export function CommandModal({
     step: isDirectModal ? "configure" : "select",
   });
   const [manualModalClosing, setManualModalClosing] = useState(false);
-  const [isDirectOpening, setIsDirectOpening] = useState(isDirectModal);
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
@@ -481,16 +480,8 @@ export function CommandModal({
       onAnimationEnd={handleManualModalAnimationEnd}
     >
       <div
-        className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""} ${isDirectModal ? "bind-config-modal-direct" : ""} ${isDirectOpening ? "is-opening" : ""}`}
+        className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""} ${isDirectModal ? "bind-config-modal-direct" : ""}`}
         onClick={(e) => e.stopPropagation()}
-        onAnimationEnd={(event) => {
-          if (
-            event.target === event.currentTarget &&
-            event.animationName === "bindConfigModalDirectIn"
-          ) {
-            setIsDirectOpening(false);
-          }
-        }}
       >
         <div className="manual-modal-header">
           <div className="manual-modal-header-main">
