@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { CloseFill } from "@mingcute/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./OptimizationPage.css";
 
@@ -88,7 +88,8 @@ export function OptimizationPage() {
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gcBuffer, setGcBuffer] = useState<number | null>(null);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(() => new Set());
+  const togglingIdsRef = useRef(new Set<string>());
   const [listError, setListError] = useState<string | null>(null);
   const pendingSteps = STEPS.filter((item) => statuses[item.id] !== "applied");
   const completed = stepIndex >= wizardSteps.length;
@@ -160,9 +161,10 @@ export function OptimizationPage() {
 
   const toggleItem = useCallback(
     async (item: OptimizationStep) => {
-      if (togglingId) return;
+      if (togglingIdsRef.current.has(item.id)) return;
       const status = statuses[item.id] ?? "available";
-      setTogglingId(item.id);
+      togglingIdsRef.current.add(item.id);
+      setTogglingIds(new Set(togglingIdsRef.current));
       setListError(null);
       try {
         if (status === "applied") {
@@ -178,10 +180,11 @@ export function OptimizationPage() {
       } catch (reason) {
         setListError(String(reason));
       } finally {
-        setTogglingId(null);
+        togglingIdsRef.current.delete(item.id);
+        setTogglingIds(new Set(togglingIdsRef.current));
       }
     },
-    [togglingId, statuses, refreshStatuses],
+    [statuses, refreshStatuses],
   );
 
   const applyStep = async () => {
@@ -223,14 +226,14 @@ export function OptimizationPage() {
         <section className="opt-card opt-list" aria-label="Шаги оптимизации">
           {STEPS.map((item) => {
             const status = statuses[item.id] ?? "available";
-            const isToggling = togglingId === item.id;
+            const isToggling = togglingIds.has(item.id);
             return (
               <button
                 key={item.id}
                 type="button"
                 className="opt-item"
                 onClick={() => toggleItem(item)}
-                disabled={statusLoading || togglingId !== null}
+                disabled={statusLoading || isToggling}
                 aria-pressed={status === "applied"}
               >
                 <div className="opt-item-text">
