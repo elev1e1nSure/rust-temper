@@ -277,7 +277,7 @@ export function OptimizationPage() {
                 disabled={applying}
                 aria-label="Закрыть мастер"
               >
-                <CloseFill size={18} />
+                <CloseFill size={22} />
               </button>
 
               {completed ? (

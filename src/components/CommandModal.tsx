@@ -508,7 +508,7 @@ export function CommandModal({
             onClick={closeManualModal}
           >
             <span className="action-icon" aria-hidden="true">
-              <CloseIcon />
+              <CloseIcon size={22} />
             </span>
           </button>
         </div>
