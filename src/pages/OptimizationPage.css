@@ -47,6 +47,11 @@
   height: 16px;
 }
 
+.opt-tab:hover .opt-tab-icon {
+  transform: none;
+  filter: none;
+}
+
 /* Dashboard layout */
 
 .opt-dashboard {
@@ -314,22 +319,36 @@
   }
 }
 
-/* Non-dashboard tab stub */
+/* Locked preview: blurred, disabled backdrop + single live CTA */
 
-.opt-empty {
-  flex: 1;
-  min-height: 320px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--panel);
-  border-radius: var(--radius-panel);
+.opt-locked {
+  position: relative;
 }
 
-.opt-empty-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-dim);
+.opt-locked-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  filter: blur(6px);
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+
+.opt-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 120px;
+}
+
+.opt-lock-btn {
+  padding: 14px 26px;
+  font-size: 15px;
+  position: sticky;
+  top: 120px;
 }
 
 /* Narrow viewport: drop the fixed 4-col placement */

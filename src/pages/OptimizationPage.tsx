@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { type ReactElement } from "react";
 import "./OptimizationPage.css";
 
 type OptTabId = "dashboard" | "leaderboard" | "history" | "benchmark";
@@ -24,36 +24,38 @@ function gaugeBarColor(i: number): string {
 }
 
 export function OptimizationPage() {
-  const [activeTab, setActiveTab] = useState<OptTabId>("dashboard");
-
+  // The whole dashboard is a locked preview for now: rendered blurred and
+  // non-interactive as a backdrop, with a single live CTA on top.
   return (
     <div className="optimization-page page-container">
-      <nav className="opt-tabs">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              className={`opt-tab${activeTab === tab.id ? " active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className="action-icon opt-tab-icon" aria-hidden="true">
-                <Icon />
-              </span>
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      {activeTab === "dashboard" ? (
-        <DashboardTab />
-      ) : (
-        <div className="opt-empty">
-          <span className="opt-empty-text">Раздел в разработке</span>
+      <div className="opt-locked">
+        <div className="opt-locked-content" aria-hidden="true">
+          <nav className="opt-tabs">
+            {TABS.map((tab, i) => {
+              const Icon = tab.icon;
+              return (
+                <span
+                  key={tab.id}
+                  className={`opt-tab${i === 0 ? " active" : ""}`}
+                >
+                  <span className="action-icon opt-tab-icon">
+                    <Icon />
+                  </span>
+                  {tab.label}
+                </span>
+              );
+            })}
+          </nav>
+          <DashboardTab />
         </div>
-      )}
+
+        <div className="opt-lock-overlay">
+          <button type="button" className="opt-btn opt-btn-accent opt-lock-btn">
+            Запустить проверку
+            <PlayIcon />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
