@@ -6,6 +6,12 @@ function commandWithoutMode(command: string): string {
   return command.replace(/^[+~]/, "");
 }
 
+function commandDisplayName(command: string): string {
+  const chatMessage = command.match(/^chat\.say\s+"(.+)"$/);
+  if (chatMessage) return `Чат: ${chatMessage[1]}`;
+  return commandWithoutMode(command);
+}
+
 function presetKey(
   command: string,
   mode: CommandPreset["defaultMode"],
@@ -42,7 +48,9 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
 
   const nameFor = useCallback(
     (command: string) => {
-      const preset = presetByCommand.get(commandKey(command));
+      const preset =
+        presetByCommand.get(command) ??
+        presetByCommand.get(commandKey(command));
       if (preset) return preset.name;
 
       return command
@@ -50,7 +58,7 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
         .map(
           (part) =>
             presetByCommand.get(commandKey(part))?.name ??
-            commandWithoutMode(part),
+            commandDisplayName(part),
         )
         .join(" + ");
     },

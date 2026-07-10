@@ -35,6 +35,11 @@ const RUST_KEY_ALIASES: Record<string, string> = {
   keypadplus: "kp_plus",
   keypadenter: "kp_enter",
   keypadperiod: "kp_dot",
+  numpadenter: "kp_enter",
+  numpadplus: "kp_plus",
+  numpadminus: "kp_minus",
+  numpadmultiply: "kp_multiply",
+  numpaddivide: "kp_divide",
   print: "printscreen",
   sysreq: "printscreen",
 };
@@ -44,6 +49,8 @@ export function normalizeRustKey(token: string | null | undefined): string {
   if (RUST_KEY_ALIASES[t]) return RUST_KEY_ALIASES[t];
   const kp = t.match(/^keypad([0-9])$/);
   if (kp) return `kp${kp[1]}`;
+  const numpad = t.match(/^numpad([0-9])$/);
+  if (numpad) return `kp${numpad[1]}`;
   return t;
 }
 

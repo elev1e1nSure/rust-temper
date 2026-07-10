@@ -174,6 +174,7 @@ pub fn presets() -> Vec<CommandPreset> {
         preset("Контакты", "uicontacts.togglecontacts"),
         preset("Отключиться от сервера", "client.disconnect"),
         preset("Консоль", "consoletoggle"),
+        preset("Старая консоль", "legacyconsoletoggle"),
         preset(
             "Меню жестов",
             "+gestures",
@@ -186,6 +187,7 @@ pub fn presets() -> Vec<CommandPreset> {
             "Переключить мод на оружии",
             "lighttoggle",
         ),
+        preset("Осмотреть предмет в руке", "inventory.examineheld"),
         // Команда, транспорт, база
         preset(
             "Поменять место в транспорте",
@@ -199,6 +201,19 @@ pub fn presets() -> Vec<CommandPreset> {
             "Уменьшить провис провода",
             "+wireslackdown",
         ),
+        // Other commands found in the default Rust key bindings.
+        preset("Атака (третья)", "+attack3"),
+        preset("Блокировать ввод", "no_input"),
+        preset("Повысить октаву ноты", "noteoctaveupmod"),
+        preset("Повысить ноту на полутон", "notesharpmod"),
+        preset("Нота Ля", "notea"),
+        preset("Нота Си", "noteb"),
+        preset("Нота До", "notec"),
+        preset("Нота Ре", "noted"),
+        preset("Нота Ми", "notee"),
+        preset("Нота Фа", "notef"),
+        preset("Нота Соль", "noteg"),
+        preset("Скрафтить бинт", "craft.add \"-2072273936\""),
         // Отладка
         preset(
             "Принудительная сборка мусора (GC)",
@@ -243,6 +258,10 @@ pub fn presets() -> Vec<CommandPreset> {
             "~netgraph.enabled true;netgraph.enabled false",
         ),
         preset("Присед + атака", "+duck;+attack"),
+        preset(
+            "Скрафтить бинт + уведомление",
+            "craft.add \"-2072273936\";chat.add 0 0 \"+бинт\"",
+        ),
         // Демо и запись
         preset("Начать запись демо", "demo.record"),
         preset("Остановить демо", "demo.stop"),
