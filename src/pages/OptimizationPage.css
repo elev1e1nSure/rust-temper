@@ -57,6 +57,11 @@
   margin-top: 17px;
   background: var(--accent);
 }
+.opt-btn-accent:disabled {
+  background: var(--row);
+  color: var(--text-dim);
+  opacity: 1;
+}
 .opt-btn-accent:hover:not(:disabled) {
   background: var(--accent-hover);
 }
