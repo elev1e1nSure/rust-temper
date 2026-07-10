@@ -6,20 +6,14 @@ function commandWithoutMode(command: string): string {
   return command.replace(/^[+~]/, "");
 }
 
-function commandDisplay(command: string): string {
-  return command.split(";").map(commandWithoutMode).join(";");
-}
-
 function presetKey(
   command: string,
   mode: CommandPreset["defaultMode"],
 ): string {
-  if (command.includes(";")) return command;
   return `${commandWithoutMode(command)}:${mode}`;
 }
 
 function commandKey(command: string): string {
-  if (command.includes(";")) return command;
   const mode = command.startsWith("~") ? "toggle" : "hold";
   return presetKey(command, mode);
 }
@@ -36,14 +30,30 @@ export function useBindEditor(commandPresets: CommandPreset[]) {
   const presetByCommand = useMemo(
     () =>
       new Map(
-        commandPresets.map((p) => [presetKey(p.command, p.defaultMode), p]),
+        commandPresets.map((p) => [
+          p.command.includes(";")
+            ? p.command
+            : presetKey(p.command, p.defaultMode),
+          p,
+        ]),
       ),
     [commandPresets],
   );
 
   const nameFor = useCallback(
-    (command: string) =>
-      presetByCommand.get(commandKey(command))?.name ?? commandDisplay(command),
+    (command: string) => {
+      const preset = presetByCommand.get(commandKey(command));
+      if (preset) return preset.name;
+
+      return command
+        .split(";")
+        .map(
+          (part) =>
+            presetByCommand.get(commandKey(part))?.name ??
+            commandWithoutMode(part),
+        )
+        .join(" + ");
+    },
     [presetByCommand],
   );
 
