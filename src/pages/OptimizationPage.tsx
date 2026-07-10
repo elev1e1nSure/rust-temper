@@ -26,36 +26,37 @@ const STEPS: OptimizationStep[] = [
   {
     id: "pcie-lpm",
     title: "Отключить PCIe LPM",
-    summary: "Снижает задержки и повышает общую производительность системы",
+    summary: "Устраняет микрофризы от энергосбережения PCI Express",
     details:
-      "PCIe Link Power Management управляет энергосбережением устройств PCI Express. Отключение убирает задержки при выходе устройств из режима экономии энергии.",
+      "PCIe Link Power Management переводит видеокарту, SSD и другие устройства PCI Express в режим пониженного энергопотребления в простое. Выход из этого режима занимает время и может ощущаться как кратковременный фриз. Отключение убирает эту задержку ценой чуть большего энергопотребления в простое.",
     command: "disable_pcie_lpm",
     revertCommand: "enable_pcie_lpm",
   },
   {
     id: "hvci",
     title: "Отключить HVCI",
-    summary: "Снижает нагрузку на CPU и может повысить стабильность FPS",
+    summary: "Снижает нагрузку на CPU от виртуализации ядра Windows",
     details:
-      "Hypervisor-protected Code Integrity защищает ядро Windows от вредоносного кода. Отключение снижает защиту системы, зато высвобождает ресурсы CPU. Для применения нужна перезагрузка.",
+      "Hypervisor-protected Code Integrity (Memory Integrity) — часть Virtualization-based Security, которая проверяет код ядра через гипервизор и создаёт постоянную нагрузку на CPU. Отключение освобождает ресурсы процессора, но ослабляет защиту от вредоносного кода уровня ядра. Изменения вступают в силу после перезагрузки.",
     command: "disable_hvci",
     revertCommand: "enable_hvci",
   },
   {
     id: "xbox-game-bar",
     title: "Отключить Xbox Game Bar",
-    summary: "Убирает фоновую нагрузку на CPU и RAM, снижает задержки",
+    summary: "Отключает фоновую запись Game DVR и оверлей Xbox Game Bar",
     details:
-      "Xbox Game Bar и Game DVR собирают данные об игре и производительности, используют память и могут конфликтовать с драйверами или оверлеями.",
+      "Game DVR постоянно готов записывать геймплей в фоне, а оверлей Game Bar перехватывает системные хоткеи и может конфликтовать со сторонним софтом (RGB-утилиты, оверлеи Discord и т.п.). Отключение убирает эту фоновую активность, хотя влияние на FPS обычно небольшое.",
     command: "disable_xbox_game_bar",
     revertCommand: "enable_xbox_game_bar",
   },
   {
     id: "gc-buffer",
     title: "Автоопределение GC Buffer",
-    summary: "Уменьшает длительные фризы и частоту очистки GC Buffer",
+    summary:
+      "Увеличивает буфер сборщика мусора Unity, чтобы он реже запускался",
     details:
-      "Garbage Collection Buffer хранит неиспользуемые объекты Rust. Мастер определит подходящий размер по объёму ОЗУ и добавит параметр в Steam, не затрагивая остальные launch options.",
+      "Rust на движке Unity периодически запускает сборщик мусора, который на короткое время останавливает игру — это ощущается как статтеры. Больший буфер даёт сборщику запас памяти впрок, поэтому он срабатывает реже. Мастер подберёт значение по объёму ОЗУ (не выше 4096 МБ — движок не учитывает более высокие значения) и добавит параметр в Steam, не трогая остальные launch options.",
     command: "apply_recommended_gc_buffer",
     revertCommand: "clear_rust_gc_buffer",
   },
@@ -186,15 +187,18 @@ export function OptimizationPage() {
       <div className="opt-dashboard">
         <section className="opt-card opt-hero">
           <div className="opt-hero-info">
-            <h1>Оптимизация системы</h1>
-            <p>Четыре настройки Windows и Rust для более стабильной игры.</p>
+            <h1>Оптимизация ПК</h1>
+            <p>
+              Параметры вашего ПК и Rust, что могут помочь увеличить
+              производительность
+            </p>
             <button
               type="button"
               className="opt-btn opt-btn-accent"
               onClick={openWizard}
               disabled={statusLoading || !pendingSteps.length}
             >
-              Запустить оптимизацию
+              Начать оптимизацию
             </button>
           </div>
         </section>
