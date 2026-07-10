@@ -33,7 +33,7 @@ interface CommandModalState {
 
 type ActionMode = "toggle" | "hold";
 const KEY_EXIT_MS = 120;
-const MODAL_KIND_ORDER: CommandModalKind[] = ["single", "combination"];
+const MODAL_KINDS: CommandModalKind[] = ["single", "combination"];
 
 interface DraftAction {
   id: number;
@@ -100,10 +100,6 @@ export function CommandModal({
     step: "select",
   });
   const [manualModalClosing, setManualModalClosing] = useState(false);
-  const [kindSlide, setKindSlide] = useState<{
-    kind: CommandModalKind;
-    direction: "left" | "right";
-  } | null>(null);
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
@@ -128,16 +124,21 @@ export function CommandModal({
   const draftKeyRemovalTimers = useRef(new Map<string, number>());
   const initializedRef = useRef(false);
 
-  const manualPresets = useMemo(() => {
+  const manualPresetsByKind = useMemo(() => {
     const q = manualSearch.trim().toLowerCase();
-    return commandPresets.filter(
-      (preset) =>
-        preset.kind === commandModal.kind &&
-        (!q ||
-          preset.name.toLowerCase().includes(q) ||
-          preset.command.toLowerCase().includes(q)),
-    );
-  }, [commandModal, commandPresets, manualSearch]);
+    return Object.fromEntries(
+      MODAL_KINDS.map((presetKind) => [
+        presetKind,
+        commandPresets.filter(
+          (preset) =>
+            preset.kind === presetKind &&
+            (!q ||
+              preset.name.toLowerCase().includes(q) ||
+              preset.command.toLowerCase().includes(q)),
+        ),
+      ]),
+    ) as Record<CommandModalKind, CommandPreset[]>;
+  }, [commandPresets, manualSearch]);
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -183,14 +184,6 @@ export function CommandModal({
   const setModalKind = useCallback((nextKind: CommandModalKind) => {
     setCommandModal((modal) => {
       if (modal.kind === nextKind) return modal;
-      setKindSlide({
-        kind: nextKind,
-        direction:
-          MODAL_KIND_ORDER.indexOf(nextKind) >
-          MODAL_KIND_ORDER.indexOf(modal.kind)
-            ? "right"
-            : "left",
-      });
       return { ...modal, kind: nextKind };
     });
     setManualSearch("");
@@ -435,6 +428,50 @@ export function CommandModal({
       : undefined;
   const isSingleKind = commandModal.kind === "single";
 
+  const renderPresetPane = (paneKind: CommandModalKind) => {
+    const panePresets = manualPresetsByKind[paneKind];
+    const isActivePane = paneKind === commandModal.kind;
+    return (
+      <div
+        className="manual-modal-list-pane"
+        aria-hidden={!isActivePane}
+        key={paneKind}
+      >
+        <div className="manual-modal-list">
+          {panePresets.map((preset) => (
+            <div className="manual-modal-row" key={presetListKey(preset)}>
+              <div className="manual-modal-row-icon">
+                <CommandIcon />
+              </div>
+              <div className="manual-modal-row-text">
+                <div className="manual-modal-row-name">{preset.name}</div>
+                <div className="manual-modal-row-id">
+                  {commandDisplay(preset.command)}
+                </div>
+              </div>
+              <button
+                className="manual-modal-add-btn"
+                type="button"
+                tabIndex={isActivePane ? 0 : -1}
+                onClick={() =>
+                  selectCommand(preset.command, preset.defaultMode)
+                }
+              >
+                <span className="action-icon" aria-hidden="true">
+                  <PlusIcon />
+                </span>
+                Добавить
+              </button>
+            </div>
+          ))}
+          {panePresets.length === 0 && (
+            <div className="manual-modal-empty">Ничего не найдено</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return createPortal(
     <div
       className={`manual-modal-backdrop ${manualModalClosing ? "closing" : ""}`}
@@ -547,43 +584,9 @@ export function CommandModal({
               </div>
             )}
 
-            <div
-              className={`manual-modal-list-wrap ${
-                kindSlide?.kind === commandModal.kind
-                  ? `slide-${kindSlide.direction}`
-                  : ""
-              }`}
-              key={commandModal.kind}
-            >
-              <div className="manual-modal-list">
-                {manualPresets.map((preset) => (
-                  <div className="manual-modal-row" key={presetListKey(preset)}>
-                    <div className="manual-modal-row-icon">
-                      <CommandIcon />
-                    </div>
-                    <div className="manual-modal-row-text">
-                      <div className="manual-modal-row-name">{preset.name}</div>
-                      <div className="manual-modal-row-id">
-                        {commandDisplay(preset.command)}
-                      </div>
-                    </div>
-                    <button
-                      className="manual-modal-add-btn"
-                      type="button"
-                      onClick={() =>
-                        selectCommand(preset.command, preset.defaultMode)
-                      }
-                    >
-                      <span className="action-icon" aria-hidden="true">
-                        <PlusIcon />
-                      </span>
-                      Добавить
-                    </button>
-                  </div>
-                ))}
-                {manualPresets.length === 0 && (
-                  <div className="manual-modal-empty">Ничего не найдено</div>
-                )}
+            <div className={`manual-modal-list-wrap is-${commandModal.kind}`}>
+              <div className="manual-modal-list-track">
+                {MODAL_KINDS.map(renderPresetPane)}
               </div>
             </div>
           </>
