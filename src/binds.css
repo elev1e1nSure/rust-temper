@@ -665,6 +665,10 @@
   animation: bindConfigContentIn 0.22s cubic-bezier(0.2, 0.85, 0.25, 1) both;
 }
 
+.bind-config-modal-direct .bind-config-content {
+  animation: none;
+}
+
 @keyframes bindConfigContentIn {
   from {
     opacity: 0;

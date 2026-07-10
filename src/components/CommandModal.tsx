@@ -479,7 +479,7 @@ export function CommandModal({
       onAnimationEnd={handleManualModalAnimationEnd}
     >
       <div
-        className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""}`}
+        className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""} ${typeof target === "number" ? "bind-config-modal-direct" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="manual-modal-header">
