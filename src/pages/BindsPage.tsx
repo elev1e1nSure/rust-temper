@@ -77,13 +77,15 @@ export function BindsPage({
     if (!previous || (!list && !empty)) return;
 
     const options: KeyframeAnimationOptions = {
-      duration: 220,
-      easing: "cubic-bezier(0.2, 0.75, 0.25, 1)",
+      duration: 260,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
     };
     const animations: Animation[] = [];
 
     if (list) {
       const nextListHeight = list.getBoundingClientRect().height;
+      const rows = [...rowRefs.current];
+      const hasNewRows = rows.some(([id]) => !previous.rowTops.has(id));
 
       if (Math.abs(previous.surfaceHeight - nextListHeight) > 0.5) {
         animations.push(
@@ -97,34 +99,34 @@ export function BindsPage({
         );
       }
 
-      for (const [id, row] of rowRefs.current) {
-        const previousTop = previous.rowTops.get(id);
-
-        if (previousTop === undefined) {
-          animations.push(
-            row.animate(
-              [
-                {
-                  clipPath: "inset(0 0 100% 0)",
-                  transform: "translateY(-6px)",
-                },
-                { clipPath: "inset(0)", transform: "none" },
-              ],
-              options,
-            ),
-          );
-          continue;
-        }
-
-        const offset = previousTop - row.getBoundingClientRect().top;
-        if (Math.abs(offset) < 0.5) continue;
-
+      if (hasNewRows) {
         animations.push(
-          row.animate(
-            [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
+          list.animate(
+            [
+              {
+                clipPath: "inset(0 0 100% 0)",
+                transform: "translateY(-6px)",
+              },
+              { clipPath: "inset(0)", transform: "none" },
+            ],
             options,
           ),
         );
+      } else {
+        for (const [id, row] of rows) {
+          const previousTop = previous.rowTops.get(id);
+          if (previousTop === undefined) continue;
+
+          const offset = previousTop - row.getBoundingClientRect().top;
+          if (Math.abs(offset) < 0.5) continue;
+
+          animations.push(
+            row.animate(
+              [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
+              options,
+            ),
+          );
+        }
       }
     } else if (empty && !previous.wasEmpty) {
       animations.push(
