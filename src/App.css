@@ -64,7 +64,10 @@ textarea {
   display: block;
 }
 
-button:not(.accordion-header):hover:not(:disabled) .action-icon {
+button:not(.accordion-header):not(
+    :where(.binds-page button, .manual-modal button)
+  ):hover:not(:disabled)
+  .action-icon {
   filter: brightness(1.16);
   transform: translateY(-1px) rotate(-5deg) scale(1.08);
 }
@@ -74,7 +77,10 @@ button:not(.accordion-header):hover:not(:disabled) .action-icon {
     transition: none;
   }
 
-  button:not(.accordion-header):hover:not(:disabled) .action-icon {
+  button:not(.accordion-header):not(
+      :where(.binds-page button, .manual-modal button)
+    ):hover:not(:disabled)
+    .action-icon {
     transform: none;
   }
 }

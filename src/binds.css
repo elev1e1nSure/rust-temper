@@ -573,7 +573,6 @@
 
 .manual-modal-row:hover .manual-modal-row-icon {
   color: var(--text);
-  transform: translateY(-1px) rotate(-4deg) scale(1.04);
 }
 
 .manual-modal-row-text {
@@ -1125,11 +1124,6 @@ body:has(.bind-config-action.dragging) {
 .kb-key:hover:not(:disabled):not(.selected) {
   color: var(--text);
   background: var(--row-hover);
-}
-
-.delete-btn:hover .action-icon {
-  filter: brightness(1.16);
-  transform: translateY(-1px) rotate(-5deg) scale(1.08);
 }
 
 /* Key currently selected as the list filter. */
