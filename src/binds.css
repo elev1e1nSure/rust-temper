@@ -286,6 +286,9 @@
   background: var(--panel);
   user-select: auto;
   transform-origin: center;
+  transition:
+    width 0.22s cubic-bezier(0.2, 0.85, 0.25, 1),
+    max-height 0.22s cubic-bezier(0.2, 0.85, 0.25, 1);
   animation: manualModalIn 0.15s ease forwards;
 }
 
@@ -673,6 +676,19 @@
   flex-direction: column;
   gap: 22px;
   user-select: auto;
+  animation: bindConfigContentIn 0.22s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+@keyframes bindConfigContentIn {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .bind-config-section {
