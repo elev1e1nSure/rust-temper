@@ -79,11 +79,11 @@ pub fn apply_recommended_gc_buffer() -> Result<u32, String> {
             .parse::<u64>()
             .map_err(|err| format!("Не удалось определить объём ОЗУ: {err}"))?;
     let total_memory_gb = total_memory_bytes / 1024 / 1024 / 1024;
+    // Rust's GC buffer slider caps at 4096 MB in practice; higher values aren't
+    // recognized by the engine, so scale up to that ceiling and stop there.
     let buffer_mb = match total_memory_gb {
         0..=8 => 2048,
-        9..=16 => 4096,
-        17..=32 => 6144,
-        _ => 8192,
+        _ => 4096,
     };
 
     steam_launch_options::set_rust_gc_buffer(buffer_mb)?;
