@@ -7,7 +7,6 @@ import {
   ChevronIcon,
   GraphicsIcon,
   RefreshIcon,
-  SaveIcon,
 } from "../icons";
 import "./GraphicsPage.css";
 
@@ -418,9 +417,6 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
             onClick={handleApply}
             disabled={applying || !gamePath}
           >
-            <span className="action-icon" aria-hidden="true">
-              <SaveIcon />
-            </span>
             {applying ? "Применение..." : "Применить"}
           </button>
         </div>
