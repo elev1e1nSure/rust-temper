@@ -433,6 +433,7 @@ export function CommandModal({
     draggedActionId !== null
       ? draftActions.find((action) => action.id === draggedActionId)
       : undefined;
+  const isSingleKind = commandModal.kind === "single";
 
   return createPortal(
     <div
@@ -478,22 +479,25 @@ export function CommandModal({
                   autoFocus
                 />
               </div>
-              {commandModal.kind === "single" && (
-                <button
-                  className={`manual-modal-plus ${manualCustomMode ? "active" : ""}`}
-                  type="button"
-                  title="Ввести команду вручную"
-                  onClick={() => setManualCustomMode((v) => !v)}
-                >
-                  <span className="action-icon" aria-hidden="true">
-                    <PlusIcon />
-                  </span>
-                </button>
-              )}
+              <button
+                className={`manual-modal-plus ${manualCustomMode ? "active" : ""} ${isSingleKind ? "" : "hidden"}`}
+                type="button"
+                title={isSingleKind ? "Ввести команду вручную" : undefined}
+                aria-hidden={!isSingleKind}
+                tabIndex={isSingleKind ? 0 : -1}
+                disabled={!isSingleKind}
+                onClick={() => {
+                  if (isSingleKind) setManualCustomMode((v) => !v);
+                }}
+              >
+                <span className="action-icon" aria-hidden="true">
+                  <PlusIcon />
+                </span>
+              </button>
             </div>
 
             <div
-              className="manual-modal-kind-switch"
+              className={`manual-modal-kind-switch is-${commandModal.kind}`}
               aria-label="Тип команд"
               role="tablist"
             >
