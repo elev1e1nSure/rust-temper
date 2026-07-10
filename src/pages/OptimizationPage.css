@@ -208,9 +208,8 @@
   border-radius: 26px;
   display: grid;
   place-items: center;
-  background: var(--accent-soft);
-  color: var(--accent);
-  animation: optLockFloat 2.6s ease-in-out infinite;
+  background: var(--row);
+  color: var(--text-dim);
 }
 
 .opt-lock-title {
@@ -226,20 +225,4 @@
   line-height: 1.5;
   color: var(--text-dim);
   max-width: 360px;
-}
-
-@keyframes optLockFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .opt-lock-icon {
-    animation: none;
-  }
 }
