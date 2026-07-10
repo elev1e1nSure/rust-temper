@@ -665,17 +665,14 @@
   animation: bindConfigContentIn 0.22s cubic-bezier(0.2, 0.85, 0.25, 1) both;
 }
 
-.bind-config-modal-direct .bind-config-content {
-  animation: none;
-}
-
 .bind-config-modal-direct {
   transition: none;
   animation: bindConfigModalDirectIn 0.15s ease forwards;
 }
 
-.bind-config-modal-direct .bind-config-animated-height {
-  transition: none;
+.bind-config-modal-direct * {
+  animation: none !important;
+  transition: none !important;
 }
 
 @keyframes bindConfigModalDirectIn {
