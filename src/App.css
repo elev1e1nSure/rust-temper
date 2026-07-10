@@ -64,8 +64,7 @@ textarea {
   display: block;
 }
 
-button:hover:not(:disabled) .action-icon,
-.accordion-header:hover .action-icon {
+button:not(.accordion-header):hover:not(:disabled) .action-icon {
   filter: brightness(1.16);
   transform: translateY(-1px) rotate(-5deg) scale(1.08);
 }
@@ -75,8 +74,7 @@ button:hover:not(:disabled) .action-icon,
     transition: none;
   }
 
-  button:hover:not(:disabled) .action-icon,
-  .accordion-header:hover .action-icon {
+  button:not(.accordion-header):hover:not(:disabled) .action-icon {
     transform: none;
   }
 }
