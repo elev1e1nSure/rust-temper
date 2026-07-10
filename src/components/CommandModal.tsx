@@ -543,31 +543,6 @@ export function CommandModal({
               </button>
             </div>
 
-            <div
-              className={`manual-modal-kind-switch is-${commandModal.kind}`}
-              aria-label="Тип команд"
-              role="tablist"
-            >
-              <button
-                className={commandModal.kind === "single" ? "active" : ""}
-                type="button"
-                role="tab"
-                aria-selected={commandModal.kind === "single"}
-                onClick={() => setModalKind("single")}
-              >
-                Простые
-              </button>
-              <button
-                className={commandModal.kind === "combination" ? "active" : ""}
-                type="button"
-                role="tab"
-                aria-selected={commandModal.kind === "combination"}
-                onClick={() => setModalKind("combination")}
-              >
-                Составные
-              </button>
-            </div>
-
             {commandModal.kind === "single" && manualCustomMode && (
               <div className="manual-modal-custom-row">
                 <input
@@ -593,6 +568,31 @@ export function CommandModal({
                 </button>
               </div>
             )}
+
+            <div
+              className={`manual-modal-kind-switch is-${commandModal.kind}`}
+              aria-label="Тип команд"
+              role="tablist"
+            >
+              <button
+                className={commandModal.kind === "single" ? "active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={commandModal.kind === "single"}
+                onClick={() => setModalKind("single")}
+              >
+                Простые
+              </button>
+              <button
+                className={commandModal.kind === "combination" ? "active" : ""}
+                type="button"
+                role="tab"
+                aria-selected={commandModal.kind === "combination"}
+                onClick={() => setModalKind("combination")}
+              >
+                Составные
+              </button>
+            </div>
 
             <div className={`manual-modal-list-wrap is-${commandModal.kind}`}>
               <div className="manual-modal-list-track">

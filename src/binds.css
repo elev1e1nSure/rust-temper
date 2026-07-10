@@ -494,6 +494,14 @@
     transform 140ms ease;
 }
 
+.manual-modal-plus .action-icon {
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.manual-modal-plus .action-icon svg {
+  stroke-width: 2.5;
+}
+
 .manual-modal-plus:hover {
   color: var(--text);
   background: var(--row-hover);
@@ -501,8 +509,12 @@
 
 .manual-modal-plus.active {
   color: var(--text);
-  background: var(--accent-muted);
+  background: var(--accent);
   border-color: transparent;
+}
+
+.manual-modal-plus.active .action-icon {
+  transform: rotate(45deg);
 }
 
 .manual-modal-plus.hidden {
