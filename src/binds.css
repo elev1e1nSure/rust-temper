@@ -669,6 +669,25 @@
   animation: none;
 }
 
+.bind-config-modal-direct {
+  transition: none;
+  animation: bindConfigModalDirectIn 0.15s ease forwards;
+}
+
+.bind-config-modal-direct .bind-config-animated-height {
+  transition: none;
+}
+
+@keyframes bindConfigModalDirectIn {
+  from {
+    transform: scale(0.95);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
 @keyframes bindConfigContentIn {
   from {
     opacity: 0;
