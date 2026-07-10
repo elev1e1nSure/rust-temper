@@ -97,7 +97,7 @@ export function CommandModal({
   const [commandModal, setCommandModal] = useState<CommandModalState>({
     kind,
     target,
-    step: "select",
+    step: typeof target === "number" ? "configure" : "select",
   });
   const [manualModalClosing, setManualModalClosing] = useState(false);
   const [manualSearch, setManualSearch] = useState("");
