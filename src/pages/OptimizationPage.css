@@ -177,8 +177,8 @@
 }
 
 .opt-locked-content {
-  filter: blur(6px);
-  opacity: 0.5;
+  filter: blur(12px);
+  opacity: 0.45;
   pointer-events: none;
   user-select: none;
 }
