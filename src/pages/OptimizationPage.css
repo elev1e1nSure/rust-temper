@@ -112,49 +112,109 @@
   color: var(--text-dim);
 }
 .opt-wizard-backdrop {
+  --opt-wizard-edge-gap: clamp(12px, 4dvh, 24px);
+  --opt-wizard-bottom-gap: clamp(28px, 5dvh, 40px);
+  --opt-wizard-titlebar-height: 32px;
+
   position: fixed;
-  inset: 0;
-  z-index: 300;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(8px);
+  inset: var(--opt-wizard-titlebar-height) 0 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: var(--opt-wizard-edge-gap) var(--opt-wizard-edge-gap)
+    var(--opt-wizard-bottom-gap);
+  background: var(--overlay);
+  overscroll-behavior: contain;
+  user-select: auto;
+  animation: optWizardBackdropIn 0.18s ease forwards;
+}
+.opt-wizard-backdrop.closing {
+  animation: optWizardBackdropOut 0.15s ease forwards;
+}
+@keyframes optWizardBackdropIn {
+  from {
+    background: transparent;
+  }
+  to {
+    background: var(--overlay);
+  }
+}
+@keyframes optWizardBackdropOut {
+  from {
+    background: var(--overlay);
+  }
+  to {
+    background: transparent;
+  }
 }
 .opt-wizard {
   position: relative;
-  width: min(100%, 580px);
+  width: min(560px, 100%);
+  margin: 0 auto;
   overflow: hidden;
-  border: 1px solid var(--row-border);
-  border-radius: 16px;
-  background: #101014;
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+  padding: 28px;
+  border: none;
+  border-radius: 14px;
+  background: var(--panel);
+  user-select: auto;
+  transform-origin: center;
+  animation: optWizardIn 0.15s ease forwards;
+}
+.opt-wizard-backdrop.closing .opt-wizard {
+  animation: optWizardOut 0.15s ease forwards;
+}
+@keyframes optWizardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes optWizardOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 .opt-wizard-header {
-  padding: 32px 58px 27px 30px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-bottom: 22px;
+  padding-right: 42px;
 }
 .opt-wizard-header h2 {
-  font-size: 19px;
-  letter-spacing: -0.02em;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 .opt-wizard-header p {
-  max-width: 455px;
-  margin: 7px 0 0;
+  margin: 8px 0 0;
   color: var(--text-dim);
   font-size: 14px;
-  font-weight: 550;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .opt-wizard-close {
   position: absolute;
-  top: 23px;
-  right: 23px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 10px;
+  top: 28px;
+  right: 28px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   background: var(--row);
   color: var(--text-dim);
   cursor: pointer;
@@ -164,21 +224,22 @@
   color: var(--text);
 }
 .opt-wizard-details {
-  border-top: 1px solid var(--row-border);
-  border-bottom: 1px solid var(--row-border);
-  padding: 28px 30px;
+  padding: 0;
 }
 .opt-wizard-details h3 {
   font-size: 15px;
+  font-weight: 700;
 }
 .opt-wizard-details p {
   margin: 8px 0 0;
   color: var(--text-soft);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 .opt-wizard-footer {
-  padding: 23px 30px 28px;
+  margin-top: 26px;
+  padding: 0;
 }
 .opt-progress-label {
   display: flex;
@@ -208,7 +269,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 23px;
+  margin-top: 24px;
 }
 .opt-wizard-actions .opt-btn {
   margin: 0;
@@ -221,7 +282,7 @@
   line-height: 1.4;
 }
 .opt-wizard-complete {
-  padding: 42px 34px 34px;
+  padding: 0;
 }
 .opt-wizard-kicker {
   color: var(--success);
@@ -232,7 +293,7 @@
 }
 .opt-wizard-complete h2 {
   margin-top: 8px;
-  font-size: 24px;
+  font-size: 22px;
 }
 .opt-wizard-complete p {
   margin: 10px 0 0;
@@ -254,13 +315,14 @@
     border-radius: 16px;
   }
   .opt-wizard-backdrop {
-    padding: 12px;
+    --opt-wizard-edge-gap: 16px;
   }
-  .opt-wizard-header,
-  .opt-wizard-details,
-  .opt-wizard-footer {
-    padding-left: 20px;
-    padding-right: 20px;
+  .opt-wizard {
+    padding: 22px;
+  }
+  .opt-wizard-close {
+    top: 22px;
+    right: 22px;
   }
   .opt-wizard-actions .opt-btn {
     min-width: 0;

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { CloseFill, RocketFill } from "@mingcute/react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import "./OptimizationPage.css";
 
 type StepStatus = "available" | "applied" | "skipped";
@@ -56,6 +57,7 @@ const STATUS_LABEL: Record<StepStatus, string> = {
 
 export function OptimizationPage() {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [statuses, setStatuses] = useState<Record<string, StepStatus>>({});
   const [applying, setApplying] = useState(false);
@@ -68,12 +70,27 @@ export function OptimizationPage() {
   ).length;
 
   const openWizard = () => {
+    setClosing(false);
     setStepIndex(0);
     setStatuses({});
     setError(null);
     setGcBuffer(null);
     setOpen(true);
   };
+
+  const closeWizard = useCallback(() => {
+    if (applying || closing) return;
+    setClosing(true);
+  }, [applying, closing]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeWizard();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeWizard, open]);
 
   const advance = (status: StepStatus) => {
     if (!step) return;
@@ -137,91 +154,105 @@ export function OptimizationPage() {
         </section>
       </div>
 
-      {open && (
-        <div className="opt-wizard-backdrop" role="presentation">
-          <section
-            className="opt-wizard"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Мастер оптимизации"
+      {open &&
+        createPortal(
+          <div
+            className={`opt-wizard-backdrop${closing ? " closing" : ""}`}
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeWizard();
+            }}
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget && closing) {
+                setOpen(false);
+                setClosing(false);
+              }
+            }}
           >
-            <button
-              type="button"
-              className="opt-wizard-close"
-              onClick={() => setOpen(false)}
-              disabled={applying}
-              aria-label="Закрыть мастер"
+            <section
+              className="opt-wizard"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Мастер оптимизации"
             >
-              <CloseFill size={18} />
-            </button>
+              <button
+                type="button"
+                className="opt-wizard-close"
+                onClick={closeWizard}
+                disabled={applying}
+                aria-label="Закрыть мастер"
+              >
+                <CloseFill size={18} />
+              </button>
 
-            {completed ? (
-              <div className="opt-wizard-complete">
-                <div className="opt-wizard-kicker">Готово</div>
-                <h2>Оптимизация завершена</h2>
-                <p>
-                  Применено настроек: {appliedCount} из {STEPS.length}.
-                  {gcBuffer ? ` GC Buffer: ${gcBuffer} МБ.` : ""}
-                </p>
-                <button
-                  type="button"
-                  className="opt-btn opt-btn-accent"
-                  onClick={() => setOpen(false)}
-                >
-                  Закрыть
-                </button>
-              </div>
-            ) : (
-              <>
-                <header className="opt-wizard-header">
-                  <h2>{step?.title}</h2>
-                  <p>{step?.summary}</p>
-                </header>
-                <div className="opt-wizard-details">
-                  <h3>Подробнее</h3>
-                  <p>{step?.details}</p>
+              {completed ? (
+                <div className="opt-wizard-complete">
+                  <div className="opt-wizard-kicker">Готово</div>
+                  <h2>Оптимизация завершена</h2>
+                  <p>
+                    Применено настроек: {appliedCount} из {STEPS.length}.
+                    {gcBuffer ? ` GC Buffer: ${gcBuffer} МБ.` : ""}
+                  </p>
+                  <button
+                    type="button"
+                    className="opt-btn opt-btn-accent"
+                    onClick={closeWizard}
+                  >
+                    Закрыть
+                  </button>
                 </div>
-                <footer className="opt-wizard-footer">
-                  <div className="opt-progress">
-                    <div className="opt-progress-label">
-                      <span>Применено</span>
-                      <span>
-                        {stepIndex + 1} из {STEPS.length}
-                      </span>
-                    </div>
-                    <div className="opt-progress-track" aria-hidden="true">
-                      <span
-                        style={{
-                          width: `${((stepIndex + 1) / STEPS.length) * 100}%`,
-                        }}
-                      />
-                    </div>
+              ) : (
+                <>
+                  <header className="opt-wizard-header">
+                    <h2>{step?.title}</h2>
+                    <p>{step?.summary}</p>
+                  </header>
+                  <div className="opt-wizard-details">
+                    <h3>Подробнее</h3>
+                    <p>{step?.details}</p>
                   </div>
-                  {error && <p className="opt-wizard-error">{error}</p>}
-                  <div className="opt-wizard-actions">
-                    <button
-                      type="button"
-                      className="opt-btn opt-btn-muted"
-                      onClick={() => advance("skipped")}
-                      disabled={applying}
-                    >
-                      Пропустить
-                    </button>
-                    <button
-                      type="button"
-                      className="opt-btn opt-btn-accent"
-                      onClick={applyStep}
-                      disabled={applying}
-                    >
-                      {applying ? "Применение..." : "Применить"}
-                    </button>
-                  </div>
-                </footer>
-              </>
-            )}
-          </section>
-        </div>
-      )}
+                  <footer className="opt-wizard-footer">
+                    <div className="opt-progress">
+                      <div className="opt-progress-label">
+                        <span>Применено</span>
+                        <span>
+                          {stepIndex + 1} из {STEPS.length}
+                        </span>
+                      </div>
+                      <div className="opt-progress-track" aria-hidden="true">
+                        <span
+                          style={{
+                            width: `${((stepIndex + 1) / STEPS.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {error && <p className="opt-wizard-error">{error}</p>}
+                    <div className="opt-wizard-actions">
+                      <button
+                        type="button"
+                        className="opt-btn opt-btn-muted"
+                        onClick={() => advance("skipped")}
+                        disabled={applying}
+                      >
+                        Пропустить
+                      </button>
+                      <button
+                        type="button"
+                        className="opt-btn opt-btn-accent"
+                        onClick={applyStep}
+                        disabled={applying}
+                      >
+                        {applying ? "Применение..." : "Применить"}
+                      </button>
+                    </div>
+                  </footer>
+                </>
+              )}
+            </section>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
