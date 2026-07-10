@@ -4,7 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import "./OptimizationPage.css";
 
-type StepStatus = "available" | "applied" | "skipped";
+type StepStatus = "available" | "applied";
+
+type OptimizationStatus = {
+  pcieLpm: boolean;
+  hvci: boolean;
+  xboxGameBar: boolean;
+  gcBuffer: boolean;
+};
 
 type OptimizationStep = {
   id: string;
@@ -52,7 +59,6 @@ const STEPS: OptimizationStep[] = [
 const STATUS_LABEL: Record<StepStatus, string> = {
   available: "Доступно",
   applied: "Применено",
-  skipped: "Пропущено",
 };
 
 export function OptimizationPage() {
@@ -69,10 +75,30 @@ export function OptimizationPage() {
     (status) => status === "applied",
   ).length;
 
+  const refreshStatuses = useCallback(async () => {
+    try {
+      const status = await invoke<OptimizationStatus>(
+        "get_optimization_status",
+      );
+      setStatuses({
+        "pcie-lpm": status.pcieLpm ? "applied" : "available",
+        hvci: status.hvci ? "applied" : "available",
+        "xbox-game-bar": status.xboxGameBar ? "applied" : "available",
+        "gc-buffer": status.gcBuffer ? "applied" : "available",
+      });
+    } catch (reason) {
+      console.error("Не удалось прочитать состояние оптимизаций:", reason);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshStatuses();
+  }, [refreshStatuses]);
+
   const openWizard = () => {
     setClosing(false);
     setStepIndex(0);
-    setStatuses({});
+    void refreshStatuses();
     setError(null);
     setGcBuffer(null);
     setOpen(true);
@@ -92,9 +118,8 @@ export function OptimizationPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [closeWizard, open]);
 
-  const advance = (status: StepStatus) => {
+  const advance = () => {
     if (!step) return;
-    setStatuses((current) => ({ ...current, [step.id]: status }));
     setError(null);
     setStepIndex((current) => current + 1);
   };
@@ -108,7 +133,8 @@ export function OptimizationPage() {
       if (step.id === "gc-buffer" && typeof result === "number") {
         setGcBuffer(result);
       }
-      advance("applied");
+      await refreshStatuses();
+      advance();
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -232,7 +258,7 @@ export function OptimizationPage() {
                       <button
                         type="button"
                         className="opt-btn opt-btn-muted"
-                        onClick={() => advance("skipped")}
+                        onClick={advance}
                         disabled={applying}
                       >
                         Пропустить

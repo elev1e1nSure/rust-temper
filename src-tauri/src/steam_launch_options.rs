@@ -61,6 +61,21 @@ pub fn set_rust_gc_buffer(buffer_mb: u32) -> Result<(), String> {
     })
 }
 
+/// Read the configured GC buffer without changing Steam's launch options.
+pub fn read_rust_gc_buffer() -> Result<Option<u32>, String> {
+    Ok(read_rust_launch_options()?
+        .as_deref()
+        .and_then(gc_buffer_from_options))
+}
+
+fn gc_buffer_from_options(options: &str) -> Option<u32> {
+    let tokens: Vec<&str> = options.split_whitespace().collect();
+    tokens
+        .windows(2)
+        .find(|pair| pair[0].eq_ignore_ascii_case("-gc.buffer"))
+        .and_then(|pair| pair[1].parse::<u32>().ok())
+}
+
 fn with_gc_buffer(options: &str, buffer_mb: u32) -> String {
     let tokens: Vec<&str> = options.split_whitespace().collect();
     let mut retained = Vec::with_capacity(tokens.len() + 2);

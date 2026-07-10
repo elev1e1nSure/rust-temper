@@ -38,6 +38,7 @@ pub fn run() {
             optimization::disable_hvci,
             optimization::disable_xbox_game_bar,
             optimization::apply_recommended_gc_buffer,
+            optimization::get_optimization_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

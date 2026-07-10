@@ -1,9 +1,32 @@
 use std::process::Command;
 
-use winreg::enums::{HKEY_CURRENT_USER, KEY_WRITE};
+use serde::Serialize;
+use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WRITE};
 use winreg::RegKey;
 
 use crate::steam_launch_options;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OptimizationStatus {
+    pcie_lpm: bool,
+    hvci: bool,
+    xbox_game_bar: bool,
+    gc_buffer: bool,
+}
+
+#[tauri::command]
+pub fn get_optimization_status() -> OptimizationStatus {
+    OptimizationStatus {
+        pcie_lpm: is_pcie_lpm_disabled().unwrap_or(false),
+        hvci: is_hvci_disabled(),
+        xbox_game_bar: is_xbox_game_bar_disabled(),
+        gc_buffer: steam_launch_options::read_rust_gc_buffer()
+            .ok()
+            .flatten()
+            .is_some(),
+    }
+}
 
 #[tauri::command]
 pub fn disable_pcie_lpm() -> Result<(), String> {
@@ -73,6 +96,51 @@ fn run_elevated_powershell(script: &str) -> Result<(), String> {
         "$process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', '{encoded}'); exit $process.ExitCode"
     );
     run_powershell(&launcher).map(|_| ())
+}
+
+fn is_pcie_lpm_disabled() -> Result<bool, String> {
+    let output = Command::new("powercfg.exe")
+        .args(["/query", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM"])
+        .output()
+        .map_err(|err| format!("Не удалось прочитать настройки PCIe LPM: {err}"))?;
+    if !output.status.success() {
+        return Err("Не удалось прочитать настройки PCIe LPM.".to_string());
+    }
+
+    let values: Vec<u32> = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .filter_map(|line| {
+            line.rsplit_once("0x")
+                .and_then(|(_, value)| value.split_whitespace().next())
+                .and_then(|value| u32::from_str_radix(value, 16).ok())
+        })
+        .collect();
+    Ok(values.len() >= 2 && values[values.len() - 2..].iter().all(|value| *value == 0))
+}
+
+fn is_hvci_disabled() -> bool {
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let key = hklm.open_subkey_with_flags(
+        "SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity",
+        KEY_READ,
+    );
+    key.and_then(|key| key.get_value::<u32, _>("Enabled"))
+        .unwrap_or(0)
+        == 0
+}
+
+fn is_xbox_game_bar_disabled() -> bool {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let game_dvr_disabled = hkcu
+        .open_subkey_with_flags("System\\GameConfigStore", KEY_READ)
+        .and_then(|key| key.get_value::<u32, _>("GameDVR_Enabled"))
+        .is_ok_and(|value| value == 0);
+    let game_bar_disabled = hkcu
+        .open_subkey_with_flags("SOFTWARE\\Microsoft\\GameBar", KEY_READ)
+        .and_then(|key| key.get_value::<u32, _>("ShowStartupPanel"))
+        .is_ok_and(|value| value == 0);
+
+    game_dvr_disabled && game_bar_disabled
 }
 
 fn powershell_output(script: &str) -> Result<String, String> {
