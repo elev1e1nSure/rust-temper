@@ -35,20 +35,24 @@
   color: var(--text);
 }
 .opt-hero-info h1 {
-  font-size: 22px;
-  letter-spacing: -0.02em;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 .opt-hero-info p {
   margin: 6px 0 0;
   color: var(--text-dim);
   font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .opt-btn {
   border: 0;
   border-radius: var(--radius-control);
-  padding: 11px 20px;
+  min-height: 38px;
+  padding: 0 14px;
   color: var(--text);
-  font: 700 14px inherit;
+  font: 700 15px inherit;
   cursor: pointer;
   transition:
     background var(--motion-fast),
@@ -84,20 +88,22 @@
 }
 .opt-item-name {
   color: var(--text);
-  font-size: 15px;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 700;
 }
 .opt-item-desc {
   margin-top: 4px;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .opt-chip {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 5px 10px;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 700;
 }
 .opt-chip-applied {
   background: color-mix(in srgb, var(--success) 15%, transparent);
