@@ -34,14 +34,9 @@ interface CommandModalTarget {
   target: number | "new";
 }
 
-type BindFilterPhase = "entering" | "exiting" | "steady";
-
-interface TransitionedBind extends FilteredBind {
-  phase: BindFilterPhase;
-}
-
-function bindId({ bind, sourceIndex }: FilteredBind): string {
-  return `${sourceIndex}:${bind.key}:${bind.command}`;
+interface BindFilterLayout {
+  listHeight: number;
+  rowTops: Map<string, number>;
 }
 
 export function BindsPage({
@@ -65,51 +60,75 @@ export function BindsPage({
 }: BindsPageProps) {
   const [commandModalState, setCommandModalState] =
     useState<CommandModalTarget | null>(null);
-  const [renderedBinds, setRenderedBinds] = useState<TransitionedBind[]>(() =>
-    filteredBinds.map<TransitionedBind>((item) => ({
-      ...item,
-      phase: "steady",
-    })),
-  );
+  const listRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  const pendingFilterLayout = useRef<BindFilterLayout | null>(null);
+  const filterAnimations = useRef<Animation[]>([]);
   const selectedKeysSignature = selectedKeys.join("+");
-  const previousSelectedKeysSignature = useRef(selectedKeysSignature);
 
   useLayoutEffect(() => {
-    const isKeyboardFilterChange =
-      previousSelectedKeysSignature.current !== selectedKeysSignature;
-    previousSelectedKeysSignature.current = selectedKeysSignature;
+    const previous = pendingFilterLayout.current;
+    const list = listRef.current;
+    pendingFilterLayout.current = null;
 
-    setRenderedBinds((previous) => {
-      if (!isKeyboardFilterChange) {
-        return filteredBinds.map<TransitionedBind>((item) => ({
-          ...item,
-          phase: "steady",
-        }));
-      }
+    if (!previous || !list) return;
 
-      const nextById = new Map(
-        filteredBinds.map((item) => [bindId(item), item]),
+    const options: KeyframeAnimationOptions = {
+      duration: 220,
+      easing: "cubic-bezier(0.2, 0.75, 0.25, 1)",
+    };
+    const animations: Animation[] = [];
+    const nextListHeight = list.getBoundingClientRect().height;
+
+    if (Math.abs(previous.listHeight - nextListHeight) > 0.5) {
+      animations.push(
+        list.animate(
+          [
+            { height: `${previous.listHeight}px` },
+            { height: `${nextListHeight}px` },
+          ],
+          options,
+        ),
       );
-      const previousById = new Map(
-        previous.map((item) => [bindId(item), item]),
+    }
+
+    for (const [id, row] of rowRefs.current) {
+      const previousTop = previous.rowTops.get(id);
+      if (previousTop === undefined) continue;
+
+      const offset = previousTop - row.getBoundingClientRect().top;
+      if (Math.abs(offset) < 0.5) continue;
+
+      animations.push(
+        row.animate(
+          [{ transform: `translateY(${offset}px)` }, { transform: "none" }],
+          options,
+        ),
       );
-      const ids = new Set([...previousById.keys(), ...nextById.keys()]);
+    }
 
-      return [...ids]
-        .map((id): TransitionedBind => {
-          const next = nextById.get(id);
-          const current = previousById.get(id);
-
-          if (!next && current) return { ...current, phase: "exiting" };
-          if (next && !current) return { ...next, phase: "entering" };
-          return {
-            ...next!,
-            phase: current!.phase === "exiting" ? "steady" : current!.phase,
-          };
-        })
-        .sort((a, b) => a.sourceIndex - b.sourceIndex);
-    });
+    filterAnimations.current = animations;
   }, [filteredBinds, selectedKeysSignature]);
+
+  const handleAnimatedKeyboardKey = (rustKey: string) => {
+    const list = listRef.current;
+
+    if (list) {
+      pendingFilterLayout.current = {
+        listHeight: list.getBoundingClientRect().height,
+        rowTops: new Map(
+          [...rowRefs.current].map(([id, row]) => [
+            id,
+            row.getBoundingClientRect().top,
+          ]),
+        ),
+      };
+    }
+
+    for (const animation of filterAnimations.current) animation.cancel();
+    filterAnimations.current = [];
+    handleKeyboardKey(rustKey);
+  };
 
   const openCommandModal = (kind: CommandModalKind, target: number | "new") => {
     setCommandModalState({ kind, target });
@@ -126,22 +145,8 @@ export function BindsPage({
     openCommandModal(kind, index);
   };
 
-  const showEmptyState =
-    !isLoading && filteredBinds.length === 0 && renderedBinds.length === 0;
-  const showList =
-    !isLoading && (filteredBinds.length > 0 || renderedBinds.length > 0);
-
-  const settleBindFilterTransition = (id: string) => {
-    setRenderedBinds((previous) =>
-      previous
-        .filter((item) => !(bindId(item) === id && item.phase === "exiting"))
-        .map((item) =>
-          bindId(item) === id && item.phase === "entering"
-            ? { ...item, phase: "steady" }
-            : item,
-        ),
-    );
-  };
+  const showEmptyState = !isLoading && filteredBinds.length === 0;
+  const showList = !isLoading && filteredBinds.length > 0;
 
   return (
     <div className="page-container binds-page">
@@ -149,7 +154,7 @@ export function BindsPage({
         selectedKeys={selectedKeys}
         search={search}
         setSearch={setSearch}
-        onToggleSelectedKey={handleKeyboardKey}
+        onToggleSelectedKey={handleAnimatedKeyboardKey}
         onOpenCommandModal={openCommandModal}
       />
 
@@ -194,7 +199,7 @@ export function BindsPage({
           <Keyboard
             selectedKeys={selectedKeys}
             occupiedKeys={occupiedKeys}
-            onKeyClick={handleKeyboardKey}
+            onKeyClick={handleAnimatedKeyboardKey}
           />
         )}
       </div>
@@ -230,59 +235,54 @@ export function BindsPage({
           </button>
         </div>
       ) : showList ? (
-        <div className="binds-list-wrap">
-          {renderedBinds.map(({ bind, sourceIndex, phase }) => {
+        <div className="binds-list-wrap" ref={listRef}>
+          {filteredBinds.map(({ bind, sourceIndex }) => {
             const hasConflict =
               bind.key !== "" && (keyConflicts.get(bind.key) ?? 0) > 1;
             const id = `${sourceIndex}:${bind.key}:${bind.command}`;
             return (
               <div
-                className={`bind-list-item bind-list-item-${phase}`}
+                className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
                 key={id}
-                onAnimationEnd={(event) => {
-                  if (event.currentTarget === event.target) {
-                    settleBindFilterTransition(id);
+                ref={(element) => {
+                  if (element) rowRefs.current.set(id, element);
+                  else rowRefs.current.delete(id);
+                }}
+                onAnimationEnd={() => {
+                  if (exitingBindIndex === sourceIndex) {
+                    confirmRemoveBind(sourceIndex);
+                  }
+                  if (newBindIndex === sourceIndex) {
+                    setNewBindIndex(null);
                   }
                 }}
               >
-                <div
-                  className={`bind-row ${newBindIndex === sourceIndex ? "bind-row-new" : ""} ${exitingBindIndex === sourceIndex ? "exiting" : ""}`}
-                  onAnimationEnd={() => {
-                    if (exitingBindIndex === sourceIndex) {
-                      confirmRemoveBind(sourceIndex);
-                    }
-                    if (newBindIndex === sourceIndex) {
-                      setNewBindIndex(null);
-                    }
-                  }}
+                <button
+                  className="action-cell"
+                  type="button"
+                  onClick={() =>
+                    openBindCommandModal(sourceIndex, bind.command)
+                  }
                 >
-                  <button
-                    className="action-cell"
-                    type="button"
-                    onClick={() =>
-                      openBindCommandModal(sourceIndex, bind.command)
-                    }
-                  >
-                    {bind.command ? nameFor(bind.command) : "Выберите действие"}
-                    <span className="action-icon" aria-hidden="true">
-                      <ChevronIcon />
-                    </span>
-                  </button>
+                  {bind.command ? nameFor(bind.command) : "Выберите действие"}
+                  <span className="action-icon" aria-hidden="true">
+                    <ChevronIcon />
+                  </span>
+                </button>
 
-                  <div
-                    className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
-                  >
-                    {bind.key ? keyDisplayName(bind.key) : "—"}
-                  </div>
+                <div
+                  className={`key-badge bind-key-slot ${hasConflict ? "conflict" : ""}`}
+                >
+                  {bind.key ? keyDisplayName(bind.key) : "—"}
+                </div>
 
-                  <div
-                    className="delete-btn"
-                    onClick={() => removeBind(sourceIndex)}
-                  >
-                    <span className="action-icon" aria-hidden="true">
-                      <TrashIcon />
-                    </span>
-                  </div>
+                <div
+                  className="delete-btn"
+                  onClick={() => removeBind(sourceIndex)}
+                >
+                  <span className="action-icon" aria-hidden="true">
+                    <TrashIcon />
+                  </span>
                 </div>
               </div>
             );
