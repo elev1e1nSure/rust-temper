@@ -141,7 +141,7 @@ export function CommandModal({
     ) as Record<CommandModalKind, CommandPreset[]>;
   }, [commandPresets, manualSearch]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
