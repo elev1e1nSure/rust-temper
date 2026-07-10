@@ -81,6 +81,7 @@ export function OptimizationPage() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [skipTransition, setSkipTransition] = useState(0);
   const [wizardSteps, setWizardSteps] = useState<OptimizationStep[]>([]);
   const [statuses, setStatuses] = useState<Record<string, StepStatus>>({});
   const [statusLoading, setStatusLoading] = useState(true);
@@ -123,6 +124,7 @@ export function OptimizationPage() {
     if (!pendingSteps.length) return;
     setClosing(false);
     setStepIndex(0);
+    setSkipTransition(0);
     setWizardSteps(pendingSteps);
     setError(null);
     setGcBuffer(null);
@@ -146,6 +148,13 @@ export function OptimizationPage() {
   const advance = () => {
     if (!step) return;
     setError(null);
+    setStepIndex((current) => current + 1);
+  };
+
+  const skipStep = () => {
+    if (!step) return;
+    setError(null);
+    setSkipTransition((current) => current + 1);
     setStepIndex((current) => current + 1);
   };
 
@@ -287,7 +296,10 @@ export function OptimizationPage() {
                   </button>
                 </div>
               ) : (
-                <>
+                <div
+                  key={skipTransition}
+                  className={`opt-wizard-step${skipTransition ? " is-skip-transition" : ""}`}
+                >
                   <header className="opt-wizard-header">
                     <h2>{step?.title}</h2>
                     <p>{step?.summary}</p>
@@ -317,7 +329,7 @@ export function OptimizationPage() {
                       <button
                         type="button"
                         className="opt-btn opt-btn-muted"
-                        onClick={advance}
+                        onClick={skipStep}
                         disabled={applying}
                       >
                         Пропустить
@@ -332,7 +344,7 @@ export function OptimizationPage() {
                       </button>
                     </div>
                   </footer>
-                </>
+                </div>
               )}
             </section>
           </div>,
