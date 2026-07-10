@@ -94,15 +94,14 @@ export function CommandModal({
   updateBind,
   onClose,
 }: CommandModalProps) {
+  const isDirectModal = typeof target === "number";
   const [commandModal, setCommandModal] = useState<CommandModalState>({
     kind,
     target,
-    step: typeof target === "number" ? "configure" : "select",
+    step: isDirectModal ? "configure" : "select",
   });
   const [manualModalClosing, setManualModalClosing] = useState(false);
-  const [isDirectOpening, setIsDirectOpening] = useState(
-    typeof target === "number",
-  );
+  const [isDirectOpening, setIsDirectOpening] = useState(isDirectModal);
   const [manualSearch, setManualSearch] = useState("");
   const [manualCustomMode, setManualCustomMode] = useState(false);
   const [manualCustomCommand, setManualCustomCommand] = useState("");
@@ -482,7 +481,7 @@ export function CommandModal({
       onAnimationEnd={handleManualModalAnimationEnd}
     >
       <div
-        className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""} ${isDirectOpening ? "bind-config-modal-direct" : ""}`}
+        className={`manual-modal ${commandModal.step === "configure" ? "bind-config-modal" : ""} ${isDirectModal ? "bind-config-modal-direct" : ""} ${isDirectOpening ? "is-opening" : ""}`}
         onClick={(e) => e.stopPropagation()}
         onAnimationEnd={(event) => {
           if (
