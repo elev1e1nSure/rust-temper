@@ -46,7 +46,7 @@
         "headerImage": "installer/nsis-header.bmp",
         "sidebarImage": "installer/nsis-sidebar.bmp",
         "installMode": "currentUser",
-        "languages": ["Russian"],
+        "languages": ["Russian", "English"],
         "compression": "lzma",
         "startMenuFolder": "RustTemper"
       },
