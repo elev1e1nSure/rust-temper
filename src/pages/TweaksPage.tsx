@@ -13,7 +13,7 @@ import {
   ChevronIcon,
   GraphicsIcon,
   InterfaceIcon,
-  ListCheckIcon,
+  QualityOfLifeIcon,
   TrashIcon,
 } from "../icons";
 import type { AdvancedSlider, TweakDef, TweakSection } from "../types";
@@ -28,7 +28,7 @@ const SECTIONS: {
   title: string;
   icon: (props: { size?: number }) => ReactNode;
 }[] = [
-  { key: "qol", title: "Качество жизни", icon: ListCheckIcon },
+  { key: "qol", title: "Качество жизни", icon: QualityOfLifeIcon },
   { key: "graphics", title: "Графика", icon: GraphicsIcon },
   { key: "interface", title: "Интерфейс", icon: InterfaceIcon },
 ];

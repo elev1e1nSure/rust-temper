@@ -5,18 +5,18 @@ import {
   Delete2Fill,
   DisplayFill,
   FolderOpenFill,
-  ListCheck3Fill,
+  LayoutRightFill,
   Magic3Fill,
   Refresh1Fill,
   RestoreFill,
   SearchLine,
   Search2Fill,
-  Settings6Fill,
   SaveFill,
   SafeShieldFill,
   CloseFill,
   CommandFill,
   KeyboardFill,
+  HeartFill,
 } from "@mingcute/react";
 
 export function ChevronIcon() {
@@ -75,12 +75,12 @@ export function GraphicsIcon({ size = 16 }: { size?: number }) {
   return <DisplayFill size={size} />;
 }
 
-export function ListCheckIcon({ size = 16 }: { size?: number }) {
-  return <ListCheck3Fill size={size} />;
+export function QualityOfLifeIcon({ size = 16 }: { size?: number }) {
+  return <HeartFill size={size} />;
 }
 
 export function InterfaceIcon({ size = 16 }: { size?: number }) {
-  return <Settings6Fill size={size} />;
+  return <LayoutRightFill size={size} />;
 }
 
 export function RefreshIcon({ size = 16 }: { size?: number }) {
