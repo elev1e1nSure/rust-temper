@@ -1,7 +1,7 @@
 {
   "name": "rust-temper",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.4.0",
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@11.9.0",
   "type": "module",

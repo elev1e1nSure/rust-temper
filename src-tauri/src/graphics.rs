@@ -6,6 +6,9 @@
 //! `lib.rs`. The read/write mechanics are shared and never duplicated per key.
 
 use crate::client_cfg;
+use crate::config_paths;
+use crate::steam;
+use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -38,11 +41,7 @@ struct Quality {
 }
 
 impl Quality {
-    /// Write the config bundle for `tier` into the file at `path`.
-    fn apply(&self, path: &str, tier: u32) -> Result<(), String> {
-        // Graphics tiers share the same client.cfg that tweaks mutate, so they
-        // must take the same process-wide lock to avoid lost-update races.
-        let _guard = client_cfg::operation_lock()?;
+    fn changes(&self, tier: u32) -> Result<BTreeMap<String, Option<String>>, String> {
         let config = self.tiers.get(tier as usize).ok_or_else(|| {
             format!(
                 "Недопустимый уровень {}: {tier}. Допустимый диапазон: 0..{}",
@@ -50,14 +49,20 @@ impl Quality {
                 self.tiers.len().saturating_sub(1)
             )
         })?;
-
-        let cfg_path = Path::new(path);
-        let content = client_cfg::read(cfg_path)?;
-
-        let changes: BTreeMap<String, Option<String>> = config
+        Ok(config
             .iter()
             .map(|(key, value)| (key.to_string(), Some(value.to_string())))
-            .collect();
+            .collect())
+    }
+
+    /// Write the config bundle for `tier` into the file at `path`.
+    fn apply(&self, path: &str, tier: u32) -> Result<(), String> {
+        // Graphics tiers share the same client.cfg that tweaks mutate, so they
+        // must take the same process-wide lock to avoid lost-update races.
+        let _guard = client_cfg::operation_lock()?;
+        let cfg_path = Path::new(path);
+        let content = client_cfg::read(cfg_path)?;
+        let changes = self.changes(tier)?;
 
         let updated = client_cfg::apply_values(&content, &changes);
         client_cfg::write_atomic(cfg_path, &updated)?;
@@ -322,12 +327,40 @@ fn quality_by_key(setting: &str) -> Result<&'static Quality, String> {
 
 #[tauri::command]
 pub fn apply_graphics_quality(path: String, setting: String, tier: u32) -> Result<(), String> {
-    quality_by_key(&setting)?.apply(&path, tier)
+    steam::ensure_rust_not_running()?;
+    let path = config_paths::validate_cfg_path(Path::new(&path), "client.cfg")?;
+    quality_by_key(&setting)?.apply(&path.to_string_lossy(), tier)
 }
 
 #[tauri::command]
 pub fn read_graphics_quality(path: String, setting: String) -> Result<u32, String> {
-    quality_by_key(&setting)?.read(&path)
+    let path = config_paths::validate_cfg_path(Path::new(&path), "client.cfg")?;
+    quality_by_key(&setting)?.read(&path.to_string_lossy())
+}
+
+#[derive(Deserialize)]
+#[serde(transparent)]
+pub struct GraphicsPreset(BTreeMap<String, u32>);
+
+#[tauri::command]
+pub fn apply_graphics_preset(path: String, tiers: GraphicsPreset) -> Result<(), String> {
+    let _guard = client_cfg::operation_lock()?;
+    steam::ensure_rust_not_running()?;
+    let path = config_paths::validate_cfg_path(Path::new(&path), "client.cfg")?;
+    let content = client_cfg::read(&path)?;
+    let mut changes = BTreeMap::new();
+
+    for (setting, tier) in tiers.0 {
+        changes.extend(quality_by_key(&setting)?.changes(tier)?);
+    }
+    if changes.is_empty() {
+        return Err("Графический пресет не содержит настроек".to_string());
+    }
+
+    let updated = client_cfg::apply_values(&content, &changes);
+    client_cfg::write_atomic(&path, &updated)?;
+    log::info!("Graphics preset applied: path={}", path.display());
+    Ok(())
 }
 
 #[cfg(test)]

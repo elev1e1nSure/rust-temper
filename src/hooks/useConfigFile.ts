@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { Bind } from "../types";
@@ -8,44 +8,26 @@ import { keysCfgPathFor } from "../utils/paths";
 export function useConfigFile() {
   const [gamePath, setGamePath] = useState(DEFAULT_GAME_PATH);
   const [detecting, setDetecting] = useState(false);
-  // Флаг реентерабельности: хранится в ref, чтобы не вызывать лишних рендеров,
-  // но НЕ экспортируется как ref — потребитель получает только read-only boolean через state.
-  const isReloadingRef = useRef(false);
-  const [isReloading, setIsReloading] = useState(false);
 
   const loadFromPath = useCallback(async (path: string) => {
-    isReloadingRef.current = true;
-    setIsReloading(true);
-    try {
-      const loaded = await invoke<Bind[]>("read_keys_cfg", {
-        path: keysCfgPathFor(path),
-      });
-      return loaded;
-    } finally {
-      isReloadingRef.current = false;
-      setIsReloading(false);
-    }
+    return invoke<Bind[]>("read_keys_cfg", {
+      path: keysCfgPathFor(path),
+    });
   }, []);
 
-  const handleSelectFile = async () => {
+  const selectGamePath = async (): Promise<string | null> => {
     const selected = await open({
       directory: true,
       multiple: false,
     });
-    if (selected) {
-      setGamePath(selected);
-    }
+    return selected;
   };
 
   const autoDetectConfigPath = async () => {
     setDetecting(true);
     try {
       const found = await invoke<string | null>("find_rust_install");
-      if (found) {
-        setGamePath(found);
-        return found;
-      }
-      return null;
+      return found;
     } catch (err) {
       console.error("Автопоиск установки Rust не удался:", err);
       return null;
@@ -60,12 +42,8 @@ export function useConfigFile() {
     gamePath,
     setGamePath,
     detecting,
-    /** true пока идёт чтение файла — безопасно читать в эффектах */
-    isReloading,
-    /** @internal используется только внутри App для guard в autosave-эффекте */
-    _isReloadingRef: isReloadingRef,
     loadFromPath,
-    handleSelectFile,
+    selectGamePath,
     autoDetectConfigPath,
   };
 }

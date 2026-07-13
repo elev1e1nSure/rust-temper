@@ -81,6 +81,22 @@ pub(crate) fn unload_before_config_write() -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(all(windows, not(test)))]
+pub(crate) fn ensure_rust_not_running() -> Result<(), String> {
+    match rust_running_probe() {
+        Ok(false) => Ok(()),
+        Ok(true) => Err("Закрой Rust перед изменением конфигов".to_string()),
+        Err(error) => Err(format!(
+            "Не удалось проверить, запущен ли Rust; запись отменена: {error}"
+        )),
+    }
+}
+
+#[cfg(any(not(windows), test))]
+pub(crate) fn ensure_rust_not_running() -> Result<(), String> {
+    Ok(())
+}
+
 #[cfg(any(not(windows), test))]
 pub(crate) fn unload_before_config_write() -> Result<(), String> {
     Ok(())
@@ -93,24 +109,35 @@ pub(crate) fn unload_before_config_write() -> Result<(), String> {
 #[cfg(all(windows, not(test)))]
 #[tauri::command]
 pub fn is_rust_running() -> bool {
-    use std::os::windows::process::CommandExt;
-    // Suppress the console window tasklist would otherwise flash on each poll.
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-
-    match Command::new("tasklist")
-        .args(["/FI", "IMAGENAME eq RustClient.exe", "/NH", "/FO", "CSV"])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-    {
-        Ok(output) => String::from_utf8_lossy(&output.stdout)
-            .to_ascii_lowercase()
-            .contains("rustclient.exe"),
+    match rust_running_probe() {
+        Ok(running) => running,
         Err(error) => {
-            // Fail open: a broken probe must not permanently lock the UI.
             log::warn!("is_rust_running: tasklist failed: {error}");
             false
         }
     }
+}
+
+#[cfg(all(windows, not(test)))]
+fn rust_running_probe() -> Result<bool, String> {
+    use std::os::windows::process::CommandExt;
+    // Suppress the console window tasklist would otherwise flash on each poll.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+    let output = Command::new("tasklist")
+        .args(["/FI", "IMAGENAME eq RustClient.exe", "/NH", "/FO", "CSV"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .map_err(|error| error.to_string())?;
+    if !output.status.success() {
+        return Err(format!(
+            "tasklist завершился с кодом {:?}",
+            output.status.code()
+        ));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout)
+        .to_ascii_lowercase()
+        .contains("rustclient.exe"))
 }
 
 #[cfg(any(not(windows), test))]

@@ -275,8 +275,11 @@ mod tests {
     #[test]
     fn parse_and_navigate() {
         let tree = parse(SAMPLE).unwrap();
-        let apps = navigate(&tree, &["UserLocalConfigStore", "Software", "Valve", "Steam", "apps"])
-            .unwrap();
+        let apps = navigate(
+            &tree,
+            &["UserLocalConfigStore", "Software", "Valve", "Steam", "apps"],
+        )
+        .unwrap();
         let rust = get_obj(apps, "252490").unwrap();
         assert_eq!(
             get_str(rust, "LaunchOptions"),
@@ -303,9 +306,11 @@ mod tests {
     #[test]
     fn set_overwrites_existing() {
         let mut tree = parse(SAMPLE).unwrap();
-        let apps =
-            navigate_mut(&mut tree, &["UserLocalConfigStore", "Software", "Valve", "Steam", "apps"])
-                .unwrap();
+        let apps = navigate_mut(
+            &mut tree,
+            &["UserLocalConfigStore", "Software", "Valve", "Steam", "apps"],
+        )
+        .unwrap();
         let rust = ensure_object(apps, "252490");
         set_str(rust, "LaunchOptions", "-window-mode exclusive");
         assert_eq!(
@@ -314,7 +319,10 @@ mod tests {
         );
     }
 
-    fn navigate_mut<'a>(members: &'a mut Vec<Member>, path: &[&str]) -> Option<&'a mut Vec<Member>> {
+    fn navigate_mut<'a>(
+        members: &'a mut Vec<Member>,
+        path: &[&str],
+    ) -> Option<&'a mut Vec<Member>> {
         let mut node = members;
         for key in path {
             node = get_obj_mut(node, key)?;
@@ -322,7 +330,7 @@ mod tests {
         Some(node)
     }
 
-    fn get_obj_mut<'a>(members: &'a mut Vec<Member>, key: &str) -> Option<&'a mut Vec<Member>> {
+    fn get_obj_mut<'a>(members: &'a mut [Member], key: &str) -> Option<&'a mut Vec<Member>> {
         members.iter_mut().find_map(|(k, node)| match node {
             Node::Obj(children) if k.eq_ignore_ascii_case(key) => Some(children),
             _ => None,
@@ -335,10 +343,7 @@ mod tests {
         let apps = ensure_object(
             ensure_object(
                 ensure_object(
-                    ensure_object(
-                        ensure_object(&mut tree, "UserLocalConfigStore"),
-                        "Software",
-                    ),
+                    ensure_object(ensure_object(&mut tree, "UserLocalConfigStore"), "Software"),
                     "Valve",
                 ),
                 "Steam",
@@ -360,9 +365,11 @@ mod tests {
     #[test]
     fn clear_removes_key() {
         let mut tree = parse(SAMPLE).unwrap();
-        let apps =
-            navigate_mut(&mut tree, &["UserLocalConfigStore", "Software", "Valve", "Steam", "apps"])
-                .unwrap();
+        let apps = navigate_mut(
+            &mut tree,
+            &["UserLocalConfigStore", "Software", "Valve", "Steam", "apps"],
+        )
+        .unwrap();
         let rust = ensure_object(apps, "252490");
         remove_key(rust, "LaunchOptions");
         assert_eq!(get_str(rust, "LaunchOptions"), None);

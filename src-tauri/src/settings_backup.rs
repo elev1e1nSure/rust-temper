@@ -1,4 +1,6 @@
 use crate::client_cfg;
+use crate::config_paths;
+use crate::steam;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -32,6 +34,8 @@ struct BackupManifest {
     config_dir: String,
     created_at_epoch_seconds: u64,
     files: Vec<String>,
+    #[serde(default)]
+    absent_files: Vec<String>,
 }
 
 #[tauri::command]
@@ -44,16 +48,14 @@ pub fn ensure_initial_game_settings_backup(
         return backup_status_for_paths(&paths);
     }
 
-    let copied_files = create_initial_backup(&paths, &game_path)?;
-    if copied_files.is_empty() {
-        return backup_status_for_paths(&paths);
-    }
+    let snapshot = create_initial_backup(&paths, &game_path)?;
 
     let manifest = BackupManifest {
         game_path,
         config_dir: paths.config_dir.to_string_lossy().to_string(),
         created_at_epoch_seconds: unix_timestamp_now()?,
-        files: copied_files,
+        files: snapshot.copied_files,
+        absent_files: snapshot.absent_files,
     };
     let manifest_content = serde_json::to_string_pretty(&manifest)
         .map_err(|error| format!("Не удалось подготовить манифест бэкапа: {error}"))?
@@ -79,20 +81,31 @@ pub fn restore_game_settings_backup(
 ) -> Result<BackupStatus, String> {
     let paths = backup_paths(&app, &game_path)?;
     let manifest = read_manifest(&paths)?;
+    validate_manifest(&paths, &manifest)?;
 
     let _guard = client_cfg::operation_lock()?;
+    steam::ensure_rust_not_running()?;
     std::fs::create_dir_all(&paths.config_dir).map_err(|error| error.to_string())?;
 
-    for file_name in manifest.files {
-        let backup_file = paths.backup_dir.join(&file_name);
+    let mut actions = Vec::new();
+    for file_name in &manifest.files {
+        let backup_file = paths.backup_dir.join(file_name);
         let content = std::fs::read_to_string(&backup_file).map_err(|error| {
             format!(
                 "Не удалось прочитать файл бэкапа {}: {error}",
                 backup_file.display()
             )
         })?;
-        client_cfg::write_atomic(&paths.config_dir.join(file_name), &content)?;
+        actions.push((paths.config_dir.join(file_name), Some(content)));
     }
+    actions.extend(
+        manifest
+            .absent_files
+            .iter()
+            .map(|file_name| (paths.config_dir.join(file_name), None)),
+    );
+
+    restore_transaction(&actions)?;
 
     backup_status_for_paths(&paths)
 }
@@ -103,9 +116,15 @@ struct BackupPaths {
     manifest: PathBuf,
 }
 
-fn create_initial_backup(paths: &BackupPaths, game_path: &str) -> Result<Vec<String>, String> {
+struct BackupSnapshot {
+    copied_files: Vec<String>,
+    absent_files: Vec<String>,
+}
+
+fn create_initial_backup(paths: &BackupPaths, game_path: &str) -> Result<BackupSnapshot, String> {
     let _guard = client_cfg::operation_lock()?;
     let mut copied_files = Vec::new();
+    let mut absent_files = Vec::new();
 
     for file_name in SETTINGS_FILES {
         let source = paths.config_dir.join(file_name);
@@ -115,6 +134,7 @@ fn create_initial_backup(paths: &BackupPaths, game_path: &str) -> Result<Vec<Str
                 game_path,
                 source.display()
             );
+            absent_files.push(file_name.to_string());
             continue;
         }
 
@@ -128,7 +148,74 @@ fn create_initial_backup(paths: &BackupPaths, game_path: &str) -> Result<Vec<Str
         copied_files.push(file_name.to_string());
     }
 
-    Ok(copied_files)
+    Ok(BackupSnapshot {
+        copied_files,
+        absent_files,
+    })
+}
+
+fn validate_manifest(paths: &BackupPaths, manifest: &BackupManifest) -> Result<(), String> {
+    let expected_key = stable_path_key(&paths.config_dir)?;
+    let manifest_key = stable_path_key(Path::new(&manifest.config_dir))?;
+    if expected_key != manifest_key {
+        return Err("Манифест бэкапа относится к другой папке Rust".to_string());
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    for file_name in manifest.files.iter().chain(&manifest.absent_files) {
+        if !SETTINGS_FILES.contains(&file_name.as_str()) || !seen.insert(file_name.as_str()) {
+            return Err(format!("Недопустимый файл в манифесте бэкапа: {file_name}"));
+        }
+    }
+    Ok(())
+}
+
+fn restore_transaction(actions: &[(PathBuf, Option<String>)]) -> Result<(), String> {
+    let originals = actions
+        .iter()
+        .map(|(path, _)| match std::fs::read_to_string(path) {
+            Ok(content) => Ok(Some(content)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(format!(
+                "Не удалось подготовить восстановление {}: {error}",
+                path.display()
+            )),
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+
+    for (index, (path, content)) in actions.iter().enumerate() {
+        let result = match content {
+            Some(content) => client_cfg::write_atomic(path, content),
+            None if path.exists() => std::fs::remove_file(path).map_err(|error| error.to_string()),
+            None => Ok(()),
+        };
+        if let Err(error) = result {
+            let rollback_error = rollback_restore(actions, &originals, index);
+            return Err(match rollback_error {
+                Ok(()) => error,
+                Err(rollback) => format!("{error}; откат восстановления не удался: {rollback}"),
+            });
+        }
+    }
+    Ok(())
+}
+
+fn rollback_restore(
+    actions: &[(PathBuf, Option<String>)],
+    originals: &[Option<String>],
+    last_index: usize,
+) -> Result<(), String> {
+    for index in (0..=last_index).rev() {
+        let path = &actions[index].0;
+        match &originals[index] {
+            Some(content) => client_cfg::write_atomic(path, content)?,
+            None if path.exists() => {
+                std::fs::remove_file(path).map_err(|error| error.to_string())?;
+            }
+            None => {}
+        }
+    }
+    Ok(())
 }
 
 fn backup_status_for_paths(paths: &BackupPaths) -> Result<BackupStatus, String> {
@@ -181,7 +268,7 @@ fn backup_paths<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
     game_path: &str,
 ) -> Result<BackupPaths, String> {
-    let config_dir = Path::new(game_path).join("cfg");
+    let config_dir = config_paths::validate_game_root(Path::new(game_path))?.join("cfg");
     let backup_key = stable_path_key(&config_dir)?;
     let backup_dir = app
         .path()

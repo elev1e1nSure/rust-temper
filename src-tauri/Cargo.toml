@@ -1,6 +1,6 @@
 [package]
 name = "rust-temper"
-version = "1.2.0"
+version = "1.4.0"
 description = "GUI-утилита для управления конфигурационными файлами игры Rust"
 authors = ["you"]
 edition = "2021"

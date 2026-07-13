@@ -13,12 +13,13 @@ import "./SettingsPage.css";
 
 interface SettingsPageProps {
   gamePath: string;
-  setGamePath: (path: string) => void;
+  setGamePath: (path: string) => Promise<"loaded" | "stale" | "error">;
   detecting: boolean;
   handleAutoDetect: () => void;
   handleSelectFile: () => void;
   backupRefreshKey: number;
-  onConfigRestored: () => Promise<void>;
+  onBeforeConfigRestore: () => Promise<void>;
+  onConfigRestored: (path: string) => Promise<void>;
 }
 
 export function SettingsPage({
@@ -28,6 +29,7 @@ export function SettingsPage({
   handleAutoDetect,
   handleSelectFile,
   backupRefreshKey,
+  onBeforeConfigRestore,
   onConfigRestored,
 }: SettingsPageProps) {
   const [backupStatus, setBackupStatus] = useState<BackupStatus | null>(null);
@@ -40,6 +42,18 @@ export function SettingsPage({
   const backupInnerRef = useRef<HTMLDivElement | null>(null);
   const [backupHeight, setBackupHeight] = useState(0);
   const [backupShouldAnimate, setBackupShouldAnimate] = useState(false);
+  const [gamePathDraft, setGamePathDraft] = useState(gamePath);
+
+  useEffect(() => {
+    setGamePathDraft(gamePath);
+  }, [gamePath]);
+
+  const commitGamePath = async () => {
+    const path = gamePathDraft.trim();
+    if (!path || path === gamePath) return;
+    const result = await setGamePath(path);
+    if (result !== "loaded") setGamePathDraft(gamePath);
+  };
 
   useLayoutEffect(() => {
     const el = backupInnerRef.current;
@@ -83,6 +97,7 @@ export function SettingsPage({
     setRestoreMessage(null);
 
     try {
+      await onBeforeConfigRestore();
       const restored = await invoke<BackupStatus>(
         "restore_game_settings_backup",
         {
@@ -90,7 +105,7 @@ export function SettingsPage({
         },
       );
       setBackupStatus(restored);
-      await onConfigRestored();
+      await onConfigRestored(gamePath);
       setRestoreMessage({
         type: "success",
         text: "Бэкап восстановлен. keys.cfg и client.cfg возвращены к первому сохранённому состоянию.",
@@ -113,8 +128,16 @@ export function SettingsPage({
           <input
             type="text"
             className="setting-input"
-            value={gamePath}
-            onChange={(e) => setGamePath(e.target.value)}
+            value={gamePathDraft}
+            onChange={(e) => setGamePathDraft(e.target.value)}
+            onBlur={() => void commitGamePath()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+              if (event.key === "Escape") {
+                setGamePathDraft(gamePath);
+                event.currentTarget.blur();
+              }
+            }}
           />
           <div className="path-actions">
             <button

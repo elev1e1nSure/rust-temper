@@ -1,5 +1,7 @@
 use crate::client_cfg;
+use crate::config_paths;
 use crate::keys_cfg;
+use crate::steam;
 use crate::tweak_defs::{self as defs, BindTweak, TweakDef};
 use crate::tweak_state::{self, ActiveTweak, ConfigState, StoredValue};
 use serde::Serialize;
@@ -123,20 +125,23 @@ pub fn read_client_cfg(
     keys_cfg_path: Option<String>,
 ) -> Result<ClientCfgState, String> {
     let _guard = operation_lock()?;
-    let cfg_path = Path::new(&path);
-    let content = client_cfg::read(cfg_path)?;
+    let cfg_path = config_paths::validate_cfg_path(Path::new(&path), "client.cfg")?;
+    let validated_keys_path = keys_cfg_path
+        .as_deref()
+        .map(|path| config_paths::validate_cfg_path(Path::new(path), "keys.cfg"))
+        .transpose()?;
+    let content = client_cfg::read(&cfg_path)?;
     let parsed = client_cfg::parse(&content);
     let state = tweak_state::load(&app)?;
-    let config_key = tweak_state::config_key(cfg_path)?;
+    let config_key = tweak_state::config_key(&cfg_path)?;
     let active_tweaks = state
         .configs
         .get(&config_key)
         .map(|config| &config.active_tweaks);
 
-    let bind_map = load_bind_map(keys_cfg_path.as_deref());
-    let keys_state_ref = if let Some(ref keys_path) = keys_cfg_path {
-        let kp = Path::new(keys_path);
-        tweak_state::config_key(kp)
+    let bind_map = load_bind_map(validated_keys_path.as_deref().and_then(Path::to_str));
+    let keys_state_ref = if let Some(keys_path) = validated_keys_path.as_deref() {
+        tweak_state::config_key(keys_path)
             .ok()
             .and_then(|ck| state.configs.get(&ck).map(|c| &c.active_tweaks))
     } else {
@@ -162,6 +167,13 @@ pub fn toggle_tweak(
     keys_cfg_path: Option<String>,
 ) -> Result<(), String> {
     let _guard = client_cfg::operation_lock()?;
+    steam::ensure_rust_not_running()?;
+    let cfg_path = config_paths::validate_cfg_path(Path::new(&path), "client.cfg")?;
+    let validated_keys_path = keys_cfg_path
+        .as_deref()
+        .map(|path| config_paths::validate_cfg_path(Path::new(path), "keys.cfg"))
+        .transpose()?
+        .map(|path| path.to_string_lossy().into_owned());
     let tweak = known_tweaks_ref()
         .iter()
         .find(|t| t.key == key)
@@ -169,12 +181,11 @@ pub fn toggle_tweak(
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
 
     if let Some(bind_tweak) = &tweak.bind {
-        return toggle_bind_tweak(&app, &tweak, bind_tweak, enabled, keys_cfg_path);
+        return toggle_bind_tweak(&app, &tweak, bind_tweak, enabled, validated_keys_path);
     }
 
-    let cfg_path = Path::new(&path);
-    let current_values = client_cfg::parse(&client_cfg::read(cfg_path)?);
-    let mut tx = TweakTx::begin(&app, cfg_path)?;
+    let current_values = client_cfg::parse(&client_cfg::read(&cfg_path)?);
+    let mut tx = TweakTx::begin(&app, &cfg_path)?;
 
     if enabled {
         let ck = tx.config_key.clone();
@@ -205,7 +216,7 @@ pub fn toggle_tweak(
                     changes
                 );
                 let updated = client_cfg::apply_values(&tx.content, &changes);
-                return client_cfg::write_atomic(cfg_path, &updated).map(|_| {
+                return client_cfg::write_atomic(&cfg_path, &updated).map(|_| {
                     log::info!(
                         "Unmanaged tweak force-disabled: path={}, tweak={}",
                         cfg_path.display(),
@@ -297,7 +308,7 @@ fn toggle_bind_tweak(
     let keys_cfg_path = Path::new(keys_path);
 
     let existing = if keys_cfg_path.exists() {
-        std::fs::read_to_string(keys_cfg_path).unwrap_or_default()
+        std::fs::read_to_string(keys_cfg_path).map_err(|error| error.to_string())?
     } else {
         String::new()
     };
@@ -384,15 +395,16 @@ pub fn set_tweak_slider(
     value: f64,
 ) -> Result<(), String> {
     let _guard = operation_lock()?;
+    steam::ensure_rust_not_running()?;
+    let cfg_path = config_paths::validate_cfg_path(Path::new(&path), "client.cfg")?;
     let tweak = known_tweaks()
         .into_iter()
         .find(|t| t.key == key)
         .ok_or_else(|| format!("Неизвестный твик: {key}"))?;
     let backend_key = validate_slider_value(&tweak, value)?;
 
-    let cfg_path = Path::new(&path);
     let desired_value = value.to_string();
-    let mut tx = TweakTx::begin(&app, cfg_path)?;
+    let mut tx = TweakTx::begin(&app, &cfg_path)?;
     let ck = tx.config_key.clone();
     let config = tx
         .state_mut()

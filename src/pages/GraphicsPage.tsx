@@ -247,13 +247,10 @@ export function GraphicsPage({ gamePath }: GraphicsPageProps) {
     setApplying(true);
 
     try {
-      for (const row of QUALITY_ROWS) {
-        await invoke("apply_graphics_quality", {
-          path: clientCfgPath,
-          setting: row.key,
-          tier: values[row.key] ?? 0,
-        });
-      }
+      await invoke("apply_graphics_preset", {
+        path: clientCfgPath,
+        tiers: values,
+      });
     } finally {
       setApplying(false);
     }

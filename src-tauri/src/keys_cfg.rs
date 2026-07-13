@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use std::path::Path;
 
 use crate::client_cfg;
+use crate::config_paths;
+use crate::steam;
 
 pub fn load_binds(path: &Path) -> Result<Vec<KeyBind>, String> {
     let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
@@ -438,7 +440,8 @@ mod tests {
 
 #[tauri::command]
 pub fn read_keys_cfg(path: String) -> Result<Vec<KeyBind>, String> {
-    load_binds(Path::new(&path))
+    let path = config_paths::validate_cfg_path(Path::new(&path), "keys.cfg")?;
+    load_binds(&path)
 }
 
 #[tauri::command]
@@ -446,12 +449,13 @@ pub fn write_keys_cfg(path: String, binds: Vec<KeyBind>) -> Result<(), String> {
     // Share the global lock so a bind tweak running concurrently with a full
     // editor save cannot interleave and drop either side's binds.
     let _guard = client_cfg::operation_lock()?;
-    let p = Path::new(&path);
+    steam::ensure_rust_not_running()?;
+    let p = config_paths::validate_cfg_path(Path::new(&path), "keys.cfg")?;
     let existing = if p.exists() {
-        std::fs::read_to_string(p).unwrap_or_default()
+        std::fs::read_to_string(&p).map_err(|error| error.to_string())?
     } else {
         String::new()
     };
     let content = merge_binds(&existing, &binds);
-    client_cfg::write_atomic(p, &content)
+    client_cfg::write_atomic(&p, &content)
 }

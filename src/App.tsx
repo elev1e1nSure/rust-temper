@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { BackupStatus, CommandPreset } from "./types";
+import type { BackupStatus, Bind, CommandPreset } from "./types";
 import { useConfigFile } from "./hooks/useConfigFile";
 import { keysCfgPathFor } from "./utils/paths";
 import { useBindEditor } from "./hooks/useBindEditor";
@@ -48,6 +48,8 @@ function App() {
   const bindEditor = useBindEditor(commandPresets);
   const { sidebarWidth, startResizing } = useSidebarResize();
   const rustRunning = useRustRunning();
+  const { loadFromPath, setGamePath } = configFile;
+  const { setBinds } = bindEditor;
 
   // Load command dictionary
   useEffect(() => {
@@ -61,29 +63,96 @@ function App() {
   // Auto-detect config path once on first launch (guarded against React strict mode double-mount)
   const autoDetectRan = useRef(false);
   const bindsLoaded = useRef(false);
+  const pathActionVersion = useRef(0);
+  const autosaveVersion = useRef(0);
+  const autosaveQueue = useRef<Promise<void>>(Promise.resolve());
+  const autosaveTimer = useRef<number | null>(null);
+  const pendingAutosave = useRef<{
+    version: number;
+    path: string;
+    binds: Bind[];
+  } | null>(null);
+
+  const enqueuePendingAutosave = useCallback(() => {
+    const pending = pendingAutosave.current;
+    if (!pending) return;
+    pendingAutosave.current = null;
+
+    const save = autosaveQueue.current
+      .catch(() => undefined)
+      .then(() =>
+        invoke<void>("write_keys_cfg", {
+          path: pending.path,
+          binds: pending.binds,
+        }),
+      );
+    autosaveQueue.current = save.catch(() => undefined);
+    save
+      .then(() => {
+        if (autosaveVersion.current === pending.version) {
+          setStatusMessage(null);
+        }
+      })
+      .catch((err) => {
+        if (autosaveVersion.current === pending.version) {
+          setStatusMessage({
+            type: "error",
+            text: `Не удалось сохранить keys.cfg: ${err}`,
+          });
+        }
+      });
+  }, []);
+
+  const flushAutosave = useCallback(async () => {
+    if (autosaveTimer.current !== null) {
+      window.clearTimeout(autosaveTimer.current);
+      autosaveTimer.current = null;
+    }
+    enqueuePendingAutosave();
+    await autosaveQueue.current;
+  }, [enqueuePendingAutosave]);
+
+  const loadGamePath = useCallback(
+    async (
+      path: string,
+      actionVersion: number,
+    ): Promise<"loaded" | "stale" | "error"> => {
+      setIsLoadingBinds(true);
+
+      try {
+        const loaded = await loadFromPath(path);
+        if (pathActionVersion.current !== actionVersion) return "stale";
+        setBinds(loaded);
+        setGamePath(path);
+        bindsLoaded.current = true;
+        setStatusMessage(null);
+        return "loaded";
+      } catch (err) {
+        if (pathActionVersion.current === actionVersion) {
+          setStatusMessage({
+            type: "error",
+            text: `Не удалось прочитать keys.cfg: ${err}`,
+          });
+        }
+        return pathActionVersion.current === actionVersion ? "error" : "stale";
+      } finally {
+        if (pathActionVersion.current === actionVersion) {
+          setIsLoadingBinds(false);
+        }
+      }
+    },
+    [loadFromPath, setBinds, setGamePath],
+  );
+
   useEffect(() => {
     if (autoDetectRan.current) return;
     autoDetectRan.current = true;
-    setIsLoadingBinds(true);
+    const actionVersion = pathActionVersion.current + 1;
+    pathActionVersion.current = actionVersion;
     configFile.autoDetectConfigPath().then((found) => {
+      if (pathActionVersion.current !== actionVersion) return;
       if (found) {
-        configFile
-          .loadFromPath(found)
-          .then((loaded) => {
-            if (loaded) {
-              bindEditor.setBinds(loaded);
-            }
-            bindsLoaded.current = true;
-            setIsLoadingBinds(false);
-          })
-          .catch((err) => {
-            setStatusMessage({
-              type: "error",
-              text: `Не удалось прочитать keys.cfg: ${err}`,
-            });
-            bindsLoaded.current = true;
-            setIsLoadingBinds(false);
-          });
+        void loadGamePath(found, actionVersion);
       } else {
         setStatusMessage({
           type: "info",
@@ -93,40 +162,29 @@ function App() {
         setIsLoadingBinds(false);
       }
     });
-  }, [configFile, bindEditor]);
+  }, [configFile, loadGamePath]);
 
-  // Load binds when gamePath changes (from user input or auto-detection)
-  const handleGamePathChange = useCallback((path: string) => {
-    configFile.setGamePath(path);
-    setIsLoadingBinds(true);
-    configFile
-      .loadFromPath(path)
-      .then((loaded) => {
-        if (loaded) {
-          bindEditor.setBinds(loaded);
-        }
-        setIsLoadingBinds(false);
-      })
-      .catch((err) => {
-        setStatusMessage({
-          type: "error",
-          text: `Не удалось прочитать keys.cfg: ${err}`,
-        });
-        setIsLoadingBinds(false);
-      });
-  }, [configFile, bindEditor]);
+  const handleGamePathChange = useCallback(
+    (path: string) => {
+      const actionVersion = pathActionVersion.current + 1;
+      pathActionVersion.current = actionVersion;
+      return loadGamePath(path, actionVersion);
+    },
+    [loadGamePath],
+  );
 
-  const reloadBindsFromCurrentPath = useCallback(async () => {
-    setIsLoadingBinds(true);
-    try {
-      const loaded = await configFile.loadFromPath(configFile.gamePath);
-      if (loaded) {
-        bindEditor.setBinds(loaded);
-      }
-    } finally {
-      setIsLoadingBinds(false);
-    }
-  }, [bindEditor, configFile]);
+  const prepareConfigRestore = useCallback(async () => {
+    pathActionVersion.current += 1;
+    await flushAutosave();
+  }, [flushAutosave]);
+
+  const reloadBindsAfterRestore = useCallback(
+    async (restoredPath: string) => {
+      if (restoredPath !== configFile.gamePath) return;
+      await loadGamePath(restoredPath, pathActionVersion.current);
+    },
+    [configFile.gamePath, loadGamePath],
+  );
 
   useEffect(() => {
     if (!configFile.gamePath) return;
@@ -151,21 +209,12 @@ function App() {
 
   // User-triggered auto-detection
   const handleAutoDetect = useCallback(() => {
+    const actionVersion = pathActionVersion.current + 1;
+    pathActionVersion.current = actionVersion;
     configFile.autoDetectConfigPath().then((found) => {
+      if (pathActionVersion.current !== actionVersion) return;
       if (found) {
-        configFile
-          .loadFromPath(found)
-          .then((loaded) => {
-            if (loaded) {
-              bindEditor.setBinds(loaded);
-            }
-          })
-          .catch((err) => {
-            setStatusMessage({
-              type: "error",
-              text: `Не удалось прочитать keys.cfg: ${err}`,
-            });
-          });
+        void loadGamePath(found, actionVersion);
       } else {
         setStatusMessage({
           type: "info",
@@ -173,24 +222,40 @@ function App() {
         });
       }
     });
-  }, [configFile, bindEditor]);
+  }, [configFile, loadGamePath]);
+
+  const handleSelectPath = useCallback(async () => {
+    const actionVersion = pathActionVersion.current + 1;
+    pathActionVersion.current = actionVersion;
+    const selected = await configFile.selectGamePath();
+    if (selected && pathActionVersion.current === actionVersion) {
+      await loadGamePath(selected, actionVersion);
+    }
+  }, [configFile, loadGamePath]);
 
   // Autosave on bind change
   useEffect(() => {
     if (!bindsLoaded.current) return;
-    if (configFile._isReloadingRef.current) return;
-    invoke("write_keys_cfg", {
+
+    const version = autosaveVersion.current + 1;
+    autosaveVersion.current = version;
+    pendingAutosave.current = {
+      version,
       path: keysCfgPathFor(configFile.gamePath),
       binds: bindEditor.binds,
-    })
-      .then(() => setStatusMessage(null))
-      .catch((err) =>
-        setStatusMessage({
-          type: "error",
-          text: `Не удалось сохранить keys.cfg: ${err}`,
-        }),
-      );
-  }, [bindEditor.binds, configFile.gamePath, configFile._isReloadingRef]);
+    };
+    autosaveTimer.current = window.setTimeout(() => {
+      autosaveTimer.current = null;
+      enqueuePendingAutosave();
+    }, 200);
+
+    return () => {
+      if (autosaveTimer.current !== null) {
+        window.clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+    };
+  }, [bindEditor.binds, configFile.gamePath, enqueuePendingAutosave]);
 
   return (
     <>
@@ -262,9 +327,10 @@ function App() {
                 setGamePath={handleGamePathChange}
                 detecting={configFile.detecting}
                 handleAutoDetect={handleAutoDetect}
-                handleSelectFile={configFile.handleSelectFile}
+                handleSelectFile={handleSelectPath}
                 backupRefreshKey={backupRefreshKey}
-                onConfigRestored={reloadBindsFromCurrentPath}
+                onBeforeConfigRestore={prepareConfigRestore}
+                onConfigRestored={reloadBindsAfterRestore}
               />
             </ErrorBoundary>
           )}

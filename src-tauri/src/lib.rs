@@ -1,4 +1,5 @@
 mod client_cfg;
+mod config_paths;
 mod graphics;
 mod keys_cfg;
 mod known_commands;
@@ -27,6 +28,7 @@ pub fn run() {
             tweaks::toggle_tweak,
             tweaks::set_tweak_slider,
             graphics::apply_graphics_quality,
+            graphics::apply_graphics_preset,
             graphics::read_graphics_quality,
             settings_backup::ensure_initial_game_settings_backup,
             settings_backup::get_game_settings_backup_status,
