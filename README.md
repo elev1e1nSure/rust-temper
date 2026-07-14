@@ -13,6 +13,8 @@
 
 [<img src="https://img.shields.io/badge/Скачать-Последнюю_версию_для_Windows-0078d4?style=for-the-badge&logo=windows&logoColor=white" height="40">](https://github.com/elev1e1nSure/rust-temper/releases/latest)
 
+[Оптимизация Rust, FPS и настройки графики](https://elev1e1nsure.github.io/rust-temper-landing/)
+
 </div>
 
 ### Rust без гайдов
