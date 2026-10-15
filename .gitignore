@@ -50,3 +50,8 @@ Desktop.ini
 /.claude
 log.txt
 quill.toml
+
+# Local agent skills and design export
+.agents/
+skills-lock.json
+landing-layout-fix/
